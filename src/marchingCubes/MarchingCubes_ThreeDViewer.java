@@ -5,6 +5,9 @@ import java.util.ArrayList;
 import bdv.labels.labelset.Label;
 import bdv.labels.labelset.LabelMultisetType;
 import bdv.labels.labelset.Multiset;
+import net.imagej.ops.geom.geom3d.mesh.DefaultMesh;
+import net.imagej.ops.geom.geom3d.mesh.TriangularFacet;
+import net.imagej.ops.geom.geom3d.mesh.Vertex;
 import net.imglib2.Cursor;
 import net.imglib2.FinalInterval;
 import net.imglib2.RandomAccessibleInterval;
@@ -28,11 +31,11 @@ public class MarchingCubes_ThreeDViewer
 	private ArrayList< double[] > vertices = new ArrayList<>();
 	private ArrayList< double[] > normals = new ArrayList<>();
 
-	public Mesh calculate( final RandomAccessibleInterval< LabelMultisetType > input, int isoLevel )
+	public DefaultMesh calculate( final RandomAccessibleInterval< LabelMultisetType > input, int isoLevel )
 	{
 		isolevel = isoLevel;
 
-		Mesh output = new Mesh();
+		DefaultMesh output = new DefaultMesh();
 		ExtendedRandomAccessibleInterval< LabelMultisetType, RandomAccessibleInterval< LabelMultisetType > > extended =
 				Views.extendValue( input, new LabelMultisetType() );
 		Cursor< LabelMultisetType > c = Views.interval( extended, new FinalInterval( new long[] { input
@@ -160,59 +163,59 @@ public class MarchingCubes_ThreeDViewer
 				for ( i = 0; MarchingCubesTables.triTable[ cubeindex ][ i ] != -1; i += 3 )
 				{
 
-					vertices.add( new double[] {vertlist[ MarchingCubesTables.triTable[ cubeindex ][ i + 2 ] ][ 0 ],
-							vertlist[ MarchingCubesTables.triTable[ cubeindex ][ i + 2 ] ][ 1 ],
-							vertlist[ MarchingCubesTables.triTable[ cubeindex ][ i + 2 ] ][ 2 ]} );
-					vertices.add( new double[] {vertlist[ MarchingCubesTables.triTable[ cubeindex ][ i + 1 ] ][ 0 ],
-									vertlist[ MarchingCubesTables.triTable[ cubeindex ][ i + 1 ] ][ 1 ],
-									vertlist[ MarchingCubesTables.triTable[ cubeindex ][ i + 1 ] ][ 2 ]} );
-					vertices.add( new double[] {vertlist[ MarchingCubesTables.triTable[ cubeindex ][ i ] ][ 0 ],
-									vertlist[ MarchingCubesTables.triTable[ cubeindex ][ i ] ][ 1 ],
-									vertlist[ MarchingCubesTables.triTable[ cubeindex ][ i ] ][ 2 ]} );
-//					TriangularFacet face = new TriangularFacet( new Vertex(
-//							vertlist[ MarchingCubesTables.triTable[ cubeindex ][ i + 2 ] ][ 0 ],
+//					vertices.add( new double[] {vertlist[ MarchingCubesTables.triTable[ cubeindex ][ i + 2 ] ][ 0 ],
 //							vertlist[ MarchingCubesTables.triTable[ cubeindex ][ i + 2 ] ][ 1 ],
-//							vertlist[ MarchingCubesTables.triTable[ cubeindex ][ i + 2 ] ][ 2 ] ), new Vertex(
-//									vertlist[ MarchingCubesTables.triTable[ cubeindex ][ i + 1 ] ][ 0 ],
+//							vertlist[ MarchingCubesTables.triTable[ cubeindex ][ i + 2 ] ][ 2 ]} );
+//					vertices.add( new double[] {vertlist[ MarchingCubesTables.triTable[ cubeindex ][ i + 1 ] ][ 0 ],
 //									vertlist[ MarchingCubesTables.triTable[ cubeindex ][ i + 1 ] ][ 1 ],
-//									vertlist[ MarchingCubesTables.triTable[ cubeindex ][ i + 1 ] ][ 2 ] ),
-//							new Vertex(
-//									vertlist[ MarchingCubesTables.triTable[ cubeindex ][ i ] ][ 0 ],
+//									vertlist[ MarchingCubesTables.triTable[ cubeindex ][ i + 1 ] ][ 2 ]} );
+//					vertices.add( new double[] {vertlist[ MarchingCubesTables.triTable[ cubeindex ][ i ] ][ 0 ],
 //									vertlist[ MarchingCubesTables.triTable[ cubeindex ][ i ] ][ 1 ],
-//									vertlist[ MarchingCubesTables.triTable[ cubeindex ][ i ] ][ 2 ] ) );
-//					face.getArea();
-//					output.addFace( face );
+//									vertlist[ MarchingCubesTables.triTable[ cubeindex ][ i ] ][ 2 ]} );
+					TriangularFacet face = new TriangularFacet( new Vertex(
+							vertlist[ MarchingCubesTables.triTable[ cubeindex ][ i + 2 ] ][ 0 ],
+							vertlist[ MarchingCubesTables.triTable[ cubeindex ][ i + 2 ] ][ 1 ],
+							vertlist[ MarchingCubesTables.triTable[ cubeindex ][ i + 2 ] ][ 2 ] ), new Vertex(
+									vertlist[ MarchingCubesTables.triTable[ cubeindex ][ i + 1 ] ][ 0 ],
+									vertlist[ MarchingCubesTables.triTable[ cubeindex ][ i + 1 ] ][ 1 ],
+									vertlist[ MarchingCubesTables.triTable[ cubeindex ][ i + 1 ] ][ 2 ] ),
+							new Vertex(
+									vertlist[ MarchingCubesTables.triTable[ cubeindex ][ i ] ][ 0 ],
+									vertlist[ MarchingCubesTables.triTable[ cubeindex ][ i ] ][ 1 ],
+									vertlist[ MarchingCubesTables.triTable[ cubeindex ][ i ] ][ 2 ] ) );
+					face.getArea();
+					output.addFace( face );
 				}
 			}
 		}
 		
-		computeNormals();
-		
-		float[][] verticesArray = new float[ vertices.size()][3];
-		float[][] normalsArray = new float[ vertices.size()][3];
-		int i = 0;
-		for ( double[] doubleV : vertices )
-		{
-			verticesArray[i][0] = ( float ) doubleV[0];
-			verticesArray[i][1] = ( float ) doubleV[1];
-			verticesArray[i][2] = ( float ) doubleV[2];
-			i++;
-		}
-
-		i = 0;
-		for ( double[] doubleV : normals )
-		{
-			normalsArray[i][0] = ( float ) doubleV[0];
-			normalsArray[i][1] = ( float ) doubleV[1];
-			normalsArray[i][2] = ( float ) doubleV[2];
-			i++;
-		}
-
-		output.setVertices( verticesArray );
-		output.setNormals( normalsArray );
-		output.setNumberOfVertices( vertices.size() );
-		
-		System.out.println("The End");
+//		computeNormals();
+//		
+//		float[][] verticesArray = new float[ vertices.size()][3];
+//		float[][] normalsArray = new float[ vertices.size()][3];
+//		int i = 0;
+//		for ( double[] doubleV : vertices )
+//		{
+//			verticesArray[i][0] = ( float ) doubleV[0];
+//			verticesArray[i][1] = ( float ) doubleV[1];
+//			verticesArray[i][2] = ( float ) doubleV[2];
+//			i++;
+//		}
+//
+//		i = 0;
+//		for ( double[] doubleV : normals )
+//		{
+//			normalsArray[i][0] = ( float ) doubleV[0];
+//			normalsArray[i][1] = ( float ) doubleV[1];
+//			normalsArray[i][2] = ( float ) doubleV[2];
+//			i++;
+//		}
+//
+//		output.setVertices( verticesArray );
+//		output.setNormals( normalsArray );
+//		output.setNumberOfVertices( vertices.size() );
+//		
+//		System.out.println("The End");
 		return output;
 	}
 

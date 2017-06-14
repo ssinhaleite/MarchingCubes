@@ -29,7 +29,9 @@ import graphics.scenery.backends.Renderer;
 import marchingCubes.MarchingCubes_ThreeDViewer;
 import marchingCubes.MarchingCubes_ilastikRAI;
 import marchingCubes.MarchingCubes_shibbyRAI;
+import net.imagej.ops.geom.geom3d.mesh.DefaultMesh;
 import net.imglib2.RandomAccessibleInterval;
+import sc.fiji.threed.process.MeshConverter;
 
 /**
  * Unit test for marching cubes
@@ -38,7 +40,7 @@ import net.imglib2.RandomAccessibleInterval;
  */
 public class MarchingCubesTest {
 	
-	private static final String mc_algorith = "ilastik";
+	private static final String mc_algorith = "threeDViewer";
 	/** Log */
 	private static final Logger LOGGER = Logger.getLogger(MarchingCubesTest.class.getName());
 
@@ -56,6 +58,8 @@ public class MarchingCubesTest {
 
 	/** compositions of labels and canvas that are displayed */
 	final protected static ArrayList<AbstractARGBConvertedLabelsSource> convertedLabels = new ArrayList<>();
+
+	Mesh neuron = new Mesh();
 
 	/**
 	 * This method load the hdf file
@@ -110,9 +114,9 @@ public class MarchingCubesTest {
 			material.setDiffuse(new GLVector(0.1f, 0.0f, 0.0f));
 			material.setSpecular(new GLVector(0.1f, 0f, 0f));
 
-			Mesh neuron = new Mesh();
 			//int isoLevel = 73396;
 			int isoLevel = 12;
+			int[] volDim = {500, 500, 5};
 			float[] verticesArray = null;
 			float[] normalsArray = null;
 			int i = 0;
@@ -127,7 +131,7 @@ public class MarchingCubesTest {
 				MarchingCubes_ilastikRAI mc_ilastik = new MarchingCubes_ilastikRAI();
 				
 				begin = new Timestamp(System.currentTimeMillis());
-				viewer.Mesh m = mc_ilastik.march( volumeLabels, 2340, 1685, 153, isoLevel );
+				viewer.Mesh m = mc_ilastik.march( volumeLabels, 500, 500, 5, isoLevel );
 				end = new Timestamp(System.currentTimeMillis());
 				System.out.println("time for generating mesh: " + (end.getTime() - begin.getTime()));
 
@@ -188,7 +192,6 @@ public class MarchingCubesTest {
 			{
 				System.out.println("MarchingCubes - shibbyRAI");
 				MarchingCubes_shibbyRAI mc_shibby = new MarchingCubes_shibbyRAI();
-				int[] volDim = {2340, 1685, 153};
 				float[] voxDim = {10, 10, 10};
 				int offset = 0;
 				begin = new Timestamp(System.currentTimeMillis());
@@ -218,38 +221,44 @@ public class MarchingCubesTest {
 				MarchingCubes_ThreeDViewer mc_threeDViewer = new MarchingCubes_ThreeDViewer();
 				
 				begin = new Timestamp(System.currentTimeMillis());
-				viewer.Mesh m = mc_threeDViewer.calculate( volumeLabels, isoLevel );
+				DefaultMesh m = mc_threeDViewer.calculate( volumeLabels, isoLevel );
 				end = new Timestamp(System.currentTimeMillis());
 				System.out.println("time for generating mesh: " + (end.getTime() - begin.getTime()));
 
 				begin = new Timestamp(System.currentTimeMillis());
-				verticesArray = new float[ m.getNumberOfVertices() * 3 ];
-				normalsArray  = new float[ m.getNumberOfVertices() * 3 ];
-				i = 0;
-				for ( float[] floatV : m.getVertices() )
-				{
-					for ( float f : floatV )
-					{
-						verticesArray[ i++ ] = f;
-					}
-				}
-
-				i = 0;
-				for ( float[] floatV : m.getNormals() )
-				{
-					for ( float f : floatV )
-					{
-						normalsArray[ i++ ] = f;
-					}
-				}
+				System.out.println("Converting mesh to scenery mesh...");
+				Mesh scMesh = MeshConverter.getSceneryMesh( m );
+				scMesh.setMaterial( material );
+				scMesh.setPosition( new GLVector( 0.0f, 0.0f, 0.0f ) );
+				neuron = scMesh;
+//
+//				verticesArray = new float[ m.getNumberOfVertices() * 3 ];
+//				normalsArray  = new float[ m.getNumberOfVertices() * 3 ];
+//				i = 0;
+//				for ( float[] floatV : m.getVertices() )
+//				{
+//					for ( float f : floatV )
+//					{
+//						verticesArray[ i++ ] = f;
+//					}
+//				}
+//
+//				i = 0;
+//				for ( float[] floatV : m.getNormals() )
+//				{
+//					for ( float f : floatV )
+//					{
+//						normalsArray[ i++ ] = f;
+//					}
+//				}
 				end = new Timestamp(System.currentTimeMillis());
 				System.out.println("time for generating arrays: " + (end.getTime() - begin.getTime()));
 			}
 
 			neuron.setMaterial(material);
 			neuron.setPosition(new GLVector(0.0f, 0.0f, 0.0f));
-			neuron.setVertices(FloatBuffer.wrap(verticesArray));
-			neuron.setNormals(FloatBuffer.wrap(normalsArray));
+//			neuron.setVertices(FloatBuffer.wrap(verticesArray));
+//			neuron.setNormals(FloatBuffer.wrap(normalsArray));
 
 			getScene().addChild(neuron);
 
@@ -259,11 +268,11 @@ public class MarchingCubesTest {
 				lights[i] = new PointLight();
 				lights[i].setPosition(new GLVector(2.0f * i, 2.0f * i, 2.0f * i));
 				lights[i].setEmissionColor(new GLVector(1.0f, 1.0f, 1.0f));
-				lights[i].setIntensity(100.2f * (i + 1));
+				lights[i].setIntensity(100.2f *5);
 				lights[i].setLinear(0.0f);
 				lights[i].setQuadratic(0f);
 				lights[i].setRadius(1000);
-				lights[i].showLightBox();
+//				lights[i].showLightBox();
 				getScene().addChild(lights[i]);
 			}
 
