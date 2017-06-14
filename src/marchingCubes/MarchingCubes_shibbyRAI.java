@@ -148,7 +148,7 @@ public class MarchingCubes_shibbyRAI
 					value6 = vertex_values[ pyz ],
 					value7 = vertex_values[ pxyz ];
 
-			// Voxel is active if its intensity is above isolevel
+			// Voxel is active if its value matches the isolevel
 			int cubeindex = 0;
 			if ( value0 == isoLevel )
 				cubeindex |= 1;
