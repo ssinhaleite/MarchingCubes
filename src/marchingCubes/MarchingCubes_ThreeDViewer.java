@@ -1,24 +1,16 @@
 package marchingCubes;
 
+import java.util.ArrayList;
+
 import bdv.labels.labelset.Label;
 import bdv.labels.labelset.LabelMultisetType;
 import bdv.labels.labelset.Multiset;
-import net.imagej.ops.Contingent;
-import net.imagej.ops.Ops;
-import net.imagej.ops.geom.geom3d.mesh.DefaultMesh;
-import net.imagej.ops.geom.geom3d.mesh.DefaultVertexInterpolator;
-import net.imagej.ops.geom.geom3d.mesh.Mesh;
-import net.imagej.ops.geom.geom3d.mesh.TriangularFacet;
-import net.imagej.ops.geom.geom3d.mesh.Vertex;
-import net.imagej.ops.geom.geom3d.mesh.VertexInterpolator;
-import net.imagej.ops.special.function.AbstractUnaryFunctionOp;
 import net.imglib2.Cursor;
 import net.imglib2.FinalInterval;
 import net.imglib2.RandomAccessibleInterval;
-import net.imglib2.type.BooleanType;
-import net.imglib2.type.logic.BoolType;
 import net.imglib2.view.ExtendedRandomAccessibleInterval;
 import net.imglib2.view.Views;
+import viewer.Mesh;
 
 /**
  * This is a marching cubes implementation. It is inspired by Paul Bourke's
@@ -29,22 +21,18 @@ import net.imglib2.view.Views;
  * @param <T>
  *            BooleanType
  */
-public class MarchingCubes_ThreeDViewer extends
-		AbstractUnaryFunctionOp< RandomAccessibleInterval< LabelMultisetType >, Mesh > implements
-		Ops.Geometric.MarchingCubes, Contingent
+public class MarchingCubes_ThreeDViewer
 {
+	private double isolevel;
+	
+	private ArrayList< double[] > vertices = new ArrayList<>();
+	private ArrayList< double[] > normals = new ArrayList<>();
 
-//	@Parameter( type = ItemIO.INPUT, required = false )
-	private double isolevel = 7;
-
-//	@Parameter( type = ItemIO.INPUT, required = false )
-	private VertexInterpolator interpolatorClass =
-			new DefaultVertexInterpolator();
-
-	@SuppressWarnings( { "unchecked" } )
-	public DefaultMesh calculate( final RandomAccessibleInterval< LabelMultisetType > input )
+	public Mesh calculate( final RandomAccessibleInterval< LabelMultisetType > input, int isoLevel )
 	{
-		DefaultMesh output = new DefaultMesh();
+		isolevel = isoLevel;
+
+		Mesh output = new Mesh();
 		ExtendedRandomAccessibleInterval< LabelMultisetType, RandomAccessibleInterval< LabelMultisetType > > extended =
 				Views.extendValue( input, new LabelMultisetType() );
 		Cursor< LabelMultisetType > c = Views.interval( extended, new FinalInterval( new long[] { input
@@ -64,19 +52,11 @@ public class MarchingCubes_ThreeDViewer extends
 			double[] vertex_values = new double[ 8 ];
 			while ( cu.hasNext() )
 			{
-//				System.out.println( "i: " + i );
-//				System.out.println( "cu:" + cu );
-//				System.out.println( "cu.hasNext():" + cu.hasNext() );
 				LabelMultisetType it = cu.next();
-//				System.out.println( "it:" + it );
-//				boolean b = it.get();
-//				System.out.println( "it.get():" + b );
-//				vertex_values[ i++ ] = ( b ) ? 1 : 0;
 				
 				for ( final Multiset.Entry< Label > e : it.entrySet() )
 				{
 					vertex_values[ i ] = e.getElement().id();
-//					System.out.println("value label: " + vertex_values[ i ]);
 				}
 				i++;
 			}
@@ -180,22 +160,57 @@ public class MarchingCubes_ThreeDViewer extends
 				for ( i = 0; MarchingCubesTables.triTable[ cubeindex ][ i ] != -1; i += 3 )
 				{
 
-					TriangularFacet face = new TriangularFacet( new Vertex(
-							vertlist[ MarchingCubesTables.triTable[ cubeindex ][ i + 2 ] ][ 0 ],
+					vertices.add( new double[] {vertlist[ MarchingCubesTables.triTable[ cubeindex ][ i + 2 ] ][ 0 ],
 							vertlist[ MarchingCubesTables.triTable[ cubeindex ][ i + 2 ] ][ 1 ],
-							vertlist[ MarchingCubesTables.triTable[ cubeindex ][ i + 2 ] ][ 2 ] ), new Vertex(
-									vertlist[ MarchingCubesTables.triTable[ cubeindex ][ i + 1 ] ][ 0 ],
+							vertlist[ MarchingCubesTables.triTable[ cubeindex ][ i + 2 ] ][ 2 ]} );
+					vertices.add( new double[] {vertlist[ MarchingCubesTables.triTable[ cubeindex ][ i + 1 ] ][ 0 ],
 									vertlist[ MarchingCubesTables.triTable[ cubeindex ][ i + 1 ] ][ 1 ],
-									vertlist[ MarchingCubesTables.triTable[ cubeindex ][ i + 1 ] ][ 2 ] ),
-							new Vertex(
-									vertlist[ MarchingCubesTables.triTable[ cubeindex ][ i ] ][ 0 ],
+									vertlist[ MarchingCubesTables.triTable[ cubeindex ][ i + 1 ] ][ 2 ]} );
+					vertices.add( new double[] {vertlist[ MarchingCubesTables.triTable[ cubeindex ][ i ] ][ 0 ],
 									vertlist[ MarchingCubesTables.triTable[ cubeindex ][ i ] ][ 1 ],
-									vertlist[ MarchingCubesTables.triTable[ cubeindex ][ i ] ][ 2 ] ) );
-					face.getArea();
-					output.addFace( face );
+									vertlist[ MarchingCubesTables.triTable[ cubeindex ][ i ] ][ 2 ]} );
+//					TriangularFacet face = new TriangularFacet( new Vertex(
+//							vertlist[ MarchingCubesTables.triTable[ cubeindex ][ i + 2 ] ][ 0 ],
+//							vertlist[ MarchingCubesTables.triTable[ cubeindex ][ i + 2 ] ][ 1 ],
+//							vertlist[ MarchingCubesTables.triTable[ cubeindex ][ i + 2 ] ][ 2 ] ), new Vertex(
+//									vertlist[ MarchingCubesTables.triTable[ cubeindex ][ i + 1 ] ][ 0 ],
+//									vertlist[ MarchingCubesTables.triTable[ cubeindex ][ i + 1 ] ][ 1 ],
+//									vertlist[ MarchingCubesTables.triTable[ cubeindex ][ i + 1 ] ][ 2 ] ),
+//							new Vertex(
+//									vertlist[ MarchingCubesTables.triTable[ cubeindex ][ i ] ][ 0 ],
+//									vertlist[ MarchingCubesTables.triTable[ cubeindex ][ i ] ][ 1 ],
+//									vertlist[ MarchingCubesTables.triTable[ cubeindex ][ i ] ][ 2 ] ) );
+//					face.getArea();
+//					output.addFace( face );
 				}
 			}
 		}
+		
+		computeNormals();
+		
+		float[][] verticesArray = new float[ vertices.size()][3];
+		float[][] normalsArray = new float[ vertices.size()][3];
+		int i = 0;
+		for ( double[] doubleV : vertices )
+		{
+			verticesArray[i][0] = ( float ) doubleV[0];
+			verticesArray[i][1] = ( float ) doubleV[1];
+			verticesArray[i][2] = ( float ) doubleV[2];
+			i++;
+		}
+
+		i = 0;
+		for ( double[] doubleV : normals )
+		{
+			normalsArray[i][0] = ( float ) doubleV[0];
+			normalsArray[i][1] = ( float ) doubleV[1];
+			normalsArray[i][2] = ( float ) doubleV[2];
+			i++;
+		}
+
+		output.setVertices( verticesArray );
+		output.setNormals( normalsArray );
+		output.setNumberOfVertices( vertices.size() );
 		
 		System.out.println("The End");
 		return output;
@@ -203,14 +218,30 @@ public class MarchingCubes_ThreeDViewer extends
 
 	private double[] interpolatePoint( int[] p0, int[] p1, double v0, double v1 )
 	{
-		interpolatorClass.setPoint1( p0 );
-		interpolatorClass.setPoint2( p1 );
-		interpolatorClass.setValue1( v0 );
-		interpolatorClass.setValue2( v1 );
-		interpolatorClass.setIsoLevel( isolevel );
-		((DefaultVertexInterpolator) interpolatorClass).run();
+		
+		double[] output = new double[3];
 
-		return interpolatorClass.getOutput();
+		if (Math.abs(isolevel - v0) < 0.00001) {
+			for (int i = 0; i < 3; i++) {
+				output[i] = p0[i];
+			}
+		} else if (Math.abs(isolevel - v1) < 0.00001) {
+			for (int i = 0; i < 3; i++) {
+				output[i] = p1[i];
+			}
+		} else if (Math.abs(v0 - v1) < 0.00001) {
+			for (int i = 0; i < 3; i++) {
+				output[i] = p0[i];
+			}
+		} else {
+			double mu = (isolevel - v0) / (v1 - v0);
+
+			output[0] = p0[0] + mu * (p1[0] - p0[0]);
+			output[1] = p0[1] + mu * (p1[1] - p0[1]);
+			output[2] = p0[2] + mu * (p1[2] - p0[2]);
+		}
+
+		return output;
 	}
 
 	private int getCubeIndex( final double[] vertex_values )
@@ -238,15 +269,6 @@ public class MarchingCubes_ThreeDViewer extends
 		vv[ 6 ] = vertex_values[ 3 ];
 		vv[ 7 ] = vertex_values[ 2 ];
 
-//		vv[ 0 ] = vertex_values[ 0 ];
-//		vv[ 1 ] = vertex_values[ 1 ];
-//		vv[ 2 ] = vertex_values[ 4 ];
-//		vv[ 3 ] = vertex_values[ 5 ];
-//		vv[ 4 ] = vertex_values[ 2 ];
-//		vv[ 5 ] = vertex_values[ 3 ];
-//		vv[ 6 ] = vertex_values[ 6 ];
-//		vv[ 7 ] = vertex_values[ 7 ];
-
 		return vv;
 	}
 
@@ -259,11 +281,30 @@ public class MarchingCubes_ThreeDViewer extends
 						cursorY + 1, cursorZ + 1 } ) ) )
 				.cursor();
 	}
+	
+	private void computeNormals() {
+		for ( int i = 0; i < vertices.size()/3; i++ )
+		{
+			double[] v0 = vertices.get( i * 3);
+			double[] v1 = vertices.get( i * 3 + 1 );
+			double[] v2 = vertices.get( i * 3 + 2 );
 
-	@Override
-	public boolean conforms() {
-//		return in().numDimensions() == 3;
-		return true;
+			double[] v1MinusV0 = { v1[ 0 ] - v0[ 0 ], v1[ 1 ] - v0[ 1 ], v1[ 2 ] - v0[ 2 ] };
+			double[] v2MinusV0 = { v2[ 0 ] - v0[ 0 ], v2[ 1 ] - v0[ 1 ], v2[ 2 ] - v0[ 2 ] };
+
+			normals.add( new double[] { ( v1MinusV0[ 1 ] * v2MinusV0[ 2 ] ) - ( v2MinusV0[ 1 ] * v1MinusV0[ 2 ] ),
+					( v1MinusV0[ 2 ] * v2MinusV0[ 0 ] ) - ( v2MinusV0[ 2 ] * v1MinusV0[ 0 ] ),
+					( v1MinusV0[ 0 ] * v2MinusV0[ 1 ] ) - ( v2MinusV0[ 0 ] * v1MinusV0[ 1 ] ) } );
+			
+			normals.add( new double[] { ( v1MinusV0[ 1 ] * v2MinusV0[ 2 ] ) - ( v2MinusV0[ 1 ] * v1MinusV0[ 2 ] ),
+					( v1MinusV0[ 2 ] * v2MinusV0[ 0 ] ) - ( v2MinusV0[ 2 ] * v1MinusV0[ 0 ] ),
+					( v1MinusV0[ 0 ] * v2MinusV0[ 1 ] ) - ( v2MinusV0[ 0 ] * v1MinusV0[ 1 ] ) } );
+
+			normals.add( new double[] { ( v1MinusV0[ 1 ] * v2MinusV0[ 2 ] ) - ( v2MinusV0[ 1 ] * v1MinusV0[ 2 ] ),
+					( v1MinusV0[ 2 ] * v2MinusV0[ 0 ] ) - ( v2MinusV0[ 2 ] * v1MinusV0[ 0 ] ),
+					( v1MinusV0[ 0 ] * v2MinusV0[ 1 ] ) - ( v2MinusV0[ 0 ] * v1MinusV0[ 1 ] ) } );
+
+		}
 	}
 
 }
