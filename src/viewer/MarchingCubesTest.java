@@ -26,16 +26,19 @@ import graphics.scenery.PointLight;
 import graphics.scenery.SceneryDefaultApplication;
 import graphics.scenery.SceneryElement;
 import graphics.scenery.backends.Renderer;
+import marchingCubes.MarchingCubes_ThreeDViewer;
+import marchingCubes.MarchingCubes_ilastikRAI;
 import marchingCubes.MarchingCubes_shibbyRAI;
 import net.imglib2.RandomAccessibleInterval;
-import net.imglib2.type.numeric.RealType;
 
 /**
  * Unit test for marching cubes
  * 
  * @author vleite
  */
-public class MarchingCubesTest<T extends RealType<T>> {
+public class MarchingCubesTest {
+	
+	private static final String mc_algorith = "ilastik";
 	/** Log */
 	private static final Logger LOGGER = Logger.getLogger(MarchingCubesTest.class.getName());
 
@@ -61,7 +64,7 @@ public class MarchingCubesTest<T extends RealType<T>> {
 	public static void loadData() {
 
 		// hdf file to use on test
-		String path = "data/sample_B.augmented.0.hdf";
+		String path = "data/sample_B_20160708_frags_46_50.hdf";
 		String path_label = "/volumes/labels/neuron_ids";
 
 		System.out.println("Opening labels from " + path);
@@ -108,37 +111,140 @@ public class MarchingCubesTest<T extends RealType<T>> {
 			material.setSpecular(new GLVector(0.1f, 0f, 0f));
 
 			Mesh neuron = new Mesh();
+			//int isoLevel = 73396;
+			int isoLevel = 12;
 			float[] verticesArray = null;
 			float[] normalsArray = null;
+			int i = 0;
+
+			Timestamp begin = new Timestamp(System.currentTimeMillis());
+			Timestamp end = new Timestamp(System.currentTimeMillis());
 
 			/** MarchingCubes - ilastik */
-			
-			/** MarchingCubes - shibbyRAI */
+			if (mc_algorith.equals( "ilastik" ))
 			{
-				System.out.println("MarchingCubes - shibbyRAI");
-				MarchingCubes_shibbyRAI<Integer> mc_shibby = new MarchingCubes_shibbyRAI<Integer>();
-				int[] volDim = {2340, 1685, 153};
-				float[] voxDim = {10, 10, 10};
-				double isoLevel = 1771;
-				int offset = 0;
-				Timestamp begin = new Timestamp(System.currentTimeMillis());
-				ArrayList< float[] > output = mc_shibby.marchingCubes(volumeLabels, volDim, voxDim, isoLevel, offset);
-				Timestamp end = new Timestamp(System.currentTimeMillis());
+				System.out.println("MarchingCubes - IlastikRAI");
+				MarchingCubes_ilastikRAI mc_ilastik = new MarchingCubes_ilastikRAI();
+				
+				begin = new Timestamp(System.currentTimeMillis());
+				viewer.Mesh m = mc_ilastik.march( volumeLabels, 2340, 1685, 153, isoLevel );
+				end = new Timestamp(System.currentTimeMillis());
 				System.out.println("time for generating mesh: " + (end.getTime() - begin.getTime()));
 
+				begin = new Timestamp(System.currentTimeMillis());
+				int numberOfVertices = m.getNumberOfVertices();
+				int numberOfTriangles = m.getNumberOfTriangles();
+
+				verticesArray = new float[ numberOfVertices * 3 ];
+				normalsArray  = new float[ numberOfVertices * 3 ];
+
+				float[][] vertices = m.getVertices();
+				float[][] normals  = m.getNormals();
+				long[]  triangles  = m.getTriangles();
+				
+				float[] point0 = new float[ 3 ];
+				float[] point1 = new float[ 3 ];
+				float[] point2 = new float[ 3 ];
+				int v = 0, n = 0;
+				for ( i = 0; i < numberOfTriangles; i ++)
+				{
+					long id0 = triangles[i * 3];
+					long id1 = triangles[i * 3 + 1];
+					long id2 = triangles[i * 3 + 2];
+					
+					point0 = vertices[( int ) id0];
+					point1 = vertices[( int ) id1];
+					point2 = vertices[( int ) id2];
+					
+					verticesArray[v++] = point0[0];
+					verticesArray[v++] = point0[1];
+					verticesArray[v++] = point0[2];
+					verticesArray[v++] = point1[0];
+					verticesArray[v++] = point1[1];
+					verticesArray[v++] = point1[2];
+					verticesArray[v++] = point2[0];
+					verticesArray[v++] = point2[1];
+					verticesArray[v++] = point2[2];
+
+					point0 = normals[( int ) id0];
+					point1 = normals[( int ) id1];
+					point2 = normals[( int ) id2];
+					
+					normalsArray[n++] = point0[0];
+					normalsArray[n++] = point0[1];
+					normalsArray[n++] = point0[2];
+					normalsArray[n++] = point1[0];
+					normalsArray[n++] = point1[1];
+					normalsArray[n++] = point1[2];
+					normalsArray[n++] = point2[0];
+					normalsArray[n++] = point2[1];
+					normalsArray[n++] = point2[2];
+				}
+				end = new Timestamp(System.currentTimeMillis());
+				System.out.println("time for generating arrays: " + (end.getTime() - begin.getTime()));
+			}
+			/** MarchingCubes - shibbyRAI */
+			else if (mc_algorith.equals( "shibby" ))
+			{
+				System.out.println("MarchingCubes - shibbyRAI");
+				MarchingCubes_shibbyRAI mc_shibby = new MarchingCubes_shibbyRAI();
+				int[] volDim = {2340, 1685, 153};
+				float[] voxDim = {10, 10, 10};
+				int offset = 0;
+				begin = new Timestamp(System.currentTimeMillis());
+				ArrayList< float[] > output = mc_shibby.marchingCubes(volumeLabels, volDim, voxDim, isoLevel, offset);
+				end = new Timestamp(System.currentTimeMillis());
+				System.out.println("time for generating mesh: " + (end.getTime() - begin.getTime()));
+
+				begin = new Timestamp(System.currentTimeMillis());
 				verticesArray = new float[ output.size() * 3 ];
-				int n = 0;
+				i = 0;
 				for ( float[] floatV : output )
 				{
 					for ( float f : floatV )
 					{
-						verticesArray[ n++ ] = f;
+						verticesArray[ i++ ] = f;
 					}
 				}
 				normalsArray = verticesArray;
-			}
-			/***/
 
+				end = new Timestamp(System.currentTimeMillis());
+				System.out.println("time for generating arrays: " + (end.getTime() - begin.getTime()));
+			}
+			/** MarchingCubes - ThreeDViewer */
+			else if (mc_algorith.equals( "threeDViewer" ))
+			{
+				System.out.println("MarchingCubes - ThreeDViewer");
+				MarchingCubes_ThreeDViewer mc_threeDViewer = new MarchingCubes_ThreeDViewer();
+				
+				begin = new Timestamp(System.currentTimeMillis());
+				viewer.Mesh m = mc_threeDViewer.calculate( volumeLabels, isoLevel );
+				end = new Timestamp(System.currentTimeMillis());
+				System.out.println("time for generating mesh: " + (end.getTime() - begin.getTime()));
+
+				begin = new Timestamp(System.currentTimeMillis());
+				verticesArray = new float[ m.getNumberOfVertices() * 3 ];
+				normalsArray  = new float[ m.getNumberOfVertices() * 3 ];
+				i = 0;
+				for ( float[] floatV : m.getVertices() )
+				{
+					for ( float f : floatV )
+					{
+						verticesArray[ i++ ] = f;
+					}
+				}
+
+				i = 0;
+				for ( float[] floatV : m.getNormals() )
+				{
+					for ( float f : floatV )
+					{
+						normalsArray[ i++ ] = f;
+					}
+				}
+				end = new Timestamp(System.currentTimeMillis());
+				System.out.println("time for generating arrays: " + (end.getTime() - begin.getTime()));
+			}
 
 			neuron.setMaterial(material);
 			neuron.setPosition(new GLVector(0.0f, 0.0f, 0.0f));
@@ -149,7 +255,7 @@ public class MarchingCubesTest<T extends RealType<T>> {
 
 			PointLight[] lights = new PointLight[2];
 
-			for (int i = 0; i < lights.length; i++) {
+			for ( i = 0; i < lights.length; i++) {
 				lights[i] = new PointLight();
 				lights[i].setPosition(new GLVector(2.0f * i, 2.0f * i, 2.0f * i));
 				lights[i].setEmissionColor(new GLVector(1.0f, 1.0f, 1.0f));
@@ -157,13 +263,14 @@ public class MarchingCubesTest<T extends RealType<T>> {
 				lights[i].setLinear(0.0f);
 				lights[i].setQuadratic(0f);
 				lights[i].setRadius(1000);
+				lights[i].showLightBox();
 				getScene().addChild(lights[i]);
 			}
 
 			final Camera cam = new DetachedHeadCamera();
 			cam.setPosition(new GLVector(0.0f, 0.0f, 5.0f));
 
-			cam.perspectiveCamera(50.0f, getWindowWidth(), getWindowHeight(), 0.1f, 1000.0f);
+			cam.perspectiveCamera(50f, getWindowWidth(), getWindowHeight(), 0.1f, 1000.0f);
 			cam.setActive(true);
 			getScene().addChild(cam);
 
