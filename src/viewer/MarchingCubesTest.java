@@ -301,7 +301,7 @@ public class MarchingCubesTest {
 				MarchingCubes_funkeyRAI mc_funkey = new MarchingCubes_funkeyRAI();
 				
 				begin = new Timestamp(System.currentTimeMillis());
-				viewer.Mesh m = mc_funkey.generateSurface( volumeLabels, voxDim, volDim, false, isoLevel );
+				viewer.Mesh m = mc_funkey.generateSurface( volumeLabels, voxDim, volDim, true, isoLevel );
 				end = new Timestamp(System.currentTimeMillis());
 				System.out.println("time for generating mesh: " + (end.getTime() - begin.getTime()));
 
@@ -380,7 +380,7 @@ public class MarchingCubesTest {
 				lights[i].setLinear(0.0f);
 				lights[i].setQuadratic(0f);
 				lights[i].setRadius(1000);
-//				lights[i].showLightBox();
+				lights[i].showLightBox();
 			}
 			
 			lights[0].setPosition(new GLVector(2.0f , 2.0f , 2.0f));
