@@ -149,10 +149,10 @@ public class MarchingCubes_funkeyRAI
 		cellSizeZ = voxDim[ 2 ];
 		acceptExactly = isExact;
 
-		System.out.println( "creating mesh for " + width + "x" + height + "x" + depth
-				+ " volume with " + nCellsX + "x" + nCellsY + "x" + nCellsZ + " cells" );
+		//System.out.println( "creating mesh for " + width + "x" + height + "x" + depth
+	//			+ " volume with " + nCellsX + "x" + nCellsY + "x" + nCellsZ + " cells" );
 
-		System.out.println( "volume size: " + width * height * depth );
+		//System.out.println( "volume size: " + width * height * depth );
 
 		ExtendedRandomAccessibleInterval< LabelMultisetType, RandomAccessibleInterval< LabelMultisetType > > extended =
 				Views.extendValue( input, new LabelMultisetType() );
@@ -173,7 +173,7 @@ public class MarchingCubes_funkeyRAI
 			if (cursorX == -1 || cursorY == -1 || cursorZ == -1)
 				continue;
 
-			System.out.println("x: " + cursorX + " y: " + cursorY + " z: " + cursorZ);
+			//System.out.println("x: " + cursorX + " y: " + cursorY + " z: " + cursorZ);
 			Cursor< LabelMultisetType > cu = getCube( extended, cursorX, cursorY, cursorZ );
 			int tableIndex = 0;
 
@@ -183,16 +183,16 @@ public class MarchingCubes_funkeyRAI
 			{
 				LabelMultisetType it = cu.next();
 
-				System.out.println(" position vertex: " +
-				cu.getIntPosition( 0 ) + " " +
-				cu.getIntPosition( 1 ) + " " +
-				cu.getIntPosition( 2 )
-				);
+				//System.out.println(" position vertex: " +
+//				cu.getIntPosition( 0 ) + " " +
+//				cu.getIntPosition( 1 ) + " " +
+//				cu.getIntPosition( 2 )
+//				);
 
 				for ( final Multiset.Entry< Label > e : it.entrySet() )
 				{
 					vertex_values[ i ] = e.getElement().id();
-					System.out.println("vertex value: " + vertex_values[i]);
+					//System.out.println("vertex value: " + vertex_values[i]);
 				}
 				i++;
 			}
@@ -385,7 +385,7 @@ public class MarchingCubes_funkeyRAI
 
 		renameVerticesAndTriangles();
 		calculateNormals();
-		//normalizeVerticesAndNormals();
+		normalizeVerticesAndNormals();
 		hasValidSurface = true;
 
 		return mesh;
@@ -443,7 +443,7 @@ public class MarchingCubes_funkeyRAI
 		// Copy vertices.
 		int numberOfVertices = id2Point3dId.size();
 		mesh.setNumberOfVertices( numberOfVertices );
-		System.out.println( "created a mesh with " + numberOfVertices + " vertices" );
+		//System.out.println( "created a mesh with " + numberOfVertices + " vertices" );
 
 		mapIterator = id2Point3dId.entrySet().iterator();
 		float[][] vertices = new float[ numberOfVertices ][ 3 ];
@@ -786,8 +786,8 @@ public class MarchingCubes_funkeyRAI
 		vv[ 6 ] = vertex_values[ 2 ];
 		vv[ 7 ] = vertex_values[ 1 ];
 
-		for (int i = 0; i < 8; i++)
-			System.out.println("new order vertex value: " + vv[i]);
+//		for (int i = 0; i < 8; i++)
+			//System.out.println("new order vertex value: " + vv[i]);
 
 		return vv;
 	}
