@@ -1,7 +1,7 @@
 package viewer;
 
 /**
- * the primary structure used to pass around the components of a mesh 
+ * the primary structure used to pass around the components of a mesh
  */
 public class Mesh
 {
@@ -28,9 +28,9 @@ public class Mesh
 	/**
 	 * the triangles given by 3 vertex indices (length = numberOfTriangles * 3)
 	 */
-	long[] triangles;
+	int[] triangles;
 
-	Mesh( int vertexCount, float[][] verticesArray, float[][] normalsArray, int trianglesCount, long[] trianglesArray )
+	Mesh( int vertexCount, float[][] verticesArray, float[][] normalsArray, int trianglesCount, int[] trianglesArray )
 	{
 		numberOfVertices = vertexCount;
 		vertices = verticesArray;
@@ -83,12 +83,12 @@ public class Mesh
 		normals = normalsArray;
 	}
 
-	public long[] getTriangles()
+	public int[] getTriangles()
 	{
 		return triangles;
 	}
 	
-	public void setTriangles( long[] trianglesArray)
+	public void setTriangles( int[] trianglesArray)
 	{
 		triangles = trianglesArray;
 	}
