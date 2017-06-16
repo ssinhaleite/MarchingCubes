@@ -39,13 +39,13 @@ public class MarchingCubes_ilastikRAI
 
 	class IdPoint
 	{
-		long id;
+		int id;
 		float x, y, z;
 	}
 
 	class Triangle
 	{
-		long pointId[] = new long[ 3 ];
+		int pointId[] = new int[ 3 ];
 	}
 
 	private float maxVal;
@@ -522,7 +522,7 @@ public class MarchingCubes_ilastikRAI
 		}
 
 		int triangleCount = triangles.size();
-		long[] triangleIndices = new long[ triangleCount * 3 ];
+		int[] triangleIndices = new int[ triangleCount * 3 ];
 //		int i = 0;
 //		while ( vecIterator.hasNext() )
 //		//for ( int i = 0; i < triangleCount; i++ )
@@ -558,7 +558,7 @@ public class MarchingCubes_ilastikRAI
 		int vertexCount = mesh.getNumberOfVertices();
 		float[][] vertices = mesh.getVertices();
 		int triangleCount = mesh.getNumberOfTriangles();
-		long[] triangles = mesh.getTriangles();
+		int[] triangles = mesh.getTriangles();
 
 		float[][] normals = new float[ vertexCount ][ 3 ];
 
