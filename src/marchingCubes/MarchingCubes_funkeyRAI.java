@@ -1,6 +1,5 @@
 package marchingCubes;
 
-
 import java.io.FileNotFoundException;
 import java.io.PrintStream;
 import java.util.HashMap;
@@ -49,7 +48,7 @@ public class MarchingCubes_funkeyRAI
 
 	/** The isosurface value. */
 	private int isoLevel;
-	
+
 	private float maxAxisVal;
 
 	/** The volume which the isosurface will be computed */
@@ -58,7 +57,10 @@ public class MarchingCubes_funkeyRAI
 	/** Indicates whether a valid surface is present. */
 	private boolean hasValidSurface;
 
-	/** Indicates if the threshold will be applied for the exact value or above it */
+	/**
+	 * Indicates if the threshold will be applied for the exact value or above
+	 * it
+	 */
 	private boolean acceptExactly = false;
 
 	/**
@@ -88,7 +90,7 @@ public class MarchingCubes_funkeyRAI
 		private long[] point = new long[ 3 ];
 	}
 
-	public MarchingCubes_funkeyRAI( )
+	public MarchingCubes_funkeyRAI()
 	{
 		cellSizeX = 0;
 		cellSizeY = 0;
@@ -123,7 +125,6 @@ public class MarchingCubes_funkeyRAI
 //		}
 //		System.setOut( fileStream );
 
-
 		if ( hasValidSurface )
 			deleteSurface();
 
@@ -150,7 +151,7 @@ public class MarchingCubes_funkeyRAI
 		acceptExactly = isExact;
 
 		//System.out.println( "creating mesh for " + width + "x" + height + "x" + depth
-	//			+ " volume with " + nCellsX + "x" + nCellsY + "x" + nCellsZ + " cells" );
+				//+ " volume with " + nCellsX + "x" + nCellsY + "x" + nCellsZ + " cells" );
 
 		//System.out.println( "volume size: " + width * height * depth );
 
@@ -169,11 +170,11 @@ public class MarchingCubes_funkeyRAI
 			int cursorX = c.getIntPosition( 0 );
 			int cursorY = c.getIntPosition( 1 );
 			int cursorZ = c.getIntPosition( 2 );
-			
-			if (cursorX == -1 || cursorY == -1 || cursorZ == -1)
+
+			if ( cursorX == -1 || cursorY == -1 || cursorZ == -1 )
 				continue;
 
-			//System.out.println("x: " + cursorX + " y: " + cursorY + " z: " + cursorZ);
+			//System.out.println( "x: " + cursorX + " y: " + cursorY + " z: " + cursorZ );
 			Cursor< LabelMultisetType > cu = getCube( extended, cursorX, cursorY, cursorZ );
 			int tableIndex = 0;
 
@@ -183,34 +184,33 @@ public class MarchingCubes_funkeyRAI
 			{
 				LabelMultisetType it = cu.next();
 
-				//System.out.println(" position vertex: " +
-//				cu.getIntPosition( 0 ) + " " +
-//				cu.getIntPosition( 1 ) + " " +
-//				cu.getIntPosition( 2 )
-//				);
+				//System.out.println( " position vertex: " +
+//						cu.getIntPosition( 0 ) + " " +
+//						cu.getIntPosition( 1 ) + " " +
+//						cu.getIntPosition( 2 ) );
 
 				for ( final Multiset.Entry< Label > e : it.entrySet() )
 				{
 					vertex_values[ i ] = e.getElement().id();
-					//System.out.println("vertex value: " + vertex_values[i]);
+					//System.out.println( "vertex value: " + vertex_values[ i ] );
 				}
 				i++;
 			}
-			
+
 //		// Generate isosurface.
 //		for ( int z = 0; z < nCellsZ; z++ )
 //			for ( int y = 0; y < nCellsY; y++ )
 //				for ( int x = 0; x < nCellsX; x++ )
 //				{
-					// Calculate table lookup index from those
-					// vertices which are below the isolevel.
+			// Calculate table lookup index from those
+			// vertices which are below the isolevel.
 //					int tableIndex = 0;
 
 			vertex_values = remapCube( vertex_values );
 
 			for ( i = 0; i < 8; i++ )
 			{
-				if ( vertex_values[ i ] < isoLevel )
+				if ( !interiorTest( vertex_values[ i ] ) )
 				{
 					tableIndex |= ( int ) Math.pow( 2, i );
 				}
@@ -249,139 +249,143 @@ public class MarchingCubes_funkeyRAI
 //						tableIndex |= 128;
 //					}
 
-					LOGGER.log( Level.FINER, "tableIndex = " + tableIndex );
+			//System.out.println( "tableIndex = " + tableIndex );
 
-					// Now create a triangulation of the isosurface in this cell.
-					if ( MarchingCubesTables.MC_EDGE_TABLE[ tableIndex ] != 0 )
-					{
-						if ( ( MarchingCubesTables.MC_EDGE_TABLE[ tableIndex ] & 8 ) != 0 )
-						{
+			// Now create a triangulation of the isosurface in this cell.
+			if ( MarchingCubesTables.MC_EDGE_TABLE[ tableIndex ] != 0 )
+			{
+				if ( ( MarchingCubesTables.MC_EDGE_TABLE[ tableIndex ] & 8 ) != 0 )
+				{
 //							LOGGER.log( Level.FINEST, "x: " + x + " y " + y + " z " + z );
-							Point3dId pt = calculateIntersection( cursorX, cursorY, cursorZ, 3, vertex_values[3], vertex_values[0] );
-							long id = getEdgeId( cursorX, cursorY, cursorZ, 3 );
-							LOGGER.log( Level.FINEST, " adding point with id: " + id );
-							id2Point3dId.put( id, pt );
-						}
-						if ( ( MarchingCubesTables.MC_EDGE_TABLE[ tableIndex ] & 1 ) != 0 )
-						{
+					Point3dId pt = calculateIntersection( cursorX, cursorY, cursorZ, 3, vertex_values[ 3 ], vertex_values[ 0 ] );
+					long id = getEdgeId( cursorX, cursorY, cursorZ, 3 );
+					LOGGER.log( Level.FINEST, " adding point with id: " + id );
+					id2Point3dId.put( id, pt );
+				}
+				if ( ( MarchingCubesTables.MC_EDGE_TABLE[ tableIndex ] & 1 ) != 0 )
+				{
 //							LOGGER.log( Level.FINEST, "x: " + x + " y " + y + " z " + z );
-							Point3dId pt = calculateIntersection( cursorX, cursorY, cursorZ, 0, vertex_values[0], vertex_values[1] );
-							long id = getEdgeId( cursorX, cursorY, cursorZ, 0 );
-							LOGGER.log( Level.FINEST, " adding point with id: " + id );
-							id2Point3dId.put( id, pt );
-						}
-						if ( ( MarchingCubesTables.MC_EDGE_TABLE[ tableIndex ] & 256 ) != 0 )
-						{
+					Point3dId pt = calculateIntersection( cursorX, cursorY, cursorZ, 0, vertex_values[ 0 ], vertex_values[ 1 ] );
+					long id = getEdgeId( cursorX, cursorY, cursorZ, 0 );
+					LOGGER.log( Level.FINEST, " adding point with id: " + id );
+					id2Point3dId.put( id, pt );
+				}
+				if ( ( MarchingCubesTables.MC_EDGE_TABLE[ tableIndex ] & 256 ) != 0 )
+				{
 //							LOGGER.log( Level.FINEST, "x: " + x + " y " + y + " z " + z );
-							Point3dId pt = calculateIntersection( cursorX, cursorY, cursorZ, 8, vertex_values[0], vertex_values[4] );
-							long id = getEdgeId( cursorX, cursorY, cursorZ, 8 );
+					Point3dId pt = calculateIntersection( cursorX, cursorY, cursorZ, 8, vertex_values[ 0 ], vertex_values[ 4 ] );
+					long id = getEdgeId( cursorX, cursorY, cursorZ, 8 );
 //							LOGGER.log( Level.FINEST, " adding point with id: " + id );
-							id2Point3dId.put( id, pt );
-						}
+					id2Point3dId.put( id, pt );
+				}
 
 //						if ( x == nCellsX - 1 )
 //						{
-							if ( ( MarchingCubesTables.MC_EDGE_TABLE[ tableIndex ] & 4 ) != 0 )
-							{
+				if ( ( MarchingCubesTables.MC_EDGE_TABLE[ tableIndex ] & 4 ) != 0 )
+				{
 //								LOGGER.log( Level.FINEST, "x: " + x + " y " + y + " z " + z );
-								Point3dId pt = calculateIntersection( cursorX, cursorY, cursorZ, 2, vertex_values[2], vertex_values[3] );
-								long id = getEdgeId( cursorX, cursorY, cursorZ, 2 );
+					Point3dId pt = calculateIntersection( cursorX, cursorY, cursorZ, 2, vertex_values[ 2 ], vertex_values[ 3 ] );
+					long id = getEdgeId( cursorX, cursorY, cursorZ, 2 );
 //								LOGGER.log( Level.FINEST, " adding point with id: " + id );
-								id2Point3dId.put( id, pt );
-							}
-							if ( ( MarchingCubesTables.MC_EDGE_TABLE[ tableIndex ] & 2048 ) != 0 )
-							{
+					id2Point3dId.put( id, pt );
+				}
+				if ( ( MarchingCubesTables.MC_EDGE_TABLE[ tableIndex ] & 2048 ) != 0 )
+				{
 //								LOGGER.log( Level.FINEST, "x: " + x + " y " + y + " z " + z );
-								Point3dId pt = calculateIntersection( cursorX, cursorY, cursorZ, 11, vertex_values[3], vertex_values[7] );
-								long id = getEdgeId( cursorX, cursorY, cursorZ, 11 );
-								LOGGER.log( Level.FINEST, " adding point with id: " + id );
-								id2Point3dId.put( id, pt );
-							}
+					Point3dId pt = calculateIntersection( cursorX, cursorY, cursorZ, 11, vertex_values[ 3 ], vertex_values[ 7 ] );
+					long id = getEdgeId( cursorX, cursorY, cursorZ, 11 );
+					LOGGER.log( Level.FINEST, " adding point with id: " + id );
+					id2Point3dId.put( id, pt );
+				}
 //						}
 //						if ( y == nCellsY - 1 )
 //						{
-							if ( ( MarchingCubesTables.MC_EDGE_TABLE[ tableIndex ] & 2 ) != 0 )
-							{
+				if ( ( MarchingCubesTables.MC_EDGE_TABLE[ tableIndex ] & 2 ) != 0 )
+				{
 //								LOGGER.log( Level.FINEST, "x: " + x + " y " + y + " z " + z );
-								Point3dId pt = calculateIntersection( cursorX, cursorY, cursorZ, 1, vertex_values[1], vertex_values[2] );
-								long id = getEdgeId( cursorX, cursorY, cursorZ, 1 );
-								LOGGER.log( Level.FINEST, " adding point with id: " + id );
-								id2Point3dId.put( id, pt );
-							}
-							if ( ( MarchingCubesTables.MC_EDGE_TABLE[ tableIndex ] & 512 ) != 0 )
-							{
+					Point3dId pt = calculateIntersection( cursorX, cursorY, cursorZ, 1, vertex_values[ 1 ], vertex_values[ 2 ] );
+					long id = getEdgeId( cursorX, cursorY, cursorZ, 1 );
+					LOGGER.log( Level.FINEST, " adding point with id: " + id );
+					id2Point3dId.put( id, pt );
+				}
+				if ( ( MarchingCubesTables.MC_EDGE_TABLE[ tableIndex ] & 512 ) != 0 )
+				{
 //								LOGGER.log( Level.FINEST, "x: " + x + " y " + y + " z " + z );
-								Point3dId pt = calculateIntersection( cursorX, cursorY, cursorZ, 9, vertex_values[1], vertex_values[5] );
-								long id = getEdgeId( cursorX, cursorY, cursorZ, 9 );
-								LOGGER.log( Level.FINEST, " adding point with id: " + id );
-								id2Point3dId.put( id, pt );
-							}
+					Point3dId pt = calculateIntersection( cursorX, cursorY, cursorZ, 9, vertex_values[ 1 ], vertex_values[ 5 ] );
+					long id = getEdgeId( cursorX, cursorY, cursorZ, 9 );
+					LOGGER.log( Level.FINEST, " adding point with id: " + id );
+					id2Point3dId.put( id, pt );
+				}
 //						}
 //						if ( z == nCellsZ - 1 )
 //						{
-							if ( ( MarchingCubesTables.MC_EDGE_TABLE[ tableIndex ] & 16 ) != 0 )
-							{
+				if ( ( MarchingCubesTables.MC_EDGE_TABLE[ tableIndex ] & 16 ) != 0 )
+				{
 //								LOGGER.log( Level.FINEST, "x: " + x + " y " + y + " z " + z );
-								Point3dId pt = calculateIntersection( cursorX, cursorY, cursorZ, 4, vertex_values[4], vertex_values[5] );
-								long id = getEdgeId( cursorX, cursorY, cursorZ, 4 );
-								LOGGER.log( Level.FINEST, " adding point with id: " + id );
-								id2Point3dId.put( id, pt );
-							}
-							if ( ( MarchingCubesTables.MC_EDGE_TABLE[ tableIndex ] & 128 ) != 0 )
-							{
-	//							LOGGER.log( Level.FINEST, "x: " + x + " y " + y + " z " + z );
-								Point3dId pt = calculateIntersection( cursorX, cursorY, cursorZ, 7, vertex_values[7], vertex_values[4] );
-								long id = getEdgeId( cursorX, cursorY, cursorZ, 7 );
-								LOGGER.log( Level.FINEST, " adding point with id: " + id );
-								id2Point3dId.put( id, pt );
-							}
+					Point3dId pt = calculateIntersection( cursorX, cursorY, cursorZ, 4, vertex_values[ 4 ], vertex_values[ 5 ] );
+					long id = getEdgeId( cursorX, cursorY, cursorZ, 4 );
+					LOGGER.log( Level.FINEST, " adding point with id: " + id );
+					id2Point3dId.put( id, pt );
+				}
+				if ( ( MarchingCubesTables.MC_EDGE_TABLE[ tableIndex ] & 128 ) != 0 )
+				{
+					// LOGGER.log( Level.FINEST, "x: " + x + " y " + y + " z " +
+					// z );
+					Point3dId pt = calculateIntersection( cursorX, cursorY, cursorZ, 7, vertex_values[ 7 ], vertex_values[ 4 ] );
+					long id = getEdgeId( cursorX, cursorY, cursorZ, 7 );
+					LOGGER.log( Level.FINEST, " adding point with id: " + id );
+					id2Point3dId.put( id, pt );
+				}
 //						}
 //						if ( ( x == nCellsX - 1 ) && ( y == nCellsY - 1 ) )
-							if ( ( MarchingCubesTables.MC_EDGE_TABLE[ tableIndex ] & 1024 ) != 0 )
-							{
-		//						LOGGER.log( Level.FINEST, "x: " + x + " y " + y + " z " + z );
-								Point3dId pt = calculateIntersection( cursorX, cursorY, cursorZ, 10, vertex_values[2], vertex_values[6] );
-								long id = getEdgeId( cursorX, cursorY, cursorZ, 10 );
-								LOGGER.log( Level.FINEST, " adding point with id: " + id );
-								id2Point3dId.put( id, pt );
-							}
-//						if ( ( x == nCellsX - 1 ) && ( z == nCellsZ - 1 ) )
-							if ( ( MarchingCubesTables.MC_EDGE_TABLE[ tableIndex ] & 64 ) != 0 )
-							{
-			//					LOGGER.log( Level.FINEST, "x: " + x + " y " + y + " z " + z );
-								Point3dId pt = calculateIntersection( cursorX, cursorY, cursorZ, 6, vertex_values[6], vertex_values[7] );
-								long id = getEdgeId( cursorX, cursorY, cursorZ, 6 );
-								LOGGER.log( Level.FINEST, " adding point with id: " + id );
-								id2Point3dId.put( id, pt );
-							}
-//						if ( ( y == nCellsY - 1 ) && ( z == nCellsZ - 1 ) )
-							if ( ( MarchingCubesTables.MC_EDGE_TABLE[ tableIndex ] & 32 ) != 0 )
-							{
-				//				LOGGER.log( Level.FINEST, "x: " + x + " y " + y + " z " + z );
-								Point3dId pt = calculateIntersection( cursorX, cursorY, cursorZ, 5, vertex_values[5], vertex_values[6] );
-								long id = getEdgeId( cursorX, cursorY, cursorZ, 5 );
-								LOGGER.log( Level.FINEST, " adding point with id: " + id );
-								id2Point3dId.put( id, pt );
-							}
-
-						for ( i = 0; MarchingCubesTables.triTable[ tableIndex ][ i ] != MarchingCubesTables.Invalid; i += 3 )
-						{
-							Triangle triangle = new Triangle();
-							long pointId0, pointId1, pointId2;
-							pointId0 = getEdgeId( cursorX, cursorY, cursorZ, MarchingCubesTables.triTable[ tableIndex ][ i ] );
-							pointId1 = getEdgeId( cursorX, cursorY, cursorZ, MarchingCubesTables.triTable[ tableIndex ][ i + 1 ] );
-							pointId2 = getEdgeId( cursorX, cursorY, cursorZ, MarchingCubesTables.triTable[ tableIndex ][ i + 2 ] );
-							LOGGER.log( Level.FINEST, "value on tritable: " + MarchingCubesTables.triTable[ tableIndex ][ i ]);
-							LOGGER.log( Level.FINEST, "value on tritable: " + MarchingCubesTables.triTable[ tableIndex ][ i + 1 ]  );
-							LOGGER.log( Level.FINEST, "value on tritable: " + MarchingCubesTables.triTable[ tableIndex ][ i + 2 ]  );
-							LOGGER.log( Level.FINEST, "triangles point id: " + pointId0 + " " + pointId1 + " " + pointId2 );
-							triangle.point[ 0 ] = pointId0;
-							triangle.point[ 1 ] = pointId1;
-							triangle.point[ 2 ] = pointId2;
-							triangleVector.add( triangle );
-						}
-					}
+				if ( ( MarchingCubesTables.MC_EDGE_TABLE[ tableIndex ] & 1024 ) != 0 )
+				{
+					// LOGGER.log( Level.FINEST, "x: " + x + " y " + y + " z " +
+					// z );
+					Point3dId pt = calculateIntersection( cursorX, cursorY, cursorZ, 10, vertex_values[ 2 ], vertex_values[ 6 ] );
+					long id = getEdgeId( cursorX, cursorY, cursorZ, 10 );
+					LOGGER.log( Level.FINEST, " adding point with id: " + id );
+					id2Point3dId.put( id, pt );
 				}
+//						if ( ( x == nCellsX - 1 ) && ( z == nCellsZ - 1 ) )
+				if ( ( MarchingCubesTables.MC_EDGE_TABLE[ tableIndex ] & 64 ) != 0 )
+				{
+					// LOGGER.log( Level.FINEST, "x: " + x + " y " + y + " z " +
+					// z );
+					Point3dId pt = calculateIntersection( cursorX, cursorY, cursorZ, 6, vertex_values[ 6 ], vertex_values[ 7 ] );
+					long id = getEdgeId( cursorX, cursorY, cursorZ, 6 );
+					LOGGER.log( Level.FINEST, " adding point with id: " + id );
+					id2Point3dId.put( id, pt );
+				}
+//						if ( ( y == nCellsY - 1 ) && ( z == nCellsZ - 1 ) )
+				if ( ( MarchingCubesTables.MC_EDGE_TABLE[ tableIndex ] & 32 ) != 0 )
+				{
+					// LOGGER.log( Level.FINEST, "x: " + x + " y " + y + " z " +
+					// z );
+					Point3dId pt = calculateIntersection( cursorX, cursorY, cursorZ, 5, vertex_values[ 5 ], vertex_values[ 6 ] );
+					long id = getEdgeId( cursorX, cursorY, cursorZ, 5 );
+					LOGGER.log( Level.FINEST, " adding point with id: " + id );
+					id2Point3dId.put( id, pt );
+				}
+
+				for ( i = 0; MarchingCubesTables.triTable[ tableIndex ][ i ] != MarchingCubesTables.Invalid; i += 3 )
+				{
+					Triangle triangle = new Triangle();
+					long pointId0, pointId1, pointId2;
+					pointId0 = getEdgeId( cursorX, cursorY, cursorZ, MarchingCubesTables.triTable[ tableIndex ][ i ] );
+					pointId1 = getEdgeId( cursorX, cursorY, cursorZ, MarchingCubesTables.triTable[ tableIndex ][ i + 1 ] );
+					pointId2 = getEdgeId( cursorX, cursorY, cursorZ, MarchingCubesTables.triTable[ tableIndex ][ i + 2 ] );
+					LOGGER.log( Level.FINEST, "value on tritable: " + MarchingCubesTables.triTable[ tableIndex ][ i ] );
+					LOGGER.log( Level.FINEST, "value on tritable: " + MarchingCubesTables.triTable[ tableIndex ][ i + 1 ] );
+					LOGGER.log( Level.FINEST, "value on tritable: " + MarchingCubesTables.triTable[ tableIndex ][ i + 2 ] );
+					LOGGER.log( Level.FINEST, "triangles point id: " + pointId0 + " " + pointId1 + " " + pointId2 );
+					triangle.point[ 0 ] = pointId0;
+					triangle.point[ 1 ] = pointId1;
+					triangle.point[ 2 ] = pointId2;
+					triangleVector.add( triangle );
+				}
+			}
+		}
 
 		renameVerticesAndTriangles();
 		calculateNormals();
@@ -423,7 +427,7 @@ public class MarchingCubes_funkeyRAI
 		}
 
 		LOGGER.log( Level.FINER, "number of triangles: " + triangleVector.size() );
-		
+
 		// Now rename triangles.
 		while ( vecIterator.hasNext() )
 		{
@@ -618,12 +622,12 @@ public class MarchingCubes_funkeyRAI
 //		p2.setPosition( volumeMin[ 1 ] + ( v2y - 1 ) * cellSizeY, 1 );
 //		p2.setPosition( volumeMin[ 2 ] + ( v2z - 1 ) * cellSizeZ, 2 );
 
-		p1.setPosition( ( v1x ) * cellSizeX, 0 );
-		p1.setPosition( ( v1y ) * cellSizeY, 1 );
-		p1.setPosition( ( v1z ) * cellSizeZ, 2 );
-		p2.setPosition( ( v2x ) * cellSizeX, 0 );
-		p2.setPosition( ( v2y ) * cellSizeY, 1 );
-		p2.setPosition( ( v2z ) * cellSizeZ, 2 );
+		p1.setPosition( ( v1x - 1) /** cellSizeX*/, 0 );
+		p1.setPosition( ( v1y -1  ) /** cellSizeY*/, 1 );
+		p1.setPosition( ( v1z - 1) /** cellSizeZ*/, 2 );
+		p2.setPosition( ( v2x -1 ) /** cellSizeX*/, 0 );
+		p2.setPosition( ( v2y - 1) /** cellSizeY*/, 1 );
+		p2.setPosition( ( v2z - 1) /** cellSizeZ*/, 2 );
 
 //		LOGGER.log( Level.FINEST, "calculateIntersection x: " + nX + " y: " + nY + " z: " + nZ );
 //
@@ -738,7 +742,7 @@ public class MarchingCubes_funkeyRAI
 			LOGGER.log( Level.FINEST, "interpolation point: " + interpolation.x + " " + interpolation.y + " " + interpolation.z );
 			LOGGER.log( Level.FINEST, "delta: " + delta );
 
-			if ( interiorTest( val1 + mu * (val2 - val1) ) )
+			if ( interiorTest( val1 + mu * ( val2 - val1 ) ) )
 				mu -= delta; // go to outside
 			else
 				mu += delta; // go to inside
@@ -752,7 +756,7 @@ public class MarchingCubes_funkeyRAI
 
 		if ( acceptExactly )
 		{
-			if ( (int) vertex_values == isoLevel )
+			if ( ( int ) vertex_values == isoLevel )
 			{
 				return true;
 			}
@@ -763,7 +767,7 @@ public class MarchingCubes_funkeyRAI
 		}
 		else
 		{
-			if ( (int) vertex_values < isoLevel )
+			if ( ( int ) vertex_values < isoLevel )
 			{
 				return true;
 			}
@@ -773,25 +777,25 @@ public class MarchingCubes_funkeyRAI
 			}
 		}
 	}
-	
+
 	private double[] remapCube( final double[] vertex_values )
 	{
 		double[] vv = new double[ 8 ];
-		vv[ 0 ] = vertex_values[ 7 ];
-		vv[ 1 ] = vertex_values[ 4 ];
+		vv[ 0 ] = vertex_values[ 5 ];
+		vv[ 1 ] = vertex_values[ 7 ];
 		vv[ 2 ] = vertex_values[ 6 ];
-		vv[ 3 ] = vertex_values[ 5 ];
-		vv[ 4 ] = vertex_values[ 3 ];
-		vv[ 5 ] = vertex_values[ 0 ];
+		vv[ 3 ] = vertex_values[ 4 ];
+		vv[ 4 ] = vertex_values[ 1 ];
+		vv[ 5 ] = vertex_values[ 3 ];
 		vv[ 6 ] = vertex_values[ 2 ];
-		vv[ 7 ] = vertex_values[ 1 ];
+		vv[ 7 ] = vertex_values[ 0 ];
 
-//		for (int i = 0; i < 8; i++)
-			//System.out.println("new order vertex value: " + vv[i]);
+		//for ( int i = 0; i < 8; i++ )
+			//System.out.println( "new order vertex value: " + vv[ i ] );
 
 		return vv;
 	}
-	
+
 	private Cursor< LabelMultisetType > getCube(
 			final ExtendedRandomAccessibleInterval< LabelMultisetType, RandomAccessibleInterval< LabelMultisetType > > extended,
 			final int cursorX, final int cursorY, final int cursorZ )
@@ -801,24 +805,24 @@ public class MarchingCubes_funkeyRAI
 						cursorY + 1, cursorZ + 1 } ) ) )
 				.cursor();
 	}
-	
+
 	private void normalizeVerticesAndNormals()
 	{
 		int vertexCount = mesh.getNumberOfVertices();
 		float[][] vertices = mesh.getVertices();
 		float[][] normals = mesh.getNormals();
-		
+
 		for ( int i = 0; i < vertexCount; ++i )
 		{
 			vertices[ i ][ 0 ] /= maxAxisVal;
 			vertices[ i ][ 1 ] /= maxAxisVal;
 			vertices[ i ][ 2 ] /= maxAxisVal;
-			
+
 			normals[ i ][ 0 ] /= maxAxisVal;
 			normals[ i ][ 1 ] /= maxAxisVal;
 			normals[ i ][ 2 ] /= maxAxisVal;
 		}
-		
+
 		mesh.setVertices( vertices );
 		mesh.setNormals( normals );
 	}
