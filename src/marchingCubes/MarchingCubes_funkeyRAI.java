@@ -1,7 +1,5 @@
 package marchingCubes;
 
-import java.io.FileNotFoundException;
-import java.io.PrintStream;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map.Entry;
@@ -38,11 +36,8 @@ public class MarchingCubes_funkeyRAI
 	/** List of Triangles which form the triangulation of the isosurface. */
 	private Vector< Triangle > triangleVector = new Vector< Triangle >();
 
-	/** No. of cells in x, y, and z directions. */
-	private long nCellsX, nCellsY, nCellsZ;
-
-	/** Cell length in x, y, and z directions. */
-	private float cellSizeX, cellSizeY, cellSizeZ;
+	/** No. of cells in x and y directions. */
+	private long nCellsX, nCellsY;
 
 	private int width, height, depth;
 
@@ -50,9 +45,6 @@ public class MarchingCubes_funkeyRAI
 	private int isoLevel;
 
 	private float maxAxisVal;
-
-	/** The volume which the isosurface will be computed */
-	private RandomAccessibleInterval< LabelMultisetType > volume;
 
 	/** Indicates whether a valid surface is present. */
 	private boolean hasValidSurface;
@@ -92,12 +84,8 @@ public class MarchingCubes_funkeyRAI
 
 	public MarchingCubes_funkeyRAI()
 	{
-		cellSizeX = 0;
-		cellSizeY = 0;
-		cellSizeZ = 0;
 		nCellsX = 0;
 		nCellsY = 0;
-		nCellsZ = 0;
 		hasValidSurface = false;
 		acceptExactly = false;
 	}
@@ -135,7 +123,6 @@ public class MarchingCubes_funkeyRAI
 
 		mesh = new Mesh();
 
-		volume = input;
 		isoLevel = level;
 
 		width = volDim[ 0 ];
@@ -144,16 +131,18 @@ public class MarchingCubes_funkeyRAI
 
 		nCellsX = ( long ) Math.ceil( width / voxDim[ 0 ] ) - 1;
 		nCellsY = ( long ) Math.ceil( height / voxDim[ 1 ] ) - 1;
-		nCellsZ = ( long ) Math.ceil( depth / voxDim[ 2 ] ) - 1;
-		cellSizeX = voxDim[ 0 ];
-		cellSizeY = voxDim[ 1 ];
-		cellSizeZ = voxDim[ 2 ];
+//		nCellsZ = ( long ) Math.ceil( depth / voxDim[ 2 ] ) - 1;
+//		cellSizeX = voxDim[ 0 ];
+//		cellSizeY = voxDim[ 1 ];
+//		cellSizeZ = voxDim[ 2 ];
 		acceptExactly = isExact;
 
-		//System.out.println( "creating mesh for " + width + "x" + height + "x" + depth
-				//+ " volume with " + nCellsX + "x" + nCellsY + "x" + nCellsZ + " cells" );
+		// System.out.println( "creating mesh for " + width + "x" + height + "x"
+		// + depth
+		// + " volume with " + nCellsX + "x" + nCellsY + "x" + nCellsZ + "
+		// cells" );
 
-		//System.out.println( "volume size: " + width * height * depth );
+		// System.out.println( "volume size: " + width * height * depth );
 
 		ExtendedRandomAccessibleInterval< LabelMultisetType, RandomAccessibleInterval< LabelMultisetType > > extended =
 				Views.extendValue( input, new LabelMultisetType() );
@@ -174,9 +163,9 @@ public class MarchingCubes_funkeyRAI
 			if ( cursorX == -1 || cursorY == -1 || cursorZ == -1 )
 				continue;
 
-			//System.out.println( "x: " + cursorX + " y: " + cursorY + " z: " + cursorZ );
+			// System.out.println( "x: " + cursorX + " y: " + cursorY + " z: " +
+			// cursorZ );
 			Cursor< LabelMultisetType > cu = getCube( extended, cursorX, cursorY, cursorZ );
-			int tableIndex = 0;
 
 			int i = 0;
 			double[] vertex_values = new double[ 8 ];
@@ -184,7 +173,7 @@ public class MarchingCubes_funkeyRAI
 			{
 				LabelMultisetType it = cu.next();
 
-				//System.out.println( " position vertex: " +
+				// System.out.println( " position vertex: " +
 //						cu.getIntPosition( 0 ) + " " +
 //						cu.getIntPosition( 1 ) + " " +
 //						cu.getIntPosition( 2 ) );
@@ -192,22 +181,42 @@ public class MarchingCubes_funkeyRAI
 				for ( final Multiset.Entry< Label > e : it.entrySet() )
 				{
 					vertex_values[ i ] = e.getElement().id();
-					//System.out.println( "vertex value: " + vertex_values[ i ] );
+					// System.out.println( "vertex value: " + vertex_values[ i ]
+					// );
 				}
 				i++;
 			}
 
-//		// Generate isosurface.
-//		for ( int z = 0; z < nCellsZ; z++ )
-//			for ( int y = 0; y < nCellsY; y++ )
-//				for ( int x = 0; x < nCellsX; x++ )
-//				{
-			// Calculate table lookup index from those
-			// vertices which are below the isolevel.
-//					int tableIndex = 0;
+			// @formatter:off
+			// the values from the cube are given first in z, then y, then x
+			// this way, the vertex_values (from getCube) are positioned in this way:
+			//
+			//  1------3
+			// /|     /|
+			// 0-----2 |
+			// |5----|-7
+			// |/    |/
+			// 4-----6
+			//
+			// this algorithm (based on http://paulbourke.net/geometry/polygonise/)
+			// considers the vertices of the cube in this order:
+			//
+			//  4------5
+			// /|     /|
+			// 7-----6 |
+			// |0----|-1
+			// |/    |/
+			// 3-----2
+			//
+			// This way, we need to remap the cube vertices:
+			// @formatter:on
 
 			vertex_values = remapCube( vertex_values );
 
+			// Calculate table lookup index from those vertices which are
+			// below the isolevel.
+
+			int tableIndex = 0;
 			for ( i = 0; i < 8; i++ )
 			{
 				if ( !interiorTest( vertex_values[ i ] ) )
@@ -215,41 +224,24 @@ public class MarchingCubes_funkeyRAI
 					tableIndex |= ( int ) Math.pow( 2, i );
 				}
 			}
-//					LOGGER.log( Level.FINER, "x y z: " + x + " " + y + " " + z );
-//					if ( !interiorTest( volume[ ( int ) ( ( x ) * cellSizeX + ( width * ( y ) * cellSizeY ) + width * height * ( z ) * cellSizeZ ) ] ) )
-//					{
-//						tableIndex |= 1;
-//					}
-//					if ( !interiorTest( volume[ ( int ) ( ( x ) * cellSizeX + ( width * ( y + 1 ) * cellSizeY ) + width * height * ( z ) * cellSizeZ ) ] ) )
-//					{
-//						tableIndex |= 2;
-//					}
-//					if ( !interiorTest( volume[ ( int ) ( ( x + 1 ) * cellSizeX + ( width * ( ( y + 1 ) * cellSizeY ) ) + width * height * ( z ) * cellSizeZ ) ] ) )
-//					{
-//						tableIndex |= 4;
-//					}
-//					if ( !interiorTest( volume[ ( int ) ( ( x + 1 ) * cellSizeX + ( width * ( y ) * cellSizeY ) + width * height * ( z ) * cellSizeZ ) ] ) )
-//					{
-//						tableIndex |= 8;
-//					}
-//					if ( !interiorTest( volume[ ( int ) ( ( x ) * cellSizeX + ( width * ( y ) * cellSizeY ) + width * height * ( z + 1 ) * cellSizeZ ) ] ) )
-//					{
-//						tableIndex |= 16;
-//					}
-//					if ( !interiorTest( volume[ ( int ) ( ( x ) * cellSizeX + ( width * ( y + 1 ) * cellSizeY ) + width * height * ( z + 1 ) * cellSizeZ ) ] ) )
-//					{
-//						tableIndex |= 32;
-//					}
-//					if ( !interiorTest( volume[ ( int ) ( ( x + 1 ) * cellSizeX + ( width * ( y + 1 ) * cellSizeY ) + width * height * ( z + 1 ) * cellSizeZ ) ] ) )
-//					{
-//						tableIndex |= 64;
-//					}
-//					if ( !interiorTest( volume[ ( int ) ( ( x + 1 ) * cellSizeX + ( width * ( y ) * cellSizeY ) + width * height * ( z + 1 ) * cellSizeZ ) ] ) )
-//					{
-//						tableIndex |= 128;
-//					}
 
-			//System.out.println( "tableIndex = " + tableIndex );
+			// System.out.println( "tableIndex = " + tableIndex );
+
+			// edge indexes:
+			// @formatter:off
+			//          4-----*4*----5
+			//         /|           /|
+			//        /*8*         / |
+			//      *7* |        *5* |
+			//      /   |        /  *9*
+			//     7-----*6*----6    |
+			//     |    0----*0*-----1
+			//   *11*  /       *10* /
+			//     |  /         | *1*
+			//     |*3*         | /
+			//     |/           |/
+			//     3-----*2*----2
+			// @formatter: on
 
 			// Now create a triangulation of the isosurface in this cell.
 			if ( MarchingCubesTables.MC_EDGE_TABLE[ tableIndex ] != 0 )
@@ -278,9 +270,6 @@ public class MarchingCubes_funkeyRAI
 //							LOGGER.log( Level.FINEST, " adding point with id: " + id );
 					id2Point3dId.put( id, pt );
 				}
-
-//						if ( x == nCellsX - 1 )
-//						{
 				if ( ( MarchingCubesTables.MC_EDGE_TABLE[ tableIndex ] & 4 ) != 0 )
 				{
 //								LOGGER.log( Level.FINEST, "x: " + x + " y " + y + " z " + z );
@@ -297,9 +286,6 @@ public class MarchingCubes_funkeyRAI
 					LOGGER.log( Level.FINEST, " adding point with id: " + id );
 					id2Point3dId.put( id, pt );
 				}
-//						}
-//						if ( y == nCellsY - 1 )
-//						{
 				if ( ( MarchingCubesTables.MC_EDGE_TABLE[ tableIndex ] & 2 ) != 0 )
 				{
 //								LOGGER.log( Level.FINEST, "x: " + x + " y " + y + " z " + z );
@@ -316,9 +302,6 @@ public class MarchingCubes_funkeyRAI
 					LOGGER.log( Level.FINEST, " adding point with id: " + id );
 					id2Point3dId.put( id, pt );
 				}
-//						}
-//						if ( z == nCellsZ - 1 )
-//						{
 				if ( ( MarchingCubesTables.MC_EDGE_TABLE[ tableIndex ] & 16 ) != 0 )
 				{
 //								LOGGER.log( Level.FINEST, "x: " + x + " y " + y + " z " + z );
@@ -336,8 +319,6 @@ public class MarchingCubes_funkeyRAI
 					LOGGER.log( Level.FINEST, " adding point with id: " + id );
 					id2Point3dId.put( id, pt );
 				}
-//						}
-//						if ( ( x == nCellsX - 1 ) && ( y == nCellsY - 1 ) )
 				if ( ( MarchingCubesTables.MC_EDGE_TABLE[ tableIndex ] & 1024 ) != 0 )
 				{
 					// LOGGER.log( Level.FINEST, "x: " + x + " y " + y + " z " +
@@ -347,7 +328,6 @@ public class MarchingCubes_funkeyRAI
 					LOGGER.log( Level.FINEST, " adding point with id: " + id );
 					id2Point3dId.put( id, pt );
 				}
-//						if ( ( x == nCellsX - 1 ) && ( z == nCellsZ - 1 ) )
 				if ( ( MarchingCubesTables.MC_EDGE_TABLE[ tableIndex ] & 64 ) != 0 )
 				{
 					// LOGGER.log( Level.FINEST, "x: " + x + " y " + y + " z " +
@@ -357,7 +337,6 @@ public class MarchingCubes_funkeyRAI
 					LOGGER.log( Level.FINEST, " adding point with id: " + id );
 					id2Point3dId.put( id, pt );
 				}
-//						if ( ( y == nCellsY - 1 ) && ( z == nCellsZ - 1 ) )
 				if ( ( MarchingCubesTables.MC_EDGE_TABLE[ tableIndex ] & 32 ) != 0 )
 				{
 					// LOGGER.log( Level.FINEST, "x: " + x + " y " + y + " z " +
@@ -400,12 +379,8 @@ public class MarchingCubes_funkeyRAI
 
 	private void deleteSurface()
 	{
-		cellSizeX = 0;
-		cellSizeY = 0;
-		cellSizeZ = 0;
 		nCellsX = 0;
 		nCellsY = 0;
-		nCellsZ = 0;
 		hasValidSurface = false;
 	}
 
@@ -614,14 +589,6 @@ public class MarchingCubes_funkeyRAI
 			break;
 		}
 
-		// transform local coordinates back into volume space
-//		p1.setPosition( volumeMin[ 0 ] + ( v1x - 1 ) * cellSizeX, 0 );
-//		p1.setPosition( volumeMin[ 1 ] + ( v1y - 1 ) * cellSizeY, 1 );
-//		p1.setPosition( volumeMin[ 2 ] + ( v1z - 1 ) * cellSizeZ, 2 );
-//		p2.setPosition( volumeMin[ 0 ] + ( v2x - 1 ) * cellSizeX, 0 );
-//		p2.setPosition( volumeMin[ 1 ] + ( v2y - 1 ) * cellSizeY, 1 );
-//		p2.setPosition( volumeMin[ 2 ] + ( v2z - 1 ) * cellSizeZ, 2 );
-
 		p1.setPosition( ( v1x - 1) /** cellSizeX*/, 0 );
 		p1.setPosition( ( v1y -1  ) /** cellSizeY*/, 1 );
 		p1.setPosition( ( v1z - 1) /** cellSizeZ*/, 2 );
@@ -629,32 +596,12 @@ public class MarchingCubes_funkeyRAI
 		p2.setPosition( ( v2y - 1) /** cellSizeY*/, 1 );
 		p2.setPosition( ( v2z - 1) /** cellSizeZ*/, 2 );
 
-//		LOGGER.log( Level.FINEST, "calculateIntersection x: " + nX + " y: " + nY + " z: " + nZ );
-//
-//		LOGGER.log( Level.FINEST, "v1x: " + v1x + " v1y: " + v1y + " v1z: " + v1z );
-//		LOGGER.log( Level.FINEST, "v2x: " + v2x + " v2y: " + v2y + " v2z: " + v2z );
-//		
-//		LOGGER.log( Level.FINEST, "accessing position v1: " + ( int ) ( v1x + ( width * v1y ) + width * height * v1z ) );
-//		LOGGER.log( Level.FINEST, "accessing position v2: " + ( int ) ( v2x + ( width * v2y ) + width * height * v2z ) );
-//		LOGGER.log( Level.FINEST, "volume size: " + ( int ) ( width * height * depth ) );
-////		
-//		float val1 = volume[ v1x + ( width * v1y ) + width * height * v1z ];
-//		float val2 = volume[ v2x + ( width * v2y ) + width * height * v2z ];
-//
-//		LOGGER.log( Level.FINEST, "value of volume[v1]: " + val1 );
-//		LOGGER.log( Level.FINEST, "value of volume[v2]: " + val2 );
-//
-//		LOGGER.log( Level.FINEST, "p1: " + p1.getDoublePosition( 0 ) + " " + p1.getDoublePosition( 1 ) + " " + p1.getDoublePosition( 2 ) );
-//		LOGGER.log( Level.FINEST, "p2: " + p2.getDoublePosition( 0 ) + " " + p2.getDoublePosition( 1 ) + " " + p2.getDoublePosition( 2 ) );
-
 		if ( interiorTest( vertex_values ) && !interiorTest( vertex_values2 ) )
 		{
-//			LOGGER.log( Level.FINEST, "p1 and p2 swap positions" );
 			return findSurfaceIntersection( p2, p1, vertex_values2, vertex_values );
 		}
 		else
 		{
-//			LOGGER.log( Level.FINEST, "p1 and p2 keep positions" );
 			return findSurfaceIntersection( p1, p2, vertex_values, vertex_values2 );
 		}
 	}
@@ -698,7 +645,7 @@ public class MarchingCubes_funkeyRAI
 		return 3 * ( nZ * ( nCellsY + 1 ) * ( nCellsX + 1 ) + nY * ( nCellsX + 1 ) + nX );
 	}
 
-	private Point3dId findSurfaceIntersection( /* Volume *//* InteriorTest */RealPoint p1, RealPoint p2, double val1, double val2 )
+	private Point3dId findSurfaceIntersection( RealPoint p1, RealPoint p2, double val1, double val2 )
 	{
 
 		Point3dId interpolation = null;
