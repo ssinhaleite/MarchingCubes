@@ -74,13 +74,14 @@ public class MarchingCubesTest
 	static String path_label = "/volumes/labels/neuron_ids";
 
 	// float[] voxDim = {10f, 10f, 10f};
-	float[] voxDim = { 1, 1, 1 };
+	float[] voxDim = { 0.5f, 0.5f, 0.5f };
 
 	// static String path_label = "/volumes/labels/small_neuron_ids";
 	// int isoLevel = 2;
 	// int[] volDim = {3, 3, 3};
 
 	int isoLevel = 7;
+
 	int[] volDim = { 500, 500, 5 };
 
 	// int isoLevel = 73396;
@@ -148,12 +149,12 @@ public class MarchingCubesTest
 			material.setDiffuse( new GLVector( 0.1f * ( 1 ), 0.0f, 1.0f ) );
 			material.setSpecular( new GLVector( 0.1f * ( 1 ), 0f, 0f ) );
 
-			voxDim = new float[] { 1.0f, 1.0f, 1.0f };
-
 			Mesh neuron = new Mesh();
 			neuron.setMaterial( material );
 			neuron.setPosition( new GLVector( 0.0f, 0.0f + 0.2f * ( 0 ), 0.0f ) );
+
 			marchingCube( "funkey" );
+
 			neuron.setVertices( FloatBuffer.wrap( verticesArray ) );
 			neuron.setNormals( FloatBuffer.wrap( normalsArray ) );
 
@@ -183,8 +184,6 @@ public class MarchingCubesTest
 			cam.perspectiveCamera( 50f, getWindowHeight(), getWindowWidth(), 0.1f, 1000.0f );
 			cam.setActive( true );
 			getScene().addChild( cam );
-
-			getScene().draw();
 
 //			final Thread neuronPositionThread = new Thread()
 //			{
@@ -243,22 +242,22 @@ public class MarchingCubesTest
 	protected static void readLabels( final IHDF5Reader reader, final String labelDataset ) throws IOException
 	{
 		/* labels */
-		System.out.println( "readLabels starts" );
+//		System.out.println( "readLabels starts" );
 		final H5LabelMultisetSetupImageLoader labelLoader = new H5LabelMultisetSetupImageLoader( reader, null,
 				labelDataset, setupId++, cellDimensions );
 
-		System.out.println( "labelLoader: " + labelLoader );
+//		System.out.println( "labelLoader: " + labelLoader );
 
 		/* converted labels */
 		final ARGBConvertedLabelsSource convertedLabelsSource = new ARGBConvertedLabelsSource( setupId++, labelLoader,
 				colorStream );
 
-		System.out.println( "convertedLabelsSource: " + convertedLabelsSource );
+//		System.out.println( "convertedLabelsSource: " + convertedLabelsSource );
 
 		labels.add( labelLoader );
 		convertedLabels.add( convertedLabelsSource );
 
-		System.out.println( "readLabels ends" );
+//		System.out.println( "readLabels ends" );
 	}
 
 	private void marchingCube( String implementationType )
