@@ -13,6 +13,7 @@ import net.imglib2.FinalInterval;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.view.ExtendedRandomAccessibleInterval;
 import net.imglib2.view.Views;
+import viewer.Mesh;
 
 /**
  * Marching cubes based on
@@ -29,6 +30,7 @@ public class MarchingCubes_shibbyRAI
 	private static final Logger LOGGER = Logger.getLogger( MarchingCubes_shibby.class.getName() );
 
 	private ArrayList< float[] > vertices = new ArrayList<>();
+	private ArrayList< float[] > normals = new ArrayList<>();
 
 	private static float[] lerp( float[] vec1, float[] vec2, double alpha )
 	{
@@ -73,7 +75,7 @@ public class MarchingCubes_shibbyRAI
 					.cursor();
 
 			int i = 0;
-			double[] vertex_values = new double[ 8 ];
+			float[] vertex_values = new float[ 8 ];
 
 //			begin = new Timestamp( System.currentTimeMillis() );
 			while ( cu.hasNext() )
@@ -129,17 +131,17 @@ public class MarchingCubes_shibbyRAI
 //					value7 = values[ pxyz ];
 
 //			begin = new Timestamp( System.currentTimeMillis() );
-			int p = 0,
-					px = 1,
-					py = 4,
-					pxy = 5,
-					pz = 2,
-					pxz = 3,
-					pyz = 6,
-					pxyz = 7;
+			int p = 4,
+					px = 5,
+					py = 1,
+					pxy = 0,
+					pz = 6,
+					pxz = 7,
+					pyz = 3,
+					pxyz = 2;
 
 			// Voxel intensities
-			double value0 = vertex_values[ p ],
+			float value0 = vertex_values[ p ],
 					value1 = vertex_values[ px ],
 					value2 = vertex_values[ py ],
 					value3 = vertex_values[ pxy ],
@@ -147,25 +149,34 @@ public class MarchingCubes_shibbyRAI
 					value5 = vertex_values[ pxz ],
 					value6 = vertex_values[ pyz ],
 					value7 = vertex_values[ pxyz ];
+			
+			vertex_values = remapCube( vertex_values );
 
 			// Voxel is active if its value matches the isolevel
 			int cubeindex = 0;
-			if ( value0 == isoLevel )
-				cubeindex |= 1;
-			if ( value1 == isoLevel )
-				cubeindex |= 2;
-			if ( value2 == isoLevel )
-				cubeindex |= 8;
-			if ( value3 == isoLevel )
-				cubeindex |= 4;
-			if ( value4 == isoLevel )
-				cubeindex |= 16;
-			if ( value5 == isoLevel )
-				cubeindex |= 32;
-			if ( value6 == isoLevel )
-				cubeindex |= 128;
-			if ( value7 == isoLevel )
-				cubeindex |= 64;
+			for ( i = 0; i < 8; i++ )
+			{
+				if ( vertex_values[ i ] < isoLevel )
+				{
+					cubeindex |= ( int ) Math.pow( 2, i );
+				}
+			}
+//			if ( value0 < isoLevel )
+//				cubeindex |= 1;
+//			if ( value1 < isoLevel )
+//				cubeindex |= 2;
+//			if ( value2 < isoLevel )
+//				cubeindex |= 8;
+//			if ( value3 < isoLevel )
+//				cubeindex |= 4;
+//			if ( value4 < isoLevel )
+//				cubeindex |= 16;
+//			if ( value5 < isoLevel )
+//				cubeindex |= 32;
+//			if ( value6 < isoLevel )
+//				cubeindex |= 128;
+//			if ( value7 < isoLevel )
+//				cubeindex |= 64;
 
 			// Fetch the triggered edges
 			int bits = MarchingCubesTables.MC_EDGE_TABLE[ cubeindex ];
@@ -261,24 +272,10 @@ public class MarchingCubes_shibbyRAI
 				vertices.add( new float[] { vertList[ index3 ][ 0 ] / maxAxisVal - 0.5f, vertList[ index3 ][ 1 ] / maxAxisVal - 0.5f, vertList[ index3 ][ 2 ] / maxAxisVal - 0.5f } );
 				vertices.add( new float[] { vertList[ index2 ][ 0 ] / maxAxisVal - 0.5f, vertList[ index2 ][ 1 ] / maxAxisVal - 0.5f, vertList[ index2 ][ 2 ] / maxAxisVal - 0.5f } );
 				vertices.add( new float[] { vertList[ index1 ][ 0 ] / maxAxisVal - 0.5f, vertList[ index1 ][ 1 ] / maxAxisVal - 0.5f, vertList[ index1 ][ 2 ] / maxAxisVal - 0.5f } );
-				LOGGER.log( Level.FINEST, "value on tritable: " + index1 );
-				LOGGER.log( Level.FINEST, "value on tritable: " + index2 );
-				LOGGER.log( Level.FINEST, "value on tritable: " + index3 );
+				vertices.add( new float[] { vertList[ index3 ][ 0 ], vertList[ index3 ][ 1 ], vertList[ index3 ][ 2 ] } );
+				vertices.add( new float[] { vertList[ index2 ][ 0 ], vertList[ index2 ][ 1 ], vertList[ index2 ][ 2 ] } );
+				vertices.add( new float[] { vertList[ index1 ][ 0 ], vertList[ index1 ][ 1 ], vertList[ index1 ][ 2 ] } );
 
-				if(vertList[ index3 ][ 1 ] / maxAxisVal - 0.5f > max)
-					max = vertList[ index3 ][ 1 ] / maxAxisVal - 0.5f;
-				if(vertList[ index2 ][ 1 ] / maxAxisVal - 0.5f > max)
-					max = vertList[ index2 ][ 1 ] / maxAxisVal - 0.5f;
-				if(vertList[ index1 ][ 1 ] / maxAxisVal - 0.5f > max)
-					max = vertList[ index1 ][ 1 ] / maxAxisVal - 0.5f;
-
-				if (vertList[ index3 ][ 1 ] / maxAxisVal - 0.5f < min)
-					min = vertList[ index3 ][ 1 ] / maxAxisVal - 0.5f;
-				if (vertList[ index2 ][ 1 ] / maxAxisVal - 0.5f < min)
-					min = vertList[ index2 ][ 1 ] / maxAxisVal - 0.5f;
-				if (vertList[ index1 ][ 1 ] / maxAxisVal - 0.5f < min)
-					min = vertList[ index1 ][ 1 ] / maxAxisVal - 0.5f;
-				
 				i += 3;
 			}
 
@@ -286,7 +283,71 @@ public class MarchingCubes_shibbyRAI
 
 		} // end while
 		LOGGER.log( Level.FINEST, "total number of vertices: " + vertices.size() );
-		System.out.println("max y: " + max + "min y: " + min);
+		
+		calculateNormals();
 		return vertices;
+	}
+	
+	private float[] remapCube( final float[] vertex_values )
+	{
+		float[] vv = new float[ 8 ];
+		vv[ 0 ] = vertex_values[ 4 ];
+		vv[ 1 ] = vertex_values[ 5 ];
+		vv[ 2 ] = vertex_values[ 1 ];
+		vv[ 3 ] = vertex_values[ 0 ];
+		vv[ 4 ] = vertex_values[ 6 ];
+		vv[ 5 ] = vertex_values[ 7 ];
+		vv[ 6 ] = vertex_values[ 3 ];
+		vv[ 7 ] = vertex_values[ 2 ];
+		
+//		vv[ 0 ] = vertex_values[ 0 ];
+//		vv[ 1 ] = vertex_values[ 1 ];
+//		vv[ 2 ] = vertex_values[ 4 ];
+//		vv[ 3 ] = vertex_values[ 5 ];
+//		vv[ 4 ] = vertex_values[ 2 ];
+//		vv[ 5 ] = vertex_values[ 3 ];
+//		vv[ 6 ] = vertex_values[ 6 ];
+//		vv[ 7 ] = vertex_values[ 7 ];
+
+		return vv;
+	}
+	
+	private void calculateNormals()
+	{
+		int vertexCount = vertices.size();
+
+		// omp parallel for
+		for ( int i = 0; i < vertexCount/3; ++i )
+		{
+			float[] vec1 = new float[ 3 ], 
+					vec2 = new float[ 3 ],
+					normal = new float[ 3 ];
+			
+			vec1[ 0 ] = vertices.get( i * 3 + 1 )[ 0 ] - vertices.get( i * 3 )[ 0 ];
+			vec1[ 1 ] = vertices.get( i * 3 + 1 )[ 1 ] - vertices.get( i * 3 )[ 1 ];
+			vec1[ 2 ] = vertices.get( i * 3 + 1 )[ 2 ] - vertices.get( i * 3 )[ 2 ];
+			vec2[ 0 ] = vertices.get( i * 3 + 2 )[ 0 ] - vertices.get( i * 3 )[ 0 ];
+			vec2[ 1 ] = vertices.get( i * 3 + 2 )[ 1 ] - vertices.get( i * 3 )[ 1 ];
+			vec2[ 2 ] = vertices.get( i * 3 + 2 )[ 2 ] - vertices.get( i * 3 )[ 2 ];
+			normal[ 0 ] = vec1[ 2 ] * vec2[ 1 ] - vec1[ 1 ] * vec2[ 2 ];
+			normal[ 1 ] = vec1[ 0 ] * vec2[ 2 ] - vec1[ 2 ] * vec2[ 0 ];
+			normal[ 2 ] = vec1[ 1 ] * vec2[ 0 ] - vec1[ 0 ] * vec2[ 1 ];
+			
+			normals.add( new float[] {normal[0], normal[1], normal[2] } );
+			normals.add( new float[] {normal[0], normal[1], normal[2] } );
+			normals.add( new float[] {normal[0], normal[1], normal[2] } );
+		}
+
+		// omp parallel for
+		for ( int i = 0; i < normals.size(); ++i )
+		{
+			float length = ( float ) Math.sqrt( normals.get( i )[ 0 ] * normals.get( i )[ 0 ] + normals.get( i )[ 1 ] * normals.get( i )[ 1 ] + normals.get( i )[ 2 ] * normals.get( i )[ 2 ] );
+			normals.set( i, new float[] {normals.get( i )[0] / length, normals.get( i )[1] / length, normals.get( i )[2] / length} );
+		}
+	}
+	
+	public ArrayList< float[] > getNormals()
+	{
+		return normals;
 	}
 }
