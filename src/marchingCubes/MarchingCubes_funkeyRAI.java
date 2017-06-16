@@ -4,8 +4,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.Vector;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import bdv.labels.labelset.Label;
 import bdv.labels.labelset.LabelMultisetType;
@@ -24,9 +22,6 @@ import viewer.Mesh;
  */
 public class MarchingCubes_funkeyRAI
 {
-	/** Log */
-	private static final Logger LOGGER = Logger.getLogger( MarchingCubes_funkeyRAI.class.getName() );
-
 	/** List of Point3ds which form the isosurface. */
 	private HashMap< Long, Point3dId > id2Point3dId = new HashMap< Long, Point3dId >();
 
@@ -248,102 +243,102 @@ public class MarchingCubes_funkeyRAI
 			{
 				if ( ( MarchingCubesTables.MC_EDGE_TABLE[ tableIndex ] & 8 ) != 0 )
 				{
-//							LOGGER.log( Level.FINEST, "x: " + x + " y " + y + " z " + z );
+//							System.out.println( "x: " + x + " y " + y + " z " + z );
 					Point3dId pt = calculateIntersection( cursorX, cursorY, cursorZ, 3, vertex_values[ 3 ], vertex_values[ 0 ] );
 					long id = getEdgeId( cursorX, cursorY, cursorZ, 3 );
-					LOGGER.log( Level.FINEST, " adding point with id: " + id );
+					//System.out.println( " adding point with id: " + id );
 					id2Point3dId.put( id, pt );
 				}
 				if ( ( MarchingCubesTables.MC_EDGE_TABLE[ tableIndex ] & 1 ) != 0 )
 				{
-//							LOGGER.log( Level.FINEST, "x: " + x + " y " + y + " z " + z );
+//							System.out.println( "x: " + x + " y " + y + " z " + z );
 					Point3dId pt = calculateIntersection( cursorX, cursorY, cursorZ, 0, vertex_values[ 0 ], vertex_values[ 1 ] );
 					long id = getEdgeId( cursorX, cursorY, cursorZ, 0 );
-					LOGGER.log( Level.FINEST, " adding point with id: " + id );
+					//System.out.println( " adding point with id: " + id );
 					id2Point3dId.put( id, pt );
 				}
 				if ( ( MarchingCubesTables.MC_EDGE_TABLE[ tableIndex ] & 256 ) != 0 )
 				{
-//							LOGGER.log( Level.FINEST, "x: " + x + " y " + y + " z " + z );
+//							System.out.println( "x: " + x + " y " + y + " z " + z );
 					Point3dId pt = calculateIntersection( cursorX, cursorY, cursorZ, 8, vertex_values[ 0 ], vertex_values[ 4 ] );
 					long id = getEdgeId( cursorX, cursorY, cursorZ, 8 );
-//							LOGGER.log( Level.FINEST, " adding point with id: " + id );
+//							System.out.println( " adding point with id: " + id );
 					id2Point3dId.put( id, pt );
 				}
 				if ( ( MarchingCubesTables.MC_EDGE_TABLE[ tableIndex ] & 4 ) != 0 )
 				{
-//								LOGGER.log( Level.FINEST, "x: " + x + " y " + y + " z " + z );
+//								System.out.println( "x: " + x + " y " + y + " z " + z );
 					Point3dId pt = calculateIntersection( cursorX, cursorY, cursorZ, 2, vertex_values[ 2 ], vertex_values[ 3 ] );
 					long id = getEdgeId( cursorX, cursorY, cursorZ, 2 );
-//								LOGGER.log( Level.FINEST, " adding point with id: " + id );
+//								System.out.println( " adding point with id: " + id );
 					id2Point3dId.put( id, pt );
 				}
 				if ( ( MarchingCubesTables.MC_EDGE_TABLE[ tableIndex ] & 2048 ) != 0 )
 				{
-//								LOGGER.log( Level.FINEST, "x: " + x + " y " + y + " z " + z );
+//								System.out.println( "x: " + x + " y " + y + " z " + z );
 					Point3dId pt = calculateIntersection( cursorX, cursorY, cursorZ, 11, vertex_values[ 3 ], vertex_values[ 7 ] );
 					long id = getEdgeId( cursorX, cursorY, cursorZ, 11 );
-					LOGGER.log( Level.FINEST, " adding point with id: " + id );
+					//System.out.println( " adding point with id: " + id );
 					id2Point3dId.put( id, pt );
 				}
 				if ( ( MarchingCubesTables.MC_EDGE_TABLE[ tableIndex ] & 2 ) != 0 )
 				{
-//								LOGGER.log( Level.FINEST, "x: " + x + " y " + y + " z " + z );
+//								System.out.println( "x: " + x + " y " + y + " z " + z );
 					Point3dId pt = calculateIntersection( cursorX, cursorY, cursorZ, 1, vertex_values[ 1 ], vertex_values[ 2 ] );
 					long id = getEdgeId( cursorX, cursorY, cursorZ, 1 );
-					LOGGER.log( Level.FINEST, " adding point with id: " + id );
+					//System.out.println( " adding point with id: " + id );
 					id2Point3dId.put( id, pt );
 				}
 				if ( ( MarchingCubesTables.MC_EDGE_TABLE[ tableIndex ] & 512 ) != 0 )
 				{
-//								LOGGER.log( Level.FINEST, "x: " + x + " y " + y + " z " + z );
+//								System.out.println( "x: " + x + " y " + y + " z " + z );
 					Point3dId pt = calculateIntersection( cursorX, cursorY, cursorZ, 9, vertex_values[ 1 ], vertex_values[ 5 ] );
 					long id = getEdgeId( cursorX, cursorY, cursorZ, 9 );
-					LOGGER.log( Level.FINEST, " adding point with id: " + id );
+					//System.out.println( " adding point with id: " + id );
 					id2Point3dId.put( id, pt );
 				}
 				if ( ( MarchingCubesTables.MC_EDGE_TABLE[ tableIndex ] & 16 ) != 0 )
 				{
-//								LOGGER.log( Level.FINEST, "x: " + x + " y " + y + " z " + z );
+//								System.out.println( "x: " + x + " y " + y + " z " + z );
 					Point3dId pt = calculateIntersection( cursorX, cursorY, cursorZ, 4, vertex_values[ 4 ], vertex_values[ 5 ] );
 					long id = getEdgeId( cursorX, cursorY, cursorZ, 4 );
-					LOGGER.log( Level.FINEST, " adding point with id: " + id );
+					//System.out.println( " adding point with id: " + id );
 					id2Point3dId.put( id, pt );
 				}
 				if ( ( MarchingCubesTables.MC_EDGE_TABLE[ tableIndex ] & 128 ) != 0 )
 				{
-					// LOGGER.log( Level.FINEST, "x: " + x + " y " + y + " z " +
+					// System.out.println( "x: " + x + " y " + y + " z " +
 					// z );
 					Point3dId pt = calculateIntersection( cursorX, cursorY, cursorZ, 7, vertex_values[ 7 ], vertex_values[ 4 ] );
 					long id = getEdgeId( cursorX, cursorY, cursorZ, 7 );
-					LOGGER.log( Level.FINEST, " adding point with id: " + id );
+					//System.out.println( " adding point with id: " + id );
 					id2Point3dId.put( id, pt );
 				}
 				if ( ( MarchingCubesTables.MC_EDGE_TABLE[ tableIndex ] & 1024 ) != 0 )
 				{
-					// LOGGER.log( Level.FINEST, "x: " + x + " y " + y + " z " +
+					// System.out.println( "x: " + x + " y " + y + " z " +
 					// z );
 					Point3dId pt = calculateIntersection( cursorX, cursorY, cursorZ, 10, vertex_values[ 2 ], vertex_values[ 6 ] );
 					long id = getEdgeId( cursorX, cursorY, cursorZ, 10 );
-					LOGGER.log( Level.FINEST, " adding point with id: " + id );
+					//System.out.println( " adding point with id: " + id );
 					id2Point3dId.put( id, pt );
 				}
 				if ( ( MarchingCubesTables.MC_EDGE_TABLE[ tableIndex ] & 64 ) != 0 )
 				{
-					// LOGGER.log( Level.FINEST, "x: " + x + " y " + y + " z " +
+					// System.out.println( "x: " + x + " y " + y + " z " +
 					// z );
 					Point3dId pt = calculateIntersection( cursorX, cursorY, cursorZ, 6, vertex_values[ 6 ], vertex_values[ 7 ] );
 					long id = getEdgeId( cursorX, cursorY, cursorZ, 6 );
-					LOGGER.log( Level.FINEST, " adding point with id: " + id );
+					//System.out.println( " adding point with id: " + id );
 					id2Point3dId.put( id, pt );
 				}
 				if ( ( MarchingCubesTables.MC_EDGE_TABLE[ tableIndex ] & 32 ) != 0 )
 				{
-					// LOGGER.log( Level.FINEST, "x: " + x + " y " + y + " z " +
+					// System.out.println( "x: " + x + " y " + y + " z " +
 					// z );
 					Point3dId pt = calculateIntersection( cursorX, cursorY, cursorZ, 5, vertex_values[ 5 ], vertex_values[ 6 ] );
 					long id = getEdgeId( cursorX, cursorY, cursorZ, 5 );
-					LOGGER.log( Level.FINEST, " adding point with id: " + id );
+					//System.out.println( " adding point with id: " + id );
 					id2Point3dId.put( id, pt );
 				}
 
@@ -354,10 +349,10 @@ public class MarchingCubes_funkeyRAI
 					pointId0 = getEdgeId( cursorX, cursorY, cursorZ, MarchingCubesTables.triTable[ tableIndex ][ i ] );
 					pointId1 = getEdgeId( cursorX, cursorY, cursorZ, MarchingCubesTables.triTable[ tableIndex ][ i + 1 ] );
 					pointId2 = getEdgeId( cursorX, cursorY, cursorZ, MarchingCubesTables.triTable[ tableIndex ][ i + 2 ] );
-					LOGGER.log( Level.FINEST, "value on tritable: " + MarchingCubesTables.triTable[ tableIndex ][ i ] );
-					LOGGER.log( Level.FINEST, "value on tritable: " + MarchingCubesTables.triTable[ tableIndex ][ i + 1 ] );
-					LOGGER.log( Level.FINEST, "value on tritable: " + MarchingCubesTables.triTable[ tableIndex ][ i + 2 ] );
-					LOGGER.log( Level.FINEST, "triangles point id: " + pointId0 + " " + pointId1 + " " + pointId2 );
+					//System.out.println( "value on tritable: " + MarchingCubesTables.triTable[ tableIndex ][ i ] );
+					//System.out.println( "value on tritable: " + MarchingCubesTables.triTable[ tableIndex ][ i + 1 ] );
+					//System.out.println( "value on tritable: " + MarchingCubesTables.triTable[ tableIndex ][ i + 2 ] );
+					//System.out.println( "triangles point id: " + pointId0 + " " + pointId1 + " " + pointId2 );
 					triangle.point[ 0 ] = pointId0;
 					triangle.point[ 1 ] = pointId1;
 					triangle.point[ 2 ] = pointId2;
@@ -390,28 +385,28 @@ public class MarchingCubes_funkeyRAI
 		Iterator< Entry< Long, Point3dId > > mapIterator = id2Point3dId.entrySet().iterator();
 		Iterator< Triangle > vecIterator = triangleVector.iterator();
 
-		LOGGER.log( Level.FINER, "number of ids on map: " + id2Point3dId.size() );
+		//System.out.println( "number of ids on map: " + id2Point3dId.size() );
 
 		// add an id for each point in the map
 		while ( mapIterator.hasNext() )
 		{
 			HashMap.Entry< Long, Point3dId > entry = mapIterator.next();
-			LOGGER.log( Level.FINEST, "key id: " + entry.getKey() );
+			//System.out.println( "key id: " + entry.getKey() );
 			entry.getValue().id = nextId;
 			nextId++;
 		}
 
-		LOGGER.log( Level.FINER, "number of triangles: " + triangleVector.size() );
+		//System.out.println( "number of triangles: " + triangleVector.size() );
 
 		// Now rename triangles.
 		while ( vecIterator.hasNext() )
 		{
 			Triangle next = vecIterator.next();
-			LOGGER.log( Level.FINEST, "getting triangle" );
+			//System.out.println( "getting triangle" );
 			for ( int i = 0; i < 3; i++ )
 			{
-				LOGGER.log( Level.FINEST, "triangle point old id: " + next.point[ i ] );
-				LOGGER.log( Level.FINEST, "id of id - new id: " + id2Point3dId.get( next.point[ i ] ).id );
+				//System.out.println( "triangle point old id: " + next.point[ i ] );
+				//System.out.println( "id of id - new id: " + id2Point3dId.get( next.point[ i ] ).id );
 				long newId = id2Point3dId.get( next.point[ i ] ).id;
 				next.point[ i ] = newId;
 			}
@@ -464,14 +459,16 @@ public class MarchingCubes_funkeyRAI
 		float[][] normals = new float[ vertexCount ][ 3 ];
 
 		// Set all normals to 0.
+		// omp parallel for
 		for ( int i = 0; i < vertexCount; ++i )
 		{
 			normals[ i ][ 0 ] = 0;
 			normals[ i ][ 1 ] = 0;
-			normals[ i ][ 2 ] = 0;
+			normals[ i ][ 2 ] = 1;
 		}
 
 		// Calculate normals.
+		// omp parallel for
 		for ( int i = 0; i < triangleCount; ++i )
 		{
 			float[] vec1 = new float[ 3 ],
@@ -504,6 +501,7 @@ public class MarchingCubes_funkeyRAI
 		}
 
 		// Normalize normals.
+		// omp parallel for
 		for ( int i = 0; i < vertexCount; ++i )
 		{
 			float length = ( float ) Math.sqrt(
@@ -661,8 +659,8 @@ public class MarchingCubes_funkeyRAI
 		// incrase mu -> go to inside
 		// decrease mu -> go to outside
 
-		LOGGER.log( Level.FINEST, "volume dimensions: " + width + " " + height + " " + depth );
-		LOGGER.log( Level.FINEST, "volume max position: " + width * height * depth );
+		//System.out.println( "volume dimensions: " + width + " " + height + " " + depth );
+		//System.out.println( "volume max position: " + width * height * depth );
 		for ( long i = 0; i < 10; i++, delta /= 2.0 )
 		{
 
@@ -670,24 +668,24 @@ public class MarchingCubes_funkeyRAI
 			float diffY = p2.getFloatPosition( 1 ) - p1.getFloatPosition( 1 );
 			float diffZ = p2.getFloatPosition( 2 ) - p1.getFloatPosition( 2 );
 
-			LOGGER.log( Level.FINEST, "diff: " + diffX + " " + diffY + " " + diffZ );
+			//System.out.println( "diff: " + diffX + " " + diffY + " " + diffZ );
 			diffX = diffX * mu;
 			diffY = diffY * mu;
 			diffZ = diffZ * mu;
-			LOGGER.log( Level.FINEST, "mu: " + mu );
-			LOGGER.log( Level.FINEST, "diff * mu: " + diffX + " " + diffY + " " + diffZ );
+			//System.out.println( "mu: " + mu );
+			//System.out.println( "diff * mu: " + diffX + " " + diffY + " " + diffZ );
 
 			diffX = diffX + p1.getFloatPosition( 0 );
 			diffY = diffY + p1.getFloatPosition( 1 );
 			diffZ = diffZ + p1.getFloatPosition( 2 );
 
-			LOGGER.log( Level.FINEST, "diff + p1: " + diffX + " " + diffY + " " + diffZ );
+			//System.out.println( "diff + p1: " + diffX + " " + diffY + " " + diffZ );
 
 			RealPoint diff = new RealPoint( diffX, diffY, diffZ );
 			interpolation = new Point3dId( diff );// p1 + mu*(p2-p1);
 
-			LOGGER.log( Level.FINEST, "interpolation point: " + interpolation.x + " " + interpolation.y + " " + interpolation.z );
-			LOGGER.log( Level.FINEST, "delta: " + delta );
+			//System.out.println( "interpolation point: " + interpolation.x + " " + interpolation.y + " " + interpolation.z );
+			//System.out.println( "delta: " + delta );
 
 			if ( interiorTest( val1 + mu * ( val2 - val1 ) ) )
 				mu -= delta; // go to outside
@@ -759,6 +757,7 @@ public class MarchingCubes_funkeyRAI
 		float[][] vertices = mesh.getVertices();
 		float[][] normals = mesh.getNormals();
 
+		// omp parallel for
 		for ( int i = 0; i < vertexCount; ++i )
 		{
 			vertices[ i ][ 0 ] /= maxAxisVal;
