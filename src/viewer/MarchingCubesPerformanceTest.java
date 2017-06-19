@@ -10,7 +10,7 @@ import bdv.img.h5.H5LabelMultisetSetupImageLoader;
 import bdv.labels.labelset.LabelMultisetType;
 import ch.systemsx.cisd.hdf5.HDF5Factory;
 import ch.systemsx.cisd.hdf5.IHDF5Reader;
-import marchingCubes.MarchingCubes_funkeyRAI;
+import marchingCubes.MarchingCubesRAI;
 import net.imglib2.RandomAccessibleInterval;
 import util.HDF5Reader;
 
@@ -71,7 +71,7 @@ public class MarchingCubesPerformanceTest
 		{
 			isoLevel = i+1;
 			System.out.println( "MarchingCubes - funkey - isolevel " + isoLevel );
-			MarchingCubes_funkeyRAI mc_funkey = new MarchingCubes_funkeyRAI();
+			MarchingCubesRAI mc_funkey = new MarchingCubesRAI();
 
 			begin = new Timestamp( System.currentTimeMillis() );
 			viewer.Mesh m = mc_funkey.generateSurface( volumeLabels, voxDim, volDim, true, isoLevel );

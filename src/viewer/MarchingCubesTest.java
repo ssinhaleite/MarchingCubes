@@ -29,7 +29,7 @@ import graphics.scenery.SceneryDefaultApplication;
 import graphics.scenery.SceneryElement;
 import graphics.scenery.backends.Renderer;
 import marchingCubes.MarchingCubes_ThreeDViewer;
-import marchingCubes.MarchingCubes_funkeyRAI;
+import marchingCubes.MarchingCubesRAI;
 import marchingCubes.MarchingCubes_ilastikRAI;
 import marchingCubes.MarchingCubes_shibbyRAI;
 import net.imagej.ops.geom.geom3d.mesh.DefaultMesh;
@@ -168,7 +168,7 @@ public class MarchingCubesTest
 			// neuron.setGeometryType(GeometryType.POINTS);
 			neuron.setPosition( new GLVector( 0.0f, 0.0f, 0.0f ) );
 
-			marchingCube( "funkey" );
+			marchingCube();
 
 			neuron.setVertices( FloatBuffer.wrap( verticesArray ) );
 			neuron.setNormals( FloatBuffer.wrap( normalsArray ) );
@@ -221,7 +221,7 @@ public class MarchingCubesTest
 							voxDim = new float[] { 5.0f, 5.0f, 5.0f };
 							System.out.println( "updating mesh dist4" );
 							System.out.println( "position before: " + neuron.getPosition() );
-							marchingCube( "funkey" );
+							marchingCube();
 							neuron.setVertices( FloatBuffer.wrap( verticesArray ) );
 							neuron.setNormals( FloatBuffer.wrap( normalsArray ) );
 							neuron.setDirty( true );
@@ -237,7 +237,7 @@ public class MarchingCubesTest
 						{
 							voxDim = new float[] { 1.0f, 1.0f, 1.0f };
 							System.out.println( "updating mesh dist2" );
-							marchingCube( "funkey" );
+							marchingCube();
 							neuron.setVertices( FloatBuffer.wrap( verticesArray ) );
 							neuron.setNormals( FloatBuffer.wrap( normalsArray ) );
 							neuron.setDirty( true );
@@ -251,7 +251,7 @@ public class MarchingCubesTest
 						{
 							voxDim = new float[] { 0.5f, 0.5f, 0.5f };
 							System.out.println( "updating mesh dist1" );
-							marchingCube( "funkey" );
+							marchingCube();
 							neuron.setVertices( FloatBuffer.wrap( verticesArray ) );
 							neuron.setNormals( FloatBuffer.wrap( normalsArray ) );
 							neuron.setDirty( true );
@@ -297,258 +297,98 @@ public class MarchingCubesTest
 //		System.out.println( "readLabels ends" );
 	}
 
-	private void marchingCube( String implementationType )
+	private void marchingCube()
 	{
-		if ( implementationType.equals( "ilastik" ) )
+		MarchingCubesRAI mc_rai = new MarchingCubesRAI();
+
+		begin = new Timestamp( System.currentTimeMillis() );
+		viewer.Mesh m = mc_rai.generateSurface( volumeLabels, voxDim, volDim, true, isoLevel );
+		end = new Timestamp( System.currentTimeMillis() );
+		System.out.println( "time for generating mesh: " + ( end.getTime() - begin.getTime() ) );
+
+		begin = new Timestamp( System.currentTimeMillis() );
+		int numberOfTriangles = m.getNumberOfTriangles();
+
+		verticesArray = new float[ numberOfTriangles * 3 * 3 ];
+		normalsArray = new float[ numberOfTriangles * 3 * 3 ];
+
+		float[][] vertices = m.getVertices();
+		float[][] normals = m.getNormals();
+		int[] triangles = m.getTriangles();
+
+		float[] point0 = new float[ 3 ];
+		float[] point1 = new float[ 3 ];
+		float[] point2 = new float[ 3 ];
+		int v = 0, n = 0;
+		for ( int i = 0; i < numberOfTriangles; i++ )
 		{
-			System.out.println( "MarchingCubes - IlastikRAI" );
-			MarchingCubes_ilastikRAI mc_ilastik = new MarchingCubes_ilastikRAI();
+			long id0 = triangles[ i * 3 ];
+			long id1 = triangles[ i * 3 + 1 ];
+			long id2 = triangles[ i * 3 + 2 ];
 
-			begin = new Timestamp( System.currentTimeMillis() );
-			viewer.Mesh m = null;
-			try
-			{
-				m = mc_ilastik.march( volumeLabels, volDim[ 0 ], volDim[ 1 ], volDim[ 2 ], isoLevel );
-			}
-			catch ( FileNotFoundException e )
-			{
-				e.printStackTrace();
-			}
-			end = new Timestamp( System.currentTimeMillis() );
-			System.out.println( "time for generating mesh: " + ( end.getTime() - begin.getTime() ) );
+			point0 = vertices[ ( int ) id0 ];
+			point1 = vertices[ ( int ) id1 ];
+			point2 = vertices[ ( int ) id2 ];
 
-			begin = new Timestamp( System.currentTimeMillis() );
-			int numberOfTriangles = m.getNumberOfTriangles();
+			verticesArray[ v++ ] = point0[ 0 ];
+			if ( verticesArray[ v - 1 ] < smallx )
+				smallx = verticesArray[ v - 1 ];
+			if ( verticesArray[ v - 1 ] > bigx )
+				bigx = verticesArray[ v - 1 ];
 
-			verticesArray = new float[ numberOfTriangles * 3 * 3 ];
-			normalsArray = new float[ numberOfTriangles * 3 * 3 ];
+			verticesArray[ v++ ] = point0[ 1 ];
+			if ( verticesArray[ v - 1 ] < smally )
+				smally = verticesArray[ v - 1 ];
+			if ( verticesArray[ v - 1 ] > bigy )
+				bigy = verticesArray[ v - 1 ];
 
-			float[][] vertices = m.getVertices();
-			float[][] normals = m.getNormals();
-			int[] triangles = m.getTriangles();
+			verticesArray[ v++ ] = point0[ 2 ];
 
-			float[] point0 = new float[ 3 ];
-			float[] point1 = new float[ 3 ];
-			float[] point2 = new float[ 3 ];
-			int v = 0, n = 0;
-			for ( int i = 0; i < numberOfTriangles; i++ )
-			{
-				long id0 = triangles[ i * 3 ];
-				long id1 = triangles[ i * 3 + 1 ];
-				long id2 = triangles[ i * 3 + 2 ];
+			verticesArray[ v++ ] = point1[ 0 ];
+			if ( verticesArray[ v - 1 ] < smallx )
+				smallx = verticesArray[ v - 1 ];
+			if ( verticesArray[ v - 1 ] > bigx )
+				bigx = verticesArray[ v - 1 ];
 
-				point0 = vertices[ ( int ) id0 ];
-				point1 = vertices[ ( int ) id1 ];
-				point2 = vertices[ ( int ) id2 ];
+			verticesArray[ v++ ] = point1[ 1 ];
+			if ( verticesArray[ v - 1 ] < smally )
+				smally = verticesArray[ v - 1 ];
+			if ( verticesArray[ v - 1 ] > bigy )
+				bigy = verticesArray[ v - 1 ];
 
-				verticesArray[ v++ ] = point0[ 0 ] / 500;
-				verticesArray[ v++ ] = point0[ 1 ] / 500;
-				verticesArray[ v++ ] = point0[ 2 ] / 500;
-				verticesArray[ v++ ] = point1[ 0 ] / 500;
-				verticesArray[ v++ ] = point1[ 1 ] / 500;
-				verticesArray[ v++ ] = point1[ 2 ] / 500;
-				verticesArray[ v++ ] = point2[ 0 ] / 500;
-				verticesArray[ v++ ] = point2[ 1 ] / 500;
-				verticesArray[ v++ ] = point2[ 2 ] / 500;
+			verticesArray[ v++ ] = point1[ 2 ];
 
-				point0 = normals[ ( int ) id0 ];
-				point1 = normals[ ( int ) id1 ];
-				point2 = normals[ ( int ) id2 ];
+			verticesArray[ v++ ] = point2[ 0 ];
+			if ( verticesArray[ v - 1 ] < smallx )
+				smallx = verticesArray[ v - 1 ];
+			if ( verticesArray[ v - 1 ] > bigx )
+				bigx = verticesArray[ v - 1 ];
 
-				normalsArray[ n++ ] = point0[ 0 ] / 500;
-				normalsArray[ n++ ] = point0[ 1 ] / 500;
-				normalsArray[ n++ ] = point0[ 2 ] / 500;
-				normalsArray[ n++ ] = point1[ 0 ] / 500;
-				normalsArray[ n++ ] = point1[ 1 ] / 500;
-				normalsArray[ n++ ] = point1[ 2 ] / 500;
-				normalsArray[ n++ ] = point2[ 0 ] / 500;
-				normalsArray[ n++ ] = point2[ 1 ] / 500;
-				normalsArray[ n++ ] = point2[ 2 ] / 500;
-			}
-			end = new Timestamp( System.currentTimeMillis() );
-			System.out.println( "time for generating arrays: " + ( end.getTime() - begin.getTime() ) );
+			verticesArray[ v++ ] = point2[ 1 ];
+			if ( verticesArray[ v - 1 ] < smally )
+				smally = verticesArray[ v - 1 ];
+			if ( verticesArray[ v - 1 ] > bigy )
+				bigy = verticesArray[ v - 1 ];
 
-			System.out.println( "number of vertices and normals: " + numberOfTriangles * 3 * 3 );
+			verticesArray[ v++ ] = point2[ 2 ];
 
+			point0 = normals[ ( int ) id0 ];
+			point1 = normals[ ( int ) id1 ];
+			point2 = normals[ ( int ) id2 ];
+
+			normalsArray[ n++ ] = point0[ 0 ];
+			normalsArray[ n++ ] = point0[ 1 ];
+			normalsArray[ n++ ] = point0[ 2 ];
+			normalsArray[ n++ ] = point1[ 0 ];
+			normalsArray[ n++ ] = point1[ 1 ];
+			normalsArray[ n++ ] = point1[ 2 ];
+			normalsArray[ n++ ] = point2[ 0 ];
+			normalsArray[ n++ ] = point2[ 1 ];
+			normalsArray[ n++ ] = point2[ 2 ];
 		}
-		else if ( implementationType.equals( "shibby" ) )
-		{
-			System.out.println( "MarchingCubes - shibbyRAI" );
-			MarchingCubes_shibbyRAI mc_shibby = new MarchingCubes_shibbyRAI();
-			int offset = 0;
-			begin = new Timestamp( System.currentTimeMillis() );
-			ArrayList< float[] > output = mc_shibby.marchingCubes( volumeLabels, volDim, voxDim, isoLevel, offset );
-			end = new Timestamp( System.currentTimeMillis() );
-			System.out.println( "time for generating mesh: " + ( end.getTime() - begin.getTime() ) );
 
-			begin = new Timestamp( System.currentTimeMillis() );
-			verticesArray = new float[ output.size() * 3 ];
-			int i = 0;
-			for ( float[] floatV : output )
-			{
-				for ( float f : floatV )
-				{
-					verticesArray[ i++ ] = f;
-					System.out.println( "vertice value: " + f );
-				}
-			}
-
-			normalsArray = new float[ mc_shibby.getNormals().size() * 3 ];
-			i = 0;
-			for ( float[] floatV : mc_shibby.getNormals() )
-			{
-				for ( float f : floatV )
-				{
-					normalsArray[ i++ ] = f;
-				}
-			}
-
-			end = new Timestamp( System.currentTimeMillis() );
-			System.out.println( "time for generating arrays: " + ( end.getTime() - begin.getTime() ) );
-
-			System.out.println( "number of vertices and normals: " + output.size() * 3 );
-		}
-		else if ( implementationType.equals( "threeDViewer" ) )
-		{
-			System.out.println( "MarchingCubes - ThreeDViewer" );
-			MarchingCubes_ThreeDViewer mc_threeDViewer = new MarchingCubes_ThreeDViewer();
-
-			begin = new Timestamp( System.currentTimeMillis() );
-			DefaultMesh m = mc_threeDViewer.calculate( volumeLabels, isoLevel );
-			end = new Timestamp( System.currentTimeMillis() );
-			System.out.println( "time for generating mesh: " + ( end.getTime() - begin.getTime() ) );
-
-			begin = new Timestamp( System.currentTimeMillis() );
-			System.out.println( "Converting mesh to scenery mesh..." );
-
-			List< Facet > facets = m.getFacets();
-			verticesArray = new float[ facets.size() * 3 * 3 ];
-			normalsArray = new float[ facets.size() * 3 * 3 ];
-
-			int count = 0;
-			List< Vertex > vertices;
-			for ( Facet facet : facets )
-			{
-				TriangularFacet tri = ( TriangularFacet ) facet;
-				vertices = tri.getVertices();
-				Vector3D normal = tri.getNormal();
-				for ( Vertex v : vertices )
-				{
-					for ( int d = 0; d < 3; d++ )
-					{
-						verticesArray[ count ] = ( float ) v.getDoublePosition( d );
-						if ( d == 0 )
-							normalsArray[ count ] = ( float ) normal.getX();
-						else if ( d == 1 )
-							normalsArray[ count ] = ( float ) normal.getY();
-						else if ( d == 2 )
-							normalsArray[ count ] = ( float ) normal.getZ();
-						count++;
-					}
-				}
-			}
-			end = new Timestamp( System.currentTimeMillis() );
-			System.out.println( "time for generating arrays: " + ( end.getTime() - begin.getTime() ) );
-		}
-		else if ( implementationType.equals( "funkey" ) )
-		{
-			System.out.println( "MarchingCubes - funkey" );
-			MarchingCubes_funkeyRAI mc_funkey = new MarchingCubes_funkeyRAI();
-
-			begin = new Timestamp( System.currentTimeMillis() );
-			viewer.Mesh m = mc_funkey.generateSurface( volumeLabels, voxDim, volDim, true, isoLevel );
-			end = new Timestamp( System.currentTimeMillis() );
-			System.out.println( "time for generating mesh: " + ( end.getTime() - begin.getTime() ) );
-
-			begin = new Timestamp( System.currentTimeMillis() );
-			int numberOfTriangles = m.getNumberOfTriangles();
-
-			verticesArray = new float[ numberOfTriangles * 3 * 3 ];
-			normalsArray = new float[ numberOfTriangles * 3 * 3 ];
-
-			float[][] vertices = m.getVertices();
-			float[][] normals = m.getNormals();
-			int[] triangles = m.getTriangles();
-
-			float[] point0 = new float[ 3 ];
-			float[] point1 = new float[ 3 ];
-			float[] point2 = new float[ 3 ];
-			int v = 0, n = 0;
-			for ( int i = 0; i < numberOfTriangles; i++ )
-			{
-				long id0 = triangles[ i * 3 ];
-				long id1 = triangles[ i * 3 + 1 ];
-				long id2 = triangles[ i * 3 + 2 ];
-
-				point0 = vertices[ ( int ) id0 ];
-				point1 = vertices[ ( int ) id1 ];
-				point2 = vertices[ ( int ) id2 ];
-
-				verticesArray[ v++ ] = point0[ 0 ];
-				if ( verticesArray[ v - 1 ] < smallx )
-					smallx = verticesArray[ v - 1 ];
-				if ( verticesArray[ v - 1 ] > bigx )
-					bigx = verticesArray[ v - 1 ];
-				verticesArray[ v++ ] = point0[ 1 ];
-				if ( verticesArray[ v - 1 ] < smally )
-					smally = verticesArray[ v - 1 ];
-				if ( verticesArray[ v - 1 ] > bigy )
-					bigy = verticesArray[ v - 1 ];
-				verticesArray[ v++ ] = point0[ 2 ];
-				if ( verticesArray[ v - 1 ] < smallz )
-					smallz = verticesArray[ v - 1 ];
-				if ( verticesArray[ v - 1 ] > bigz )
-					bigz = verticesArray[ v - 1 ];
-				verticesArray[ v++ ] = point1[ 0 ];
-				if ( verticesArray[ v - 1 ] < smallx )
-					smallx = verticesArray[ v - 1 ];
-				if ( verticesArray[ v - 1 ] > bigx )
-					bigx = verticesArray[ v - 1 ];
-				verticesArray[ v++ ] = point1[ 1 ];
-				if ( verticesArray[ v - 1 ] < smally )
-					smally = verticesArray[ v - 1 ];
-				if ( verticesArray[ v - 1 ] > bigy )
-					bigy = verticesArray[ v - 1 ];
-				verticesArray[ v++ ] = point1[ 2 ];
-				if ( verticesArray[ v - 1 ] < smallz )
-					smallz = verticesArray[ v - 1 ];
-				if ( verticesArray[ v - 1 ] > bigz )
-					bigz = verticesArray[ v - 1 ];
-				verticesArray[ v++ ] = point2[ 0 ];
-				if ( verticesArray[ v - 1 ] < smallx )
-					smallx = verticesArray[ v - 1 ];
-				if ( verticesArray[ v - 1 ] > bigx )
-					bigx = verticesArray[ v - 1 ];
-				verticesArray[ v++ ] = point2[ 1 ];
-				if ( verticesArray[ v - 1 ] < smally )
-					smally = verticesArray[ v - 1 ];
-				if ( verticesArray[ v - 1 ] > bigy )
-					bigy = verticesArray[ v - 1 ];
-				verticesArray[ v++ ] = point2[ 2 ];
-				if ( verticesArray[ v - 1 ] < smallz )
-					smallz = verticesArray[ v - 1 ];
-				if ( verticesArray[ v - 1 ] > bigz )
-					bigz = verticesArray[ v - 1 ];
-
-				point0 = normals[ ( int ) id0 ];
-				point1 = normals[ ( int ) id1 ];
-				point2 = normals[ ( int ) id2 ];
-
-				normalsArray[ n++ ] = point0[ 0 ];
-				normalsArray[ n++ ] = point0[ 1 ];
-				normalsArray[ n++ ] = point0[ 2 ];
-				normalsArray[ n++ ] = point1[ 0 ];
-				normalsArray[ n++ ] = point1[ 1 ];
-				normalsArray[ n++ ] = point1[ 2 ];
-				normalsArray[ n++ ] = point2[ 0 ];
-				normalsArray[ n++ ] = point2[ 1 ];
-				normalsArray[ n++ ] = point2[ 2 ];
-			}
-			System.out.println( "-------------small vertice is: " + smallx + ":" + smally + ":" + smallz );
-
-			end = new Timestamp( System.currentTimeMillis() );
-			System.out.println( "time for generating arrays: " + ( end.getTime() - begin.getTime() ) );
-			System.out.println( "number of vertices and normals: " + numberOfTriangles * 3 * 3 );
-		}
+		end = new Timestamp( System.currentTimeMillis() );
+		System.out.println( "time for generating arrays: " + ( end.getTime() - begin.getTime() ) );
+		System.out.println( "number of vertices and normals: " + numberOfTriangles * 3 * 3 );
 	}
 }

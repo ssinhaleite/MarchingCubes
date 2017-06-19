@@ -351,3 +351,41 @@ public class MarchingCubes_shibbyRAI
 		return normals;
 	}
 }
+
+//else if ( implementationType.equals( "shibby" ) )
+//{
+//	System.out.println( "MarchingCubes - shibbyRAI" );
+//	MarchingCubes_shibbyRAI mc_shibby = new MarchingCubes_shibbyRAI();
+//	int offset = 0;
+//	begin = new Timestamp( System.currentTimeMillis() );
+//	ArrayList< float[] > output = mc_shibby.marchingCubes( volumeLabels, volDim, voxDim, isoLevel, offset );
+//	end = new Timestamp( System.currentTimeMillis() );
+//	System.out.println( "time for generating mesh: " + ( end.getTime() - begin.getTime() ) );
+//
+//	begin = new Timestamp( System.currentTimeMillis() );
+//	verticesArray = new float[ output.size() * 3 ];
+//	int i = 0;
+//	for ( float[] floatV : output )
+//	{
+//		for ( float f : floatV )
+//		{
+//			verticesArray[ i++ ] = f;
+//			System.out.println( "vertice value: " + f );
+//		}
+//	}
+//
+//	normalsArray = new float[ mc_shibby.getNormals().size() * 3 ];
+//	i = 0;
+//	for ( float[] floatV : mc_shibby.getNormals() )
+//	{
+//		for ( float f : floatV )
+//		{
+//			normalsArray[ i++ ] = f;
+//		}
+//	}
+//
+//	end = new Timestamp( System.currentTimeMillis() );
+//	System.out.println( "time for generating arrays: " + ( end.getTime() - begin.getTime() ) );
+//
+//	System.out.println( "number of vertices and normals: " + output.size() * 3 );
+//}

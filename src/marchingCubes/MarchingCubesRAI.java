@@ -1,8 +1,10 @@
 package marchingCubes;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.Vector;
 
 import bdv.labels.labelset.Label;
@@ -20,7 +22,7 @@ import viewer.Mesh;
  * MarchingCubes from
  * https://github.com/funkey/sg_gui/blob/master/MarchingCubes.h
  */
-public class MarchingCubes_funkeyRAI
+public class MarchingCubesRAI
 {
 	/** List of Point3ds which form the isosurface. */
 	private HashMap< Long, Point3dId > id2Point3dId = new HashMap< Long, Point3dId >();
@@ -77,7 +79,7 @@ public class MarchingCubes_funkeyRAI
 		private long[] point = new long[ 3 ];
 	}
 
-	public MarchingCubes_funkeyRAI()
+	public MarchingCubesRAI()
 	{
 		nCellsX = 0;
 		nCellsY = 0;
@@ -756,7 +758,7 @@ public class MarchingCubes_funkeyRAI
 		int vertexCount = mesh.getNumberOfVertices();
 		float[][] vertices = mesh.getVertices();
 		float[][] normals = mesh.getNormals();
-
+		
 		// omp parallel for
 		for ( int i = 0; i < vertexCount; ++i )
 		{

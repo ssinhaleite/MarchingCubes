@@ -1,11 +1,16 @@
 package marchingCubes;
 
+import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.commons.math3.geometry.euclidean.threed.Vector3D;
 
 import bdv.labels.labelset.Label;
 import bdv.labels.labelset.LabelMultisetType;
 import bdv.labels.labelset.Multiset;
 import net.imagej.ops.geom.geom3d.mesh.DefaultMesh;
+import net.imagej.ops.geom.geom3d.mesh.Facet;
 import net.imagej.ops.geom.geom3d.mesh.TriangularFacet;
 import net.imagej.ops.geom.geom3d.mesh.Vertex;
 import net.imglib2.Cursor;
@@ -311,3 +316,46 @@ public class MarchingCubes_ThreeDViewer
 	}
 
 }
+
+//else if ( implementationType.equals( "threeDViewer" ) )
+//{
+//	System.out.println( "MarchingCubes - ThreeDViewer" );
+//	MarchingCubes_ThreeDViewer mc_threeDViewer = new MarchingCubes_ThreeDViewer();
+//
+//	begin = new Timestamp( System.currentTimeMillis() );
+//	DefaultMesh m = mc_threeDViewer.calculate( volumeLabels, isoLevel );
+//	end = new Timestamp( System.currentTimeMillis() );
+//	System.out.println( "time for generating mesh: " + ( end.getTime() - begin.getTime() ) );
+//
+//	begin = new Timestamp( System.currentTimeMillis() );
+//	System.out.println( "Converting mesh to scenery mesh..." );
+//
+//	List< Facet > facets = m.getFacets();
+//	verticesArray = new float[ facets.size() * 3 * 3 ];
+//	normalsArray = new float[ facets.size() * 3 * 3 ];
+//
+//	int count = 0;
+//	List< Vertex > vertices;
+//	for ( Facet facet : facets )
+//	{
+//		TriangularFacet tri = ( TriangularFacet ) facet;
+//		vertices = tri.getVertices();
+//		Vector3D normal = tri.getNormal();
+//		for ( Vertex v : vertices )
+//		{
+//			for ( int d = 0; d < 3; d++ )
+//			{
+//				verticesArray[ count ] = ( float ) v.getDoublePosition( d );
+//				if ( d == 0 )
+//					normalsArray[ count ] = ( float ) normal.getX();
+//				else if ( d == 1 )
+//					normalsArray[ count ] = ( float ) normal.getY();
+//				else if ( d == 2 )
+//					normalsArray[ count ] = ( float ) normal.getZ();
+//				count++;
+//			}
+//		}
+//	}
+//	end = new Timestamp( System.currentTimeMillis() );
+//	System.out.println( "time for generating arrays: " + ( end.getTime() - begin.getTime() ) );
+//}

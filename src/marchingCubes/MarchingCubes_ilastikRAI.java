@@ -3,6 +3,7 @@ package marchingCubes;
 
 import java.io.FileNotFoundException;
 import java.io.PrintStream;
+import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map.Entry;
@@ -634,3 +635,76 @@ public class MarchingCubes_ilastikRAI
 		return vv;
 	}
 }
+
+//if ( implementationType.equals( "ilastik" ) )
+//{
+//	System.out.println( "MarchingCubes - IlastikRAI" );
+//	MarchingCubes_ilastikRAI mc_ilastik = new MarchingCubes_ilastikRAI();
+//
+//	begin = new Timestamp( System.currentTimeMillis() );
+//	viewer.Mesh m = null;
+//	try
+//	{
+//		m = mc_ilastik.march( volumeLabels, volDim[ 0 ], volDim[ 1 ], volDim[ 2 ], isoLevel );
+//	}
+//	catch ( FileNotFoundException e )
+//	{
+//		e.printStackTrace();
+//	}
+//	end = new Timestamp( System.currentTimeMillis() );
+//	System.out.println( "time for generating mesh: " + ( end.getTime() - begin.getTime() ) );
+//
+//	begin = new Timestamp( System.currentTimeMillis() );
+//	int numberOfTriangles = m.getNumberOfTriangles();
+//
+//	verticesArray = new float[ numberOfTriangles * 3 * 3 ];
+//	normalsArray = new float[ numberOfTriangles * 3 * 3 ];
+//
+//	float[][] vertices = m.getVertices();
+//	float[][] normals = m.getNormals();
+//	int[] triangles = m.getTriangles();
+//
+//	float[] point0 = new float[ 3 ];
+//	float[] point1 = new float[ 3 ];
+//	float[] point2 = new float[ 3 ];
+//	int v = 0, n = 0;
+//	for ( int i = 0; i < numberOfTriangles; i++ )
+//	{
+//		long id0 = triangles[ i * 3 ];
+//		long id1 = triangles[ i * 3 + 1 ];
+//		long id2 = triangles[ i * 3 + 2 ];
+//
+//		point0 = vertices[ ( int ) id0 ];
+//		point1 = vertices[ ( int ) id1 ];
+//		point2 = vertices[ ( int ) id2 ];
+//
+//		verticesArray[ v++ ] = point0[ 0 ] / 500;
+//		verticesArray[ v++ ] = point0[ 1 ] / 500;
+//		verticesArray[ v++ ] = point0[ 2 ] / 500;
+//		verticesArray[ v++ ] = point1[ 0 ] / 500;
+//		verticesArray[ v++ ] = point1[ 1 ] / 500;
+//		verticesArray[ v++ ] = point1[ 2 ] / 500;
+//		verticesArray[ v++ ] = point2[ 0 ] / 500;
+//		verticesArray[ v++ ] = point2[ 1 ] / 500;
+//		verticesArray[ v++ ] = point2[ 2 ] / 500;
+//
+//		point0 = normals[ ( int ) id0 ];
+//		point1 = normals[ ( int ) id1 ];
+//		point2 = normals[ ( int ) id2 ];
+//
+//		normalsArray[ n++ ] = point0[ 0 ] / 500;
+//		normalsArray[ n++ ] = point0[ 1 ] / 500;
+//		normalsArray[ n++ ] = point0[ 2 ] / 500;
+//		normalsArray[ n++ ] = point1[ 0 ] / 500;
+//		normalsArray[ n++ ] = point1[ 1 ] / 500;
+//		normalsArray[ n++ ] = point1[ 2 ] / 500;
+//		normalsArray[ n++ ] = point2[ 0 ] / 500;
+//		normalsArray[ n++ ] = point2[ 1 ] / 500;
+//		normalsArray[ n++ ] = point2[ 2 ] / 500;
+//	}
+//	end = new Timestamp( System.currentTimeMillis() );
+//	System.out.println( "time for generating arrays: " + ( end.getTime() - begin.getTime() ) );
+//
+//	System.out.println( "number of vertices and normals: " + numberOfTriangles * 3 * 3 );
+//
+//}
