@@ -21,6 +21,7 @@ import ch.systemsx.cisd.hdf5.IHDF5Reader;
 import cleargl.GLVector;
 import graphics.scenery.Camera;
 import graphics.scenery.DetachedHeadCamera;
+import graphics.scenery.GeometryType;
 import graphics.scenery.Material;
 import graphics.scenery.Mesh;
 import graphics.scenery.PointLight;
@@ -73,8 +74,8 @@ public class MarchingCubesTest
 	// static String path = "data/sample_B.augmented.0.hdf";
 	static String path_label = "/volumes/labels/neuron_ids";
 
-	// float[] voxDim = {10f, 10f, 10f};
-	float[] voxDim = { 0.5f, 0.5f, 0.5f };
+	float[] voxDim = { 10f, 10f, 10f };
+//	float[] voxDim = { 0.5f, 0.5f, 0.5f };
 
 	// static String path_label = "/volumes/labels/small_neuron_ids";
 	// int isoLevel = 2;
@@ -83,6 +84,18 @@ public class MarchingCubesTest
 	int isoLevel = 7;
 
 	int[] volDim = { 500, 500, 5 };
+
+	float smallx = 0.0f;
+
+	float smally = 0.0f;
+
+	float smallz = 0.0f;
+
+	float bigx = 0.0f;
+
+	float bigy = 0.0f;
+
+	float bigz = 0.0f;
 
 	// int isoLevel = 73396;
 	// int isoLevel = 1854;
@@ -148,10 +161,12 @@ public class MarchingCubesTest
 			material.setAmbient( new GLVector( 0.1f * ( 1 ), 1.0f, 1.0f ) );
 			material.setDiffuse( new GLVector( 0.1f * ( 1 ), 0.0f, 1.0f ) );
 			material.setSpecular( new GLVector( 0.1f * ( 1 ), 0f, 0f ) );
+			// material.setDoubleSided(true);
 
 			Mesh neuron = new Mesh();
 			neuron.setMaterial( material );
-			neuron.setPosition( new GLVector( 0.0f, 0.0f + 0.2f * ( 0 ), 0.0f ) );
+			// neuron.setGeometryType(GeometryType.POINTS);
+			neuron.setPosition( new GLVector( 0.0f, 0.0f, 0.0f ) );
 
 			marchingCube( "funkey" );
 
@@ -168,6 +183,7 @@ public class MarchingCubesTest
 				lights[ i ].setEmissionColor( new GLVector( 1.0f, 1.0f, 1.0f ) );
 				lights[ i ].setIntensity( 100.2f * 5 );
 				lights[ i ].setLinear( 0.0f );
+				// lights[ i ].showLightBox();
 			}
 
 			lights[ 0 ].setPosition( new GLVector( 1.0f, 0f, -1.0f / ( float ) Math.sqrt( 2.0 ) ) );
@@ -179,63 +195,84 @@ public class MarchingCubesTest
 				getScene().addChild( lights[ i ] );
 
 			final Camera cam = new DetachedHeadCamera();
-			cam.setPosition( new GLVector( 0.0f, 0.0f, 5.0f ) );
+			cam.setPosition( new GLVector( ( bigx - smallx ) / 2, ( bigy - smally ) / 2, 5.0f ) );
 
 			cam.perspectiveCamera( 50f, getWindowHeight(), getWindowWidth(), 0.1f, 1000.0f );
 			cam.setActive( true );
 			getScene().addChild( cam );
 
-//			final Thread neuronPositionThread = new Thread()
-//			{
-//				@Override
-//				public void run()
-//				{
-//					while ( true )
-//					{
-//						neuron.setNeedsUpdate( true );
-//
-//						float diff = cam.getPosition().minus( neuron.getPosition() ).magnitude();
-//
-//						if ( diff >= 5 && !( previousDiff >= 5 ) )
-//						{
-//							voxDim = new float[] { 10.0f, 10.0f, 10.0f };
-//							marchingCube( "funkey" );
-//							neuron.setVertices( FloatBuffer.wrap( verticesArray ) );
-//							neuron.setNormals( FloatBuffer.wrap( normalsArray ) );
-//
-//							previousDiff = diff;
-//						}
-//						else if ( diff >= 3 && !( previousDiff >= 3 ) )
-//						{
-//							voxDim = new float[] { 5.0f, 5.0f, 5.0f };
-//							marchingCube( "funkey" );
-//							neuron.setVertices( FloatBuffer.wrap( verticesArray ) );
-//							neuron.setNormals( FloatBuffer.wrap( normalsArray ) );
-//
-//							previousDiff = diff;
-//						}
-//						else if ( diff < 3 && !( previousDiff < 3 ) )
-//						{
-//							voxDim = new float[] { 1.0f, 1.0f, 1.0f };
-//							marchingCube( "funkey" );
-//							neuron.setVertices( FloatBuffer.wrap( verticesArray ) );
-//							neuron.setNormals( FloatBuffer.wrap( normalsArray ) );
-//
-//							previousDiff = diff;
-//						}
-//
-//						try
-//						{
-//							Thread.sleep( 20 );
-//						}
-//						catch ( InterruptedException e )
-//						{
-//							e.printStackTrace();
-//						}
-//					}
-//				}
-//			};
-//			neuronPositionThread.start();
+			final Thread neuronPositionThread = new Thread()
+			{
+				@Override
+				public void run()
+				{
+					boolean dist3 = true;
+					boolean dist2 = false;
+					boolean dist1 = false;
+					while ( true )
+					{
+						neuron.setNeedsUpdate( true );
+
+						float diff = cam.getPosition().minus( neuron.getPosition() ).magnitude();
+						System.out.println( "distance to camera: " + diff );
+						System.out.println( "dists - 4: " + dist3 + " 2: " + dist2 + " 1: " + dist1 );
+						if ( diff < 4 && diff >= 3 && dist3 )
+						{
+							voxDim = new float[] { 5.0f, 5.0f, 5.0f };
+							System.out.println( "updating mesh dist4" );
+							System.out.println( "position before: " + neuron.getPosition() );
+							marchingCube( "funkey" );
+							neuron.setVertices( FloatBuffer.wrap( verticesArray ) );
+							neuron.setNormals( FloatBuffer.wrap( normalsArray ) );
+							neuron.setDirty( true );
+							System.out.println( "position after: " + neuron.getPosition() );
+
+							cam.setPosition( new GLVector( ( bigx - smallx ) / 2, ( bigy - smally ) / 2, diff ) );
+							dist3 = false;
+							dist2 = true;
+							dist1 = true;
+						}
+
+						else if ( diff < 3 && diff >= 2 && dist2 )
+						{
+							voxDim = new float[] { 1.0f, 1.0f, 1.0f };
+							System.out.println( "updating mesh dist2" );
+							marchingCube( "funkey" );
+							neuron.setVertices( FloatBuffer.wrap( verticesArray ) );
+							neuron.setNormals( FloatBuffer.wrap( normalsArray ) );
+							neuron.setDirty( true );
+
+							cam.setPosition( new GLVector( ( bigx - smallx ) / 2, ( bigy - smally ) / 2, diff ) );
+							dist2 = false;
+							dist3 = true;
+							dist1 = true;
+						}
+						else if ( diff < 2 && diff >= 1 && dist1 )
+						{
+							voxDim = new float[] { 0.5f, 0.5f, 0.5f };
+							System.out.println( "updating mesh dist1" );
+							marchingCube( "funkey" );
+							neuron.setVertices( FloatBuffer.wrap( verticesArray ) );
+							neuron.setNormals( FloatBuffer.wrap( normalsArray ) );
+							neuron.setDirty( true );
+							cam.setPosition( new GLVector( ( bigx - smallx ) / 2, ( bigy - smally ) / 2, diff ) );
+							dist1 = false;
+							dist2 = false;
+							dist3 = false;
+						}
+
+						try
+						{
+							Thread.sleep( 20 );
+						}
+						catch ( InterruptedException e )
+						{
+							e.printStackTrace();
+						}
+					}
+				}
+			};
+			neuronPositionThread.start();
 		}
 	}
 
@@ -448,14 +485,50 @@ public class MarchingCubesTest
 				point2 = vertices[ ( int ) id2 ];
 
 				verticesArray[ v++ ] = point0[ 0 ];
+				if ( verticesArray[ v - 1 ] < smallx )
+					smallx = verticesArray[ v - 1 ];
+				if ( verticesArray[ v - 1 ] > bigx )
+					bigx = verticesArray[ v - 1 ];
 				verticesArray[ v++ ] = point0[ 1 ];
+				if ( verticesArray[ v - 1 ] < smally )
+					smally = verticesArray[ v - 1 ];
+				if ( verticesArray[ v - 1 ] > bigy )
+					bigy = verticesArray[ v - 1 ];
 				verticesArray[ v++ ] = point0[ 2 ];
+				if ( verticesArray[ v - 1 ] < smallz )
+					smallz = verticesArray[ v - 1 ];
+				if ( verticesArray[ v - 1 ] > bigz )
+					bigz = verticesArray[ v - 1 ];
 				verticesArray[ v++ ] = point1[ 0 ];
+				if ( verticesArray[ v - 1 ] < smallx )
+					smallx = verticesArray[ v - 1 ];
+				if ( verticesArray[ v - 1 ] > bigx )
+					bigx = verticesArray[ v - 1 ];
 				verticesArray[ v++ ] = point1[ 1 ];
+				if ( verticesArray[ v - 1 ] < smally )
+					smally = verticesArray[ v - 1 ];
+				if ( verticesArray[ v - 1 ] > bigy )
+					bigy = verticesArray[ v - 1 ];
 				verticesArray[ v++ ] = point1[ 2 ];
+				if ( verticesArray[ v - 1 ] < smallz )
+					smallz = verticesArray[ v - 1 ];
+				if ( verticesArray[ v - 1 ] > bigz )
+					bigz = verticesArray[ v - 1 ];
 				verticesArray[ v++ ] = point2[ 0 ];
+				if ( verticesArray[ v - 1 ] < smallx )
+					smallx = verticesArray[ v - 1 ];
+				if ( verticesArray[ v - 1 ] > bigx )
+					bigx = verticesArray[ v - 1 ];
 				verticesArray[ v++ ] = point2[ 1 ];
+				if ( verticesArray[ v - 1 ] < smally )
+					smally = verticesArray[ v - 1 ];
+				if ( verticesArray[ v - 1 ] > bigy )
+					bigy = verticesArray[ v - 1 ];
 				verticesArray[ v++ ] = point2[ 2 ];
+				if ( verticesArray[ v - 1 ] < smallz )
+					smallz = verticesArray[ v - 1 ];
+				if ( verticesArray[ v - 1 ] > bigz )
+					bigz = verticesArray[ v - 1 ];
 
 				point0 = normals[ ( int ) id0 ];
 				point1 = normals[ ( int ) id1 ];
@@ -471,6 +544,8 @@ public class MarchingCubesTest
 				normalsArray[ n++ ] = point2[ 1 ];
 				normalsArray[ n++ ] = point2[ 2 ];
 			}
+			System.out.println( "-------------small vertice is: " + smallx + ":" + smally + ":" + smallz );
+
 			end = new Timestamp( System.currentTimeMillis() );
 			System.out.println( "time for generating arrays: " + ( end.getTime() - begin.getTime() ) );
 			System.out.println( "number of vertices and normals: " + numberOfTriangles * 3 * 3 );
