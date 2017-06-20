@@ -1,5 +1,6 @@
 package marchingCubes;
 
+import java.sql.Timestamp;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -98,18 +99,6 @@ public class MarchingCubesRAI
 	 */
 	public Mesh generateSurface( RandomAccessibleInterval< LabelMultisetType > input, float[] voxDim, int[] volDim, boolean isExact, int level )
 	{
-//		PrintStream fileStream = null;
-//		try
-//		{
-//			fileStream = new PrintStream("filename.txt");
-//		}
-//		catch ( FileNotFoundException e1 )
-//		{
-//			// TODO Auto-generated catch block
-//			e1.printStackTrace();
-//		}
-//		System.setOut( fileStream );
-
 		if ( hasValidSurface )
 			deleteSurface();
 
@@ -128,18 +117,9 @@ public class MarchingCubesRAI
 
 		nCellsX = ( long ) Math.ceil( width / voxDim[ 0 ] ) - 1;
 		nCellsY = ( long ) Math.ceil( height / voxDim[ 1 ] ) - 1;
-//		nCellsZ = ( long ) Math.ceil( depth / voxDim[ 2 ] ) - 1;
-//		cellSizeX = voxDim[ 0 ];
-//		cellSizeY = voxDim[ 1 ];
-//		cellSizeZ = voxDim[ 2 ];
 		acceptExactly = isExact;
 
-		// System.out.println( "creating mesh for " + width + "x" + height + "x"
-		// + depth
-		// + " volume with " + nCellsX + "x" + nCellsY + "x" + nCellsZ + "
-		// cells" );
-
-		// System.out.println( "volume size: " + width * height * depth );
+		Timestamp begin = new Timestamp( System.currentTimeMillis() );
 
 		ExtendedRandomAccessibleInterval< LabelMultisetType, RandomAccessibleInterval< LabelMultisetType > > extended =
 				Views.extendValue( input, new LabelMultisetType() );
@@ -148,9 +128,12 @@ public class MarchingCubesRAI
 						0 ) + 1, input.max( 1 ) + 1, input.max( 2 ) + 1 } ) )
 				.localizingCursor();
 
+		Timestamp end = new Timestamp( System.currentTimeMillis() );
+		System.out.println( "preparing RAI: " + ( end.getTime() - begin.getTime() ) );
+
 		while ( c.hasNext() )
 		{
-//			begin = new Timestamp( System.currentTimeMillis() );
+			begin = new Timestamp( System.currentTimeMillis() );
 			c.next();
 
 			int cursorX = c.getIntPosition( 0 );
@@ -160,8 +143,6 @@ public class MarchingCubesRAI
 			if ( cursorX == -1 || cursorY == -1 || cursorZ == -1 )
 				continue;
 
-			// System.out.println( "x: " + cursorX + " y: " + cursorY + " z: " +
-			// cursorZ );
 			Cursor< LabelMultisetType > cu = getCube( extended, cursorX, cursorY, cursorZ );
 
 			int i = 0;
@@ -170,19 +151,15 @@ public class MarchingCubesRAI
 			{
 				LabelMultisetType it = cu.next();
 
-				// System.out.println( " position vertex: " +
-//						cu.getIntPosition( 0 ) + " " +
-//						cu.getIntPosition( 1 ) + " " +
-//						cu.getIntPosition( 2 ) );
-
 				for ( final Multiset.Entry< Label > e : it.entrySet() )
 				{
 					vertex_values[ i ] = e.getElement().id();
-					// System.out.println( "vertex value: " + vertex_values[ i ]
-					// );
 				}
 				i++;
 			}
+			
+			end = new Timestamp( System.currentTimeMillis() );
+			System.out.println( "getting cube information: " + ( end.getTime() - begin.getTime() ) );
 
 			// @formatter:off
 			// the values from the cube are given first in z, then y, then x
@@ -208,6 +185,7 @@ public class MarchingCubesRAI
 			// This way, we need to remap the cube vertices:
 			// @formatter:on
 
+			begin = new Timestamp( System.currentTimeMillis() );
 			vertex_values = remapCube( vertex_values );
 
 			// Calculate table lookup index from those vertices which are
@@ -221,8 +199,6 @@ public class MarchingCubesRAI
 					tableIndex |= ( int ) Math.pow( 2, i );
 				}
 			}
-
-			// System.out.println( "tableIndex = " + tableIndex );
 
 			// edge indexes:
 			// @formatter:off
@@ -245,102 +221,74 @@ public class MarchingCubesRAI
 			{
 				if ( ( MarchingCubesTables.MC_EDGE_TABLE[ tableIndex ] & 8 ) != 0 )
 				{
-//							System.out.println( "x: " + x + " y " + y + " z " + z );
 					Point3dId pt = calculateIntersection( cursorX, cursorY, cursorZ, 3, vertex_values[ 3 ], vertex_values[ 0 ] );
 					long id = getEdgeId( cursorX, cursorY, cursorZ, 3 );
-					//System.out.println( " adding point with id: " + id );
 					id2Point3dId.put( id, pt );
 				}
 				if ( ( MarchingCubesTables.MC_EDGE_TABLE[ tableIndex ] & 1 ) != 0 )
 				{
-//							System.out.println( "x: " + x + " y " + y + " z " + z );
 					Point3dId pt = calculateIntersection( cursorX, cursorY, cursorZ, 0, vertex_values[ 0 ], vertex_values[ 1 ] );
 					long id = getEdgeId( cursorX, cursorY, cursorZ, 0 );
-					//System.out.println( " adding point with id: " + id );
 					id2Point3dId.put( id, pt );
 				}
 				if ( ( MarchingCubesTables.MC_EDGE_TABLE[ tableIndex ] & 256 ) != 0 )
 				{
-//							System.out.println( "x: " + x + " y " + y + " z " + z );
 					Point3dId pt = calculateIntersection( cursorX, cursorY, cursorZ, 8, vertex_values[ 0 ], vertex_values[ 4 ] );
 					long id = getEdgeId( cursorX, cursorY, cursorZ, 8 );
-//							System.out.println( " adding point with id: " + id );
 					id2Point3dId.put( id, pt );
 				}
 				if ( ( MarchingCubesTables.MC_EDGE_TABLE[ tableIndex ] & 4 ) != 0 )
 				{
-//								System.out.println( "x: " + x + " y " + y + " z " + z );
 					Point3dId pt = calculateIntersection( cursorX, cursorY, cursorZ, 2, vertex_values[ 2 ], vertex_values[ 3 ] );
 					long id = getEdgeId( cursorX, cursorY, cursorZ, 2 );
-//								System.out.println( " adding point with id: " + id );
 					id2Point3dId.put( id, pt );
 				}
 				if ( ( MarchingCubesTables.MC_EDGE_TABLE[ tableIndex ] & 2048 ) != 0 )
 				{
-//								System.out.println( "x: " + x + " y " + y + " z " + z );
 					Point3dId pt = calculateIntersection( cursorX, cursorY, cursorZ, 11, vertex_values[ 3 ], vertex_values[ 7 ] );
 					long id = getEdgeId( cursorX, cursorY, cursorZ, 11 );
-					//System.out.println( " adding point with id: " + id );
 					id2Point3dId.put( id, pt );
 				}
 				if ( ( MarchingCubesTables.MC_EDGE_TABLE[ tableIndex ] & 2 ) != 0 )
 				{
-//								System.out.println( "x: " + x + " y " + y + " z " + z );
 					Point3dId pt = calculateIntersection( cursorX, cursorY, cursorZ, 1, vertex_values[ 1 ], vertex_values[ 2 ] );
 					long id = getEdgeId( cursorX, cursorY, cursorZ, 1 );
-					//System.out.println( " adding point with id: " + id );
 					id2Point3dId.put( id, pt );
 				}
 				if ( ( MarchingCubesTables.MC_EDGE_TABLE[ tableIndex ] & 512 ) != 0 )
 				{
-//								System.out.println( "x: " + x + " y " + y + " z " + z );
 					Point3dId pt = calculateIntersection( cursorX, cursorY, cursorZ, 9, vertex_values[ 1 ], vertex_values[ 5 ] );
 					long id = getEdgeId( cursorX, cursorY, cursorZ, 9 );
-					//System.out.println( " adding point with id: " + id );
 					id2Point3dId.put( id, pt );
 				}
 				if ( ( MarchingCubesTables.MC_EDGE_TABLE[ tableIndex ] & 16 ) != 0 )
 				{
-//								System.out.println( "x: " + x + " y " + y + " z " + z );
 					Point3dId pt = calculateIntersection( cursorX, cursorY, cursorZ, 4, vertex_values[ 4 ], vertex_values[ 5 ] );
 					long id = getEdgeId( cursorX, cursorY, cursorZ, 4 );
-					//System.out.println( " adding point with id: " + id );
 					id2Point3dId.put( id, pt );
 				}
 				if ( ( MarchingCubesTables.MC_EDGE_TABLE[ tableIndex ] & 128 ) != 0 )
 				{
-					// System.out.println( "x: " + x + " y " + y + " z " +
-					// z );
 					Point3dId pt = calculateIntersection( cursorX, cursorY, cursorZ, 7, vertex_values[ 7 ], vertex_values[ 4 ] );
 					long id = getEdgeId( cursorX, cursorY, cursorZ, 7 );
-					//System.out.println( " adding point with id: " + id );
 					id2Point3dId.put( id, pt );
 				}
 				if ( ( MarchingCubesTables.MC_EDGE_TABLE[ tableIndex ] & 1024 ) != 0 )
 				{
-					// System.out.println( "x: " + x + " y " + y + " z " +
-					// z );
 					Point3dId pt = calculateIntersection( cursorX, cursorY, cursorZ, 10, vertex_values[ 2 ], vertex_values[ 6 ] );
 					long id = getEdgeId( cursorX, cursorY, cursorZ, 10 );
-					//System.out.println( " adding point with id: " + id );
 					id2Point3dId.put( id, pt );
 				}
 				if ( ( MarchingCubesTables.MC_EDGE_TABLE[ tableIndex ] & 64 ) != 0 )
 				{
-					// System.out.println( "x: " + x + " y " + y + " z " +
-					// z );
 					Point3dId pt = calculateIntersection( cursorX, cursorY, cursorZ, 6, vertex_values[ 6 ], vertex_values[ 7 ] );
 					long id = getEdgeId( cursorX, cursorY, cursorZ, 6 );
-					//System.out.println( " adding point with id: " + id );
 					id2Point3dId.put( id, pt );
 				}
 				if ( ( MarchingCubesTables.MC_EDGE_TABLE[ tableIndex ] & 32 ) != 0 )
 				{
-					// System.out.println( "x: " + x + " y " + y + " z " +
-					// z );
 					Point3dId pt = calculateIntersection( cursorX, cursorY, cursorZ, 5, vertex_values[ 5 ], vertex_values[ 6 ] );
 					long id = getEdgeId( cursorX, cursorY, cursorZ, 5 );
-					//System.out.println( " adding point with id: " + id );
 					id2Point3dId.put( id, pt );
 				}
 
@@ -351,27 +299,28 @@ public class MarchingCubesRAI
 					pointId0 = getEdgeId( cursorX, cursorY, cursorZ, MarchingCubesTables.triTable[ tableIndex ][ i ] );
 					pointId1 = getEdgeId( cursorX, cursorY, cursorZ, MarchingCubesTables.triTable[ tableIndex ][ i + 1 ] );
 					pointId2 = getEdgeId( cursorX, cursorY, cursorZ, MarchingCubesTables.triTable[ tableIndex ][ i + 2 ] );
-					//System.out.println( "value on tritable: " + MarchingCubesTables.triTable[ tableIndex ][ i ] );
-					//System.out.println( "value on tritable: " + MarchingCubesTables.triTable[ tableIndex ][ i + 1 ] );
-					//System.out.println( "value on tritable: " + MarchingCubesTables.triTable[ tableIndex ][ i + 2 ] );
-					//System.out.println( "triangles point id: " + pointId0 + " " + pointId1 + " " + pointId2 );
 					triangle.point[ 0 ] = pointId0;
 					triangle.point[ 1 ] = pointId1;
 					triangle.point[ 2 ] = pointId2;
 					triangleVector.add( triangle );
 				}
 			}
+			
+			end = new Timestamp( System.currentTimeMillis() );
+			System.out.println( "creating triangles: " + ( end.getTime() - begin.getTime() ) );
 		}
+
+		begin = new Timestamp( System.currentTimeMillis() );
 
 		renameVerticesAndTriangles();
 		calculateNormals();
 		normalizeVerticesAndNormals();
 		hasValidSurface = true;
+		
+		end = new Timestamp( System.currentTimeMillis() );
+		System.out.println( "finalizing mesh: " + ( end.getTime() - begin.getTime() ) );
 
 		return mesh;
-//		}
-//		
-//			return new Mesh();
 	}
 
 	private void deleteSurface()
@@ -386,29 +335,19 @@ public class MarchingCubesRAI
 		long nextId = 0;
 		Iterator< Entry< Long, Point3dId > > mapIterator = id2Point3dId.entrySet().iterator();
 		Iterator< Triangle > vecIterator = triangleVector.iterator();
-
-		//System.out.println( "number of ids on map: " + id2Point3dId.size() );
-
-		// add an id for each point in the map
 		while ( mapIterator.hasNext() )
 		{
 			HashMap.Entry< Long, Point3dId > entry = mapIterator.next();
-			//System.out.println( "key id: " + entry.getKey() );
 			entry.getValue().id = nextId;
 			nextId++;
 		}
-
-		//System.out.println( "number of triangles: " + triangleVector.size() );
 
 		// Now rename triangles.
 		while ( vecIterator.hasNext() )
 		{
 			Triangle next = vecIterator.next();
-			//System.out.println( "getting triangle" );
 			for ( int i = 0; i < 3; i++ )
 			{
-				//System.out.println( "triangle point old id: " + next.point[ i ] );
-				//System.out.println( "id of id - new id: " + id2Point3dId.get( next.point[ i ] ).id );
 				long newId = id2Point3dId.get( next.point[ i ] ).id;
 				next.point[ i ] = newId;
 			}
@@ -419,7 +358,6 @@ public class MarchingCubesRAI
 		// Copy vertices.
 		int numberOfVertices = id2Point3dId.size();
 		mesh.setNumberOfVertices( numberOfVertices );
-		//System.out.println( "created a mesh with " + numberOfVertices + " vertices" );
 
 		mapIterator = id2Point3dId.entrySet().iterator();
 		float[][] vertices = new float[ numberOfVertices ][ 3 ];
@@ -661,8 +599,6 @@ public class MarchingCubesRAI
 		// incrase mu -> go to inside
 		// decrease mu -> go to outside
 
-		//System.out.println( "volume dimensions: " + width + " " + height + " " + depth );
-		//System.out.println( "volume max position: " + width * height * depth );
 		for ( long i = 0; i < 10; i++, delta /= 2.0 )
 		{
 
@@ -670,24 +606,16 @@ public class MarchingCubesRAI
 			float diffY = p2.getFloatPosition( 1 ) - p1.getFloatPosition( 1 );
 			float diffZ = p2.getFloatPosition( 2 ) - p1.getFloatPosition( 2 );
 
-			//System.out.println( "diff: " + diffX + " " + diffY + " " + diffZ );
 			diffX = diffX * mu;
 			diffY = diffY * mu;
 			diffZ = diffZ * mu;
-			//System.out.println( "mu: " + mu );
-			//System.out.println( "diff * mu: " + diffX + " " + diffY + " " + diffZ );
 
 			diffX = diffX + p1.getFloatPosition( 0 );
 			diffY = diffY + p1.getFloatPosition( 1 );
 			diffZ = diffZ + p1.getFloatPosition( 2 );
 
-			//System.out.println( "diff + p1: " + diffX + " " + diffY + " " + diffZ );
-
 			RealPoint diff = new RealPoint( diffX, diffY, diffZ );
 			interpolation = new Point3dId( diff );// p1 + mu*(p2-p1);
-
-			//System.out.println( "interpolation point: " + interpolation.x + " " + interpolation.y + " " + interpolation.z );
-			//System.out.println( "delta: " + delta );
 
 			if ( interiorTest( val1 + mu * ( val2 - val1 ) ) )
 				mu -= delta; // go to outside
@@ -736,9 +664,6 @@ public class MarchingCubesRAI
 		vv[ 5 ] = vertex_values[ 3 ];
 		vv[ 6 ] = vertex_values[ 2 ];
 		vv[ 7 ] = vertex_values[ 0 ];
-
-		//for ( int i = 0; i < 8; i++ )
-			//System.out.println( "new order vertex value: " + vv[ i ] );
 
 		return vv;
 	}
