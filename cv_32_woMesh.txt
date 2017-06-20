@@ -1,0 +1,108 @@
+MarchingCubes isolevel: 1
+complete time for generating mesh: 9044
+time for generating arrays: 0
+number of vertices and normals: 0
+MarchingCubes isolevel: 2
+complete time for generating mesh: 4550
+time for generating arrays: 0
+number of vertices and normals: 0
+MarchingCubes isolevel: 3
+complete time for generating mesh: 4500
+time for generating arrays: 0
+number of vertices and normals: 0
+MarchingCubes isolevel: 4
+complete time for generating mesh: 4507
+time for generating arrays: 0
+number of vertices and normals: 0
+MarchingCubes isolevel: 5
+complete time for generating mesh: 4531
+time for generating arrays: 0
+number of vertices and normals: 0
+MarchingCubes isolevel: 6
+complete time for generating mesh: 4552
+time for generating arrays: 0
+number of vertices and normals: 0
+MarchingCubes isolevel: 7
+complete time for generating mesh: 4751
+time for generating arrays: 0
+number of vertices and normals: 0
+MarchingCubes isolevel: 8
+complete time for generating mesh: 4716
+time for generating arrays: 0
+number of vertices and normals: 0
+MarchingCubes isolevel: 9
+complete time for generating mesh: 4570
+time for generating arrays: 0
+number of vertices and normals: 0
+MarchingCubes isolevel: 10
+complete time for generating mesh: 4550
+time for generating arrays: 0
+number of vertices and normals: 0
+MarchingCubes isolevel: 11
+complete time for generating mesh: 4587
+time for generating arrays: 0
+number of vertices and normals: 0
+MarchingCubes isolevel: 12
+complete time for generating mesh: 4540
+time for generating arrays: 0
+number of vertices and normals: 0
+MarchingCubes isolevel: 13
+complete time for generating mesh: 4575
+time for generating arrays: 0
+number of vertices and normals: 0
+MarchingCubes isolevel: 14
+complete time for generating mesh: 4564
+time for generating arrays: 0
+number of vertices and normals: 0
+MarchingCubes isolevel: 15
+complete time for generating mesh: 4551
+time for generating arrays: 0
+number of vertices and normals: 0
+MarchingCubes isolevel: 16
+complete time for generating mesh: 4562
+time for generating arrays: 0
+number of vertices and normals: 0
+MarchingCubes isolevel: 17
+complete time for generating mesh: 4897
+time for generating arrays: 0
+number of vertices and normals: 0
+MarchingCubes isolevel: 18
+complete time for generating mesh: 5350
+time for generating arrays: 0
+number of vertices and normals: 0
+MarchingCubes isolevel: 19
+complete time for generating mesh: 4691
+time for generating arrays: 0
+number of vertices and normals: 0
+MarchingCubes isolevel: 20
+complete time for generating mesh: 5024
+time for generating arrays: 0
+number of vertices and normals: 0
+MarchingCubes isolevel: 21
+complete time for generating mesh: 4815
+time for generating arrays: 0
+number of vertices and normals: 0
+MarchingCubes isolevel: 22
+complete time for generating mesh: 4904
+time for generating arrays: 0
+number of vertices and normals: 0
+MarchingCubes isolevel: 23
+complete time for generating mesh: 4779
+time for generating arrays: 0
+number of vertices and normals: 0
+MarchingCubes isolevel: 24
+complete time for generating mesh: 4783
+time for generating arrays: 0
+number of vertices and normals: 0
+MarchingCubes isolevel: 25
+complete time for generating mesh: 4696
+time for generating arrays: 0
+number of vertices and normals: 0
+MarchingCubes isolevel: 26
+complete time for generating mesh: 4669
+time for generating arrays: 0
+number of vertices and normals: 0
+MarchingCubes isolevel: 27
+complete time for generating mesh: 4667
+time for generating arrays: 0
+number of vertices and normals: 0
