@@ -1,9 +1,11 @@
 package marchingCubes;
 
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.Vector;
@@ -129,11 +131,11 @@ public class MarchingCubesRAI
 				.localizingCursor();
 
 		Timestamp end = new Timestamp( System.currentTimeMillis() );
-		System.out.println( "preparing RAI: " + ( end.getTime() - begin.getTime() ) );
+//		System.out.println( "preparing RAI: " + ( end.getTime() - begin.getTime() ) );
 
 		while ( c.hasNext() )
 		{
-			begin = new Timestamp( System.currentTimeMillis() );
+//			begin = new Timestamp( System.currentTimeMillis() );
 			c.next();
 
 			int cursorX = c.getIntPosition( 0 );
@@ -141,6 +143,9 @@ public class MarchingCubesRAI
 			int cursorZ = c.getIntPosition( 2 );
 
 			if ( cursorX == -1 || cursorY == -1 || cursorZ == -1 )
+				continue;
+			
+			if ( cursorX == volDim[0] || cursorY == volDim[1] || cursorZ == volDim[2] )
 				continue;
 
 			Cursor< LabelMultisetType > cu = getCube( extended, cursorX, cursorY, cursorZ );
@@ -157,9 +162,9 @@ public class MarchingCubesRAI
 				}
 				i++;
 			}
-			
-			end = new Timestamp( System.currentTimeMillis() );
-			System.out.println( "getting cube information: " + ( end.getTime() - begin.getTime() ) );
+
+//			end = new Timestamp( System.currentTimeMillis() );
+//			System.out.println( "getting cube information: " + ( end.getTime() - begin.getTime() ) );
 
 			// @formatter:off
 			// the values from the cube are given first in z, then y, then x
@@ -185,11 +190,21 @@ public class MarchingCubesRAI
 			// This way, we need to remap the cube vertices:
 			// @formatter:on
 
-			begin = new Timestamp( System.currentTimeMillis() );
+//			begin = new Timestamp( System.currentTimeMillis() );
 			vertex_values = remapCube( vertex_values );
 
 			// Calculate table lookup index from those vertices which are
 			// below the isolevel.
+			
+			System.out.println("cube: " + vertex_values[0] + " " +
+					  + vertex_values[1] + " " +
+					  + vertex_values[2] + " " +
+					  + vertex_values[3] + " " +
+					  + vertex_values[4] + " " +
+					  + vertex_values[5] + " " +
+					  + vertex_values[6] + " " +
+					  + vertex_values[7] );
+
 
 			int tableIndex = 0;
 			for ( i = 0; i < 8; i++ )
@@ -199,6 +214,8 @@ public class MarchingCubesRAI
 					tableIndex |= ( int ) Math.pow( 2, i );
 				}
 			}
+			
+			System.out.println("tableIndex: " + tableIndex);
 
 			// edge indexes:
 			// @formatter:off
@@ -306,19 +323,19 @@ public class MarchingCubesRAI
 				}
 			}
 			
-			end = new Timestamp( System.currentTimeMillis() );
-			System.out.println( "creating triangles: " + ( end.getTime() - begin.getTime() ) );
+//			end = new Timestamp( System.currentTimeMillis() );
+//			System.out.println( "creating triangles: " + ( end.getTime() - begin.getTime() ) );
 		}
 
-		begin = new Timestamp( System.currentTimeMillis() );
+//		begin = new Timestamp( System.currentTimeMillis() );
 
 		renameVerticesAndTriangles();
 		calculateNormals();
 		normalizeVerticesAndNormals();
 		hasValidSurface = true;
 		
-		end = new Timestamp( System.currentTimeMillis() );
-		System.out.println( "finalizing mesh: " + ( end.getTime() - begin.getTime() ) );
+//		end = new Timestamp( System.currentTimeMillis() );
+//		System.out.println( "finalizing mesh: " + ( end.getTime() - begin.getTime() ) );
 
 		return mesh;
 	}
@@ -698,5 +715,215 @@ public class MarchingCubesRAI
 
 		mesh.setVertices( vertices );
 		mesh.setNormals( normals );
+	}
+	
+	public Mesh generateSurface2( RandomAccessibleInterval< LabelMultisetType > input, float[] voxDim, int[] volDim, boolean isExact, int level )
+	{
+		if ( hasValidSurface )
+			deleteSurface();
+
+		float maxX = voxDim[ 0 ] * ( volDim[ 0 ] - 1 );
+		float maxY = voxDim[ 1 ] * ( volDim[ 1 ] - 1 );
+		float maxZ = voxDim[ 2 ] * ( volDim[ 2 ] - 1 );
+		maxAxisVal = Math.max( maxX, Math.max( maxY, maxZ ) );
+
+		mesh = new Mesh();
+
+		isoLevel = level;
+
+		width = volDim[ 0 ];
+		height = volDim[ 1 ];
+		depth = volDim[ 2 ];
+
+		nCellsX = ( long ) Math.ceil( width / voxDim[ 0 ] ) - 1;
+		nCellsY = ( long ) Math.ceil( height / voxDim[ 1 ] ) - 1;
+		acceptExactly = isExact;
+
+		ExtendedRandomAccessibleInterval< LabelMultisetType, RandomAccessibleInterval< LabelMultisetType > > extended =
+				Views.extendValue( input, new LabelMultisetType() );
+		Cursor< LabelMultisetType > c = Views.flatIterable( Views.interval( extended, new FinalInterval(
+				new long[] { input
+						.min( 0 ) - 1, input.min( 1 ) - 1, input.min( 2 ) - 1 }, new long[] { input.max(
+								0 ) + 1, input.max( 1 ) + 1, input.max( 2 ) + 1 } ) ) )
+				.localizingCursor();
+
+		List<Long> volume = new ArrayList<Long>();
+
+		while ( c.hasNext() )
+		{
+			LabelMultisetType it = c.next();
+
+			int cursorX = c.getIntPosition( 0 );
+			int cursorY = c.getIntPosition( 1 );
+			int cursorZ = c.getIntPosition( 2 );
+			
+			if ( cursorX == -1 || cursorY == -1 || cursorZ == -1 )
+				continue;
+
+			for ( final Multiset.Entry< Label > e : it.entrySet() )
+			{
+				volume.add( e.getElement().id());
+			}
+		}
+
+		int xWidth = ( volDim[0] + 1 );
+		int xyWidth = xWidth * ( volDim[1] + 1 );
+
+		double[] vertex_values = new double[ 8 ];
+
+		for( int cursorZ = 0; cursorZ < volDim[2] ; cursorZ++)
+		{
+			for( int cursorY = 0; cursorY < volDim[1] ; cursorY++)
+			{
+				for( int cursorX = 0; cursorX < volDim[0] ; cursorX++)
+				{
+					vertex_values[7] = volume.get( cursorZ * xyWidth + cursorY * xWidth + cursorX );
+					vertex_values[6] = volume.get( cursorZ * xyWidth + ( cursorY + 1 ) * xWidth + cursorX );
+					vertex_values[5] = volume.get( cursorZ * xyWidth + ( cursorY + 1 ) * xWidth + ( cursorX + 1 ) );
+					vertex_values[4] = volume.get( cursorZ * xyWidth + cursorY * xWidth + ( cursorX + 1 ) );
+					vertex_values[3] = volume.get( ( cursorZ + 1 ) * xyWidth + cursorY * xWidth + cursorX );
+					vertex_values[2] = volume.get( ( cursorZ + 1 ) * xyWidth + ( cursorY + 1 ) * xWidth + cursorX );
+					vertex_values[1] = volume.get( ( cursorZ + 1 ) * xyWidth + ( cursorY + 1 ) * xWidth + ( cursorX + 1 ) );
+					vertex_values[0] = volume.get( ( cursorZ + 1 ) * xyWidth + cursorY * xWidth + ( cursorX + 1 ) );
+
+					// @formatter:off
+					// this algorithm (based on http://paulbourke.net/geometry/polygonise/)
+					// considers the vertices of the cube in this order:
+					//
+					//  4------5
+					// /|     /|
+					// 7-----6 |
+					// |0----|-1
+					// |/    |/
+					// 3-----2
+					//
+					// @formatter:on
+
+					// Calculate table lookup index from those vertices which
+					// are below the isolevel.
+					int tableIndex = 0;
+					for ( int i = 0; i < 8; i++ )
+					{
+						if ( !interiorTest( vertex_values[ i ] ) )
+						{
+							tableIndex |= ( int ) Math.pow( 2, i );
+						}
+					}
+
+					// edge indexes:
+					// @formatter:off
+					//          4-----*4*----5
+					//         /|           /|
+					//        /*8*         / |
+					//      *7* |        *5* |
+					//      /   |        /  *9*
+					//     7-----*6*----6    |
+					//     |    0----*0*-----1
+					//   *11*  /       *10* /
+					//     |  /         | *1*
+					//     |*3*         | /
+					//     |/           |/
+					//     3-----*2*----2
+					// @formatter: on
+
+					// Now create a triangulation of the isosurface in this cell.
+					if ( MarchingCubesTables.MC_EDGE_TABLE[ tableIndex ] != 0 )
+					{
+						if ( ( MarchingCubesTables.MC_EDGE_TABLE[ tableIndex ] & 8 ) != 0 )
+						{
+							Point3dId pt = calculateIntersection( cursorX, cursorY, cursorZ, 3, vertex_values[ 3 ], vertex_values[ 0 ] );
+							long id = getEdgeId( cursorX, cursorY, cursorZ, 3 );
+							id2Point3dId.put( id, pt );
+						}
+						if ( ( MarchingCubesTables.MC_EDGE_TABLE[ tableIndex ] & 1 ) != 0 )
+						{
+							Point3dId pt = calculateIntersection( cursorX, cursorY, cursorZ, 0, vertex_values[ 0 ], vertex_values[ 1 ] );
+							long id = getEdgeId( cursorX, cursorY, cursorZ, 0 );
+							id2Point3dId.put( id, pt );
+						}
+						if ( ( MarchingCubesTables.MC_EDGE_TABLE[ tableIndex ] & 256 ) != 0 )
+						{
+							Point3dId pt = calculateIntersection( cursorX, cursorY, cursorZ, 8, vertex_values[ 0 ], vertex_values[ 4 ] );
+							long id = getEdgeId( cursorX, cursorY, cursorZ, 8 );
+							id2Point3dId.put( id, pt );
+						}
+						if ( ( MarchingCubesTables.MC_EDGE_TABLE[ tableIndex ] & 4 ) != 0 )
+						{
+							Point3dId pt = calculateIntersection( cursorX, cursorY, cursorZ, 2, vertex_values[ 2 ], vertex_values[ 3 ] );
+							long id = getEdgeId( cursorX, cursorY, cursorZ, 2 );
+							id2Point3dId.put( id, pt );
+						}
+						if ( ( MarchingCubesTables.MC_EDGE_TABLE[ tableIndex ] & 2048 ) != 0 )
+						{
+							Point3dId pt = calculateIntersection( cursorX, cursorY, cursorZ, 11, vertex_values[ 3 ], vertex_values[ 7 ] );
+							long id = getEdgeId( cursorX, cursorY, cursorZ, 11 );
+							id2Point3dId.put( id, pt );
+						}
+						if ( ( MarchingCubesTables.MC_EDGE_TABLE[ tableIndex ] & 2 ) != 0 )
+						{
+							Point3dId pt = calculateIntersection( cursorX, cursorY, cursorZ, 1, vertex_values[ 1 ], vertex_values[ 2 ] );
+							long id = getEdgeId( cursorX, cursorY, cursorZ, 1 );
+							id2Point3dId.put( id, pt );
+						}
+						if ( ( MarchingCubesTables.MC_EDGE_TABLE[ tableIndex ] & 512 ) != 0 )
+						{
+							Point3dId pt = calculateIntersection( cursorX, cursorY, cursorZ, 9, vertex_values[ 1 ], vertex_values[ 5 ] );
+							long id = getEdgeId( cursorX, cursorY, cursorZ, 9 );
+							id2Point3dId.put( id, pt );
+						}
+						if ( ( MarchingCubesTables.MC_EDGE_TABLE[ tableIndex ] & 16 ) != 0 )
+						{
+							Point3dId pt = calculateIntersection( cursorX, cursorY, cursorZ, 4, vertex_values[ 4 ], vertex_values[ 5 ] );
+							long id = getEdgeId( cursorX, cursorY, cursorZ, 4 );
+							id2Point3dId.put( id, pt );
+						}
+						if ( ( MarchingCubesTables.MC_EDGE_TABLE[ tableIndex ] & 128 ) != 0 )
+						{
+							Point3dId pt = calculateIntersection( cursorX, cursorY, cursorZ, 7, vertex_values[ 7 ], vertex_values[ 4 ] );
+							long id = getEdgeId( cursorX, cursorY, cursorZ, 7 );
+							id2Point3dId.put( id, pt );
+						}
+						if ( ( MarchingCubesTables.MC_EDGE_TABLE[ tableIndex ] & 1024 ) != 0 )
+						{
+							Point3dId pt = calculateIntersection( cursorX, cursorY, cursorZ, 10, vertex_values[ 2 ], vertex_values[ 6 ] );
+							long id = getEdgeId( cursorX, cursorY, cursorZ, 10 );
+							id2Point3dId.put( id, pt );
+						}
+						if ( ( MarchingCubesTables.MC_EDGE_TABLE[ tableIndex ] & 64 ) != 0 )
+						{
+							Point3dId pt = calculateIntersection( cursorX, cursorY, cursorZ, 6, vertex_values[ 6 ], vertex_values[ 7 ] );
+							long id = getEdgeId( cursorX, cursorY, cursorZ, 6 );
+							id2Point3dId.put( id, pt );
+						}
+						if ( ( MarchingCubesTables.MC_EDGE_TABLE[ tableIndex ] & 32 ) != 0 )
+						{
+							Point3dId pt = calculateIntersection( cursorX, cursorY, cursorZ, 5, vertex_values[ 5 ], vertex_values[ 6 ] );
+							long id = getEdgeId( cursorX, cursorY, cursorZ, 5 );
+							id2Point3dId.put( id, pt );
+						}
+		
+						for ( int i = 0; MarchingCubesTables.triTable[ tableIndex ][ i ] != MarchingCubesTables.Invalid; i += 3 )
+						{
+							Triangle triangle = new Triangle();
+							long pointId0, pointId1, pointId2;
+							pointId0 = getEdgeId( cursorX, cursorY, cursorZ, MarchingCubesTables.triTable[ tableIndex ][ i ] );
+							pointId1 = getEdgeId( cursorX, cursorY, cursorZ, MarchingCubesTables.triTable[ tableIndex ][ i + 1 ] );
+							pointId2 = getEdgeId( cursorX, cursorY, cursorZ, MarchingCubesTables.triTable[ tableIndex ][ i + 2 ] );
+							triangle.point[ 0 ] = pointId0;
+							triangle.point[ 1 ] = pointId1;
+							triangle.point[ 2 ] = pointId2;
+							triangleVector.add( triangle );
+						}
+					}
+				}
+			}
+		}
+
+		renameVerticesAndTriangles();
+		calculateNormals();
+		normalizeVerticesAndNormals();
+		hasValidSurface = true;
+
+		return mesh;
 	}
 }
