@@ -1,8 +1,7 @@
 package viewer;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.PrintStream;
+import java.io.PrintWriter;
 import java.nio.FloatBuffer;
 import java.sql.Timestamp;
 import java.util.ArrayList;
@@ -11,7 +10,6 @@ import java.util.List;
 import java.util.concurrent.CompletionService;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorCompletionService;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
@@ -35,7 +33,6 @@ import graphics.scenery.Scene;
 import graphics.scenery.SceneryDefaultApplication;
 import graphics.scenery.SceneryElement;
 import graphics.scenery.backends.Renderer;
-import marchingCubes.MarchingCubesRAI;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.view.Views;
 
@@ -65,9 +62,9 @@ public class MarchingCubesTest
 
 	Timestamp end = new Timestamp( System.currentTimeMillis() );
 
-	float[] verticesArray = new float[0];
+	float[] verticesArray = new float[ 0 ];
 
-	float[] normalsArray = new float[0];
+	float[] normalsArray = new float[ 0 ];
 
 	/** big hdf5 for test - whole sample B */
 //	 static String path = "data/sample_B.augmented.0.hdf";
@@ -77,20 +74,23 @@ public class MarchingCubesTest
 
 	/** small hdf5 for test - subset from sample B */
 	static String path = "data/sample_B_20160708_frags_46_50.hdf";
+
 	static String path_label = "/volumes/labels/neuron_ids";
+
 	int isoLevel = 7;
-//	int[] volDim = { 500, 500, 5 };
-	// blockwise
+
+////	int[] volDim = { 500, 500, 5 };
+//	// blockwise
 	int[] volDim = { 250, 250, 5 };
 
-	/** tiny hdf5 for test - dummy values */
-//	 static String path_label = "/volumes/labels/small_neuron_ids";
-//	 int isoLevel = 2;
-//	 int[] volDim = {3, 3, 3};
+//	/** tiny hdf5 for test - dummy values */
+//	static String path_label = "/volumes/labels/small_neuron_ids";
+//
+//	int isoLevel = 2;
+//	int[] volDim = {3, 3, 3};
 
-
-//	float[] voxDim = { 10f, 10f, 10f };
-	float[] voxDim = { 1f, 1f, 1f };
+	float[] voxDim = { 10f, 10f, 10f };
+//	float[] voxDim = { 1f, 1f, 1f };
 
 	float smallx = 0.0f;
 
@@ -104,6 +104,9 @@ public class MarchingCubesTest
 
 	float bigz = 0.0f;
 
+	PrintWriter writer = null;
+
+	PrintWriter writer2 = null;
 
 	// float previousDiff = 0.0f;
 
@@ -157,6 +160,16 @@ public class MarchingCubesTest
 		@Override
 		public void init()
 		{
+			try
+			{
+				writer = new PrintWriter( "vertices.txt", "UTF-8" );
+				writer2 = new PrintWriter( "normals.txt", "UTF-8" );
+			}
+			catch ( IOException e )
+			{
+				// do something
+			}
+
 			setRenderer( Renderer.Factory.createRenderer( getHub(), getApplicationName(), getScene(), getWindowWidth(),
 					getWindowHeight() ) );
 			getHub().add( SceneryElement.Renderer, getRenderer() );
@@ -192,15 +205,14 @@ public class MarchingCubesTest
 			for ( int i = 0; i < lights.length; i++ )
 				getScene().addChild( lights[ i ] );
 
-			
 			Mesh neuron = new Mesh();
 			neuron.setMaterial( material );
-			// neuron.setGeometryType(GeometryType.POINTS);
+//			neuron.setGeometryType(GeometryType.POINTS);
 			neuron.setPosition( new GLVector( 0.0f, 0.0f, 0.0f ) );
 
 			marchingCube( neuron, getScene(), cam );
-			
-//			levelOfDetails( neuron, getScene(), cam );
+
+			// levelOfDetails( neuron, getScene(), cam );
 		}
 	}
 
@@ -220,28 +232,38 @@ public class MarchingCubesTest
 
 	private void marchingCube( Mesh neuron, Scene scene, Camera cam )
 	{
-//		MarchingCubesRAI mc_rai = new MarchingCubesRAI();
 
-//		begin = new Timestamp( System.currentTimeMillis() );
+		boolean first = true;
 		viewer.Mesh m = new viewer.Mesh();
-		List<RandomAccessibleInterval< LabelMultisetType >> subvolumes = dataPartitioning();
-		
-		System.out.println("starting executor...");
-		CompletionService< viewer.Mesh > executor = new ExecutorCompletionService< viewer.Mesh >(Executors.newWorkStealingPool());
+		List< RandomAccessibleInterval< LabelMultisetType > > subvolumes = dataPartitioning();
 
-		List<Future<viewer.Mesh>> resultMeshList = new ArrayList<>();
-		
-		System.out.println("creating callables...");
+//		subvolumes.clear();
+//		subvolumes.add( volumeLabels );
+
+		System.out.println( "starting executor..." );
+		CompletionService< viewer.Mesh > executor = new ExecutorCompletionService< viewer.Mesh >( Executors.newWorkStealingPool() );
+
+		List< Future< viewer.Mesh > > resultMeshList = new ArrayList<>();
+
+		System.out.println( "creating callables..." );
 		for ( int i = 0; i < subvolumes.size(); i++ )
 		{
-			MarchingCubeCallable callable = new MarchingCubeCallable( subvolumes.get( i ), voxDim, volDim, true, isoLevel);
-			System.out.println("callable: " + callable);
-			System.out.println("input " + subvolumes.get( i ));
+			System.out.println( "dimension: " + subvolumes.get( i ).dimension( 0 ) + "x" + subvolumes.get( i ).dimension( 1 ) + "x" + subvolumes.get( i ).dimension( 2 ) );
+			volDim = new int[] { ( int ) subvolumes.get( i ).dimension( 0 ), ( int ) subvolumes.get( i ).dimension( 1 ), ( int ) subvolumes.get( i ).dimension( 2 ) };
+			MarchingCubeCallable callable = new MarchingCubeCallable( subvolumes.get( i ), voxDim, volDim, true, isoLevel );
+			System.out.println( "callable: " + callable );
+			System.out.println( "input " + subvolumes.get( i ) );
 			Future< viewer.Mesh > result = executor.submit( callable );
 			resultMeshList.add( result );
 		}
-		
-		Future<viewer.Mesh> completedFuture = null;
+
+//		int i = 3;
+//		volDim = new int[]{( int ) subvolumes.get( i ).dimension( 0 ), ( int ) subvolumes.get( i ).dimension( 1 ), ( int ) subvolumes.get( i ).dimension( 2 )};
+//		MarchingCubeCallable callable = new MarchingCubeCallable( subvolumes.get( i ), voxDim, volDim, true, isoLevel);
+//		Future< viewer.Mesh > result = executor.submit( callable );
+//		resultMeshList.add( result );
+//		
+		Future< viewer.Mesh > completedFuture = null;
 
 		System.out.println( "waiting results..." );
 		while ( resultMeshList.size() > 0 )
@@ -257,6 +279,7 @@ public class MarchingCubesTest
 				// TODO Auto-generated catch block
 				e1.printStackTrace();
 			}
+
 			resultMeshList.remove( completedFuture );
 
 			// get the mesh, if the task was able to create it
@@ -273,90 +296,42 @@ public class MarchingCubesTest
 				break;
 			}
 
-			// a Widget was created, so do something with it
+			// a mesh was created, so update the existing mesh
 			System.out.println( "updating mesh " );
+			// neuron.setGeometryType(GeometryType.POINTS);
 			updateMesh( m, neuron );
-//			updateMeshComplete( m, neuron );
-			scene.addChild( neuron );
+
+			if ( first )
+			{
+				scene.addChild( neuron );
+				first = false;
+			}
 			cam.setPosition( new GLVector( ( bigx - smallx ) / 2, ( bigy - smally ) / 2, 5.0f ) );
+
+			System.out.println( "size of mesh " + verticesArray.length );
 		}
-		 
-		
-//		while ( true )
-//		{
-//			boolean done = true;
-//			for ( Future< viewer.Mesh > future : resultMeshList )
-//			{
-//				try
-//				{
-//					if ( !future.isDone() )
-//					{
-//						System.out.println( "Future is done: " + future.isDone() );
-//						done = false;
-//					}
-//					else
-//						m = future.get();
-//				}
-//				catch ( Exception e )
-//				{
-//					e.printStackTrace();
-//				}
-//			}
-//			
-//			if ( done )
-//			{
-//				System.out.println("all futures are done!");
-//				break;
-//			}
-//		}
-
-		
-//		m = mc_rai.generateSurface( volumeLabels, voxDim, volDim, true, isoLevel );
-////		m = mc_rai.generateSurface2( volumeLabels, voxDim, volDim, true, isoLevel );
-//		updateMesh( m, neuron );
-////		updateMeshComplete( m, neuron );
-//		scene.addChild( neuron );
-//		cam.setPosition( new GLVector( ( bigx - smallx ) / 2, ( bigy - smally ) / 2, 5.0f ) );
-
-//		m = mc_rai.generateSurface( second, voxDim, volDim, true, isoLevel );
-//		updateMesh( m, neuron );
-//		cam.setPosition( new GLVector( ( bigx - smallx ) / 2, ( bigy - smally ) / 2, 5.0f ) );
-//
-//		m = mc_rai.generateSurface( third, voxDim, volDim, true, isoLevel );
-//		updateMesh( m, neuron );
-//		cam.setPosition( new GLVector( ( bigx - smallx ) / 2, ( bigy - smally ) / 2, 5.0f ) );
-//
-//		m = mc_rai.generateSurface( forth, voxDim, volDim, true, isoLevel );
-//		updateMesh( m, neuron );
-//		cam.setPosition( new GLVector( ( bigx - smallx ) / 2, ( bigy - smally ) / 2, 5.0f ) );
-
-//		end = new Timestamp( System.currentTimeMillis() );
-//		System.out.println( "time for generating mesh: " + ( end.getTime() - begin.getTime() ) );
-//
-//		begin = new Timestamp( System.currentTimeMillis() );
-
-
-//		end = new Timestamp( System.currentTimeMillis() );
-//		System.out.println( "time for generating arrays: " + ( end.getTime() - begin.getTime() ) );
-//		System.out.println( "number of vertices and normals: " + numberOfTriangles * 3 * 3 );
 	}
 
 	/**
-	 * this method assumes that the data is processed completely at once, this way, everytime this method is called
-	 * it overwrites the vertices and normals arrays.
-	 * @param m mesh information to be converted in a mesh for scenery
-	 * @param neuron scenery mesh that will receive the information
+	 * this method assumes that the data is processed completely at once, this
+	 * way, every time this method is called it overwrites the vertices and
+	 * normals arrays.
+	 * 
+	 * @param m
+	 *            mesh information to be converted in a mesh for scenery
+	 * @param neuron
+	 *            scenery mesh that will receive the information
 	 */
 	public void updateMeshComplete( viewer.Mesh m, Mesh neuron )
 	{
-		System.out.println("previous size of vertices: " + verticesArray.length);
+		System.out.println( "previous size of vertices: " + verticesArray.length );
 
 		int numberOfTriangles = m.getNumberOfTriangles();
-		System.out.println("number of triangles: " + numberOfTriangles);
+		System.out.println( "number of triangles: " + numberOfTriangles );
 		verticesArray = new float[ numberOfTriangles * 3 * 3 ];
 		normalsArray = new float[ numberOfTriangles * 3 * 3 ];
-		
-		System.out.println("size of verticesArray: " +  numberOfTriangles * 3 * 3);
+
+		System.out.println( "size of verticesArray: " + numberOfTriangles * 3 * 3 );
 
 		float[][] vertices = m.getVertices();
 		float[][] normals = m.getNormals();
@@ -433,30 +408,34 @@ public class MarchingCubesTest
 			normalsArray[ n++ ] = point2[ 1 ];
 			normalsArray[ n++ ] = point2[ 2 ];
 		}
-		
+
 		neuron.setVertices( FloatBuffer.wrap( verticesArray ) );
 		neuron.setNormals( FloatBuffer.wrap( normalsArray ) );
 		neuron.setDirty( true );
 	}
-	
+
 	/**
-	 * this method assumes that the data is processed blockwise, this way, everytime this method is called
-	 * it add more vertices and normal information to the already existing arrays.
-	 * @param m mesh information to be converted in a mesh for scenery
-	 * @param neuron scenery mesh that will receive the information
+	 * this method assumes that the data is processed blockwise, this way,
+	 * everytime this method is called it add more vertices and normal
+	 * information to the already existing arrays.
+	 * 
+	 * @param m
+	 *            mesh information to be converted in a mesh for scenery
+	 * @param neuron
+	 *            scenery mesh that will receive the information
 	 */
 	public void updateMesh( viewer.Mesh m, Mesh neuron )
 	{
-		System.out.println("previous size of vertices: " + verticesArray.length);
+		System.out.println( "previous size of vertices: " + verticesArray.length );
 		int vertexCount = verticesArray.length;
 
 		int numberOfTriangles = m.getNumberOfTriangles();
-		System.out.println("number of triangles: " + numberOfTriangles);
+		System.out.println( "number of triangles: " + numberOfTriangles );
 
 		// resize array to fit the new mesh
-		verticesArray = Arrays.copyOf(verticesArray, (numberOfTriangles * 3 * 3 + vertexCount));
-		normalsArray = Arrays.copyOf(normalsArray, (numberOfTriangles * 3 * 3 + vertexCount));
-		System.out.println("size of verticesArray: " +  (numberOfTriangles * 3 * 3 + vertexCount));
+		verticesArray = Arrays.copyOf( verticesArray, ( numberOfTriangles * 3 * 3 + vertexCount ) );
+		normalsArray = Arrays.copyOf( normalsArray, ( numberOfTriangles * 3 * 3 + vertexCount ) );
+		System.out.println( "size of verticesArray: " + ( numberOfTriangles * 3 * 3 + vertexCount ) );
 
 		float[][] vertices = m.getVertices();
 		float[][] normals = m.getNormals();
@@ -466,7 +445,7 @@ public class MarchingCubesTest
 		float[] point1 = new float[ 3 ];
 		float[] point2 = new float[ 3 ];
 		int v = 0, n = 0;
-		
+
 		for ( int i = 0; i < numberOfTriangles; i++ )
 		{
 			long id0 = triangles[ i * 3 ];
@@ -476,6 +455,16 @@ public class MarchingCubesTest
 			point0 = vertices[ ( int ) id0 ];
 			point1 = vertices[ ( int ) id1 ];
 			point2 = vertices[ ( int ) id2 ];
+
+//			writer.println(point0[ 0 ]);
+//			writer.println(point0[ 1 ]);
+//			writer.println(point0[ 2 ]);
+//			writer.println(point1[ 0 ]);
+//			writer.println(point1[ 1 ]);
+//			writer.println(point1[ 2 ]);
+//			writer.println(point2[ 0 ]);
+//			writer.println(point2[ 1 ]);
+//			writer.println(point2[ 2 ]);
 
 			verticesArray[ vertexCount + v++ ] = point0[ 0 ];
 			if ( verticesArray[ vertexCount + v - 1 ] < smallx )
@@ -498,30 +487,40 @@ public class MarchingCubesTest
 				bigx = verticesArray[ vertexCount + v - 1 ];
 
 			verticesArray[ vertexCount + v++ ] = point1[ 1 ];
-			if ( verticesArray[ vertexCount  + v - 1 ] < smally )
-				smally = verticesArray[ vertexCount  + v - 1 ];
+			if ( verticesArray[ vertexCount + v - 1 ] < smally )
+				smally = verticesArray[ vertexCount + v - 1 ];
 			if ( verticesArray[ vertexCount + v - 1 ] > bigy )
 				bigy = verticesArray[ vertexCount + v - 1 ];
 
-			verticesArray[ vertexCount+ v++ ] = point1[ 2 ];
+			verticesArray[ vertexCount + v++ ] = point1[ 2 ];
 
-			verticesArray[ vertexCount+ v++ ] = point2[ 0 ];
+			verticesArray[ vertexCount + v++ ] = point2[ 0 ];
 			if ( verticesArray[ vertexCount + v - 1 ] < smallx )
 				smallx = verticesArray[ vertexCount + v - 1 ];
 			if ( verticesArray[ vertexCount + v - 1 ] > bigx )
-				bigx = verticesArray[ vertexCount  + v - 1 ];
+				bigx = verticesArray[ vertexCount + v - 1 ];
 
 			verticesArray[ vertexCount + v++ ] = point2[ 1 ];
 			if ( verticesArray[ vertexCount + v - 1 ] < smally )
-				smally = verticesArray[ vertexCount  + v - 1 ];
-			if ( verticesArray[ vertexCount  + v - 1 ] > bigy )
-				bigy = verticesArray[ vertexCount  + v - 1 ];
+				smally = verticesArray[ vertexCount + v - 1 ];
+			if ( verticesArray[ vertexCount + v - 1 ] > bigy )
+				bigy = verticesArray[ vertexCount + v - 1 ];
 
 			verticesArray[ vertexCount + v++ ] = point2[ 2 ];
 
 			point0 = normals[ ( int ) id0 ];
 			point1 = normals[ ( int ) id1 ];
 			point2 = normals[ ( int ) id2 ];
+
+//			writer2.println(point0[ 0 ]);
+//			writer2.println(point0[ 1 ]);
+//			writer2.println(point0[ 2 ]);
+//			writer2.println(point1[ 0 ]);
+//			writer2.println(point1[ 1 ]);
+//			writer2.println(point1[ 2 ]);
+//			writer2.println(point2[ 0 ]);
+//			writer2.println(point2[ 1 ]);
+//			writer2.println(point2[ 2 ]);
 
 			normalsArray[ vertexCount + n++ ] = point0[ 0 ];
 			normalsArray[ vertexCount + n++ ] = point0[ 1 ];
@@ -535,50 +534,56 @@ public class MarchingCubesTest
 		}
 
 		neuron.setVertices( FloatBuffer.wrap( verticesArray ) );
+		// TODO: only one of the next two calls must be here :P
 		neuron.setNormals( FloatBuffer.wrap( normalsArray ) );
+		neuron.recalculateNormals();
 		neuron.setDirty( true );
 	}
-	
-	private List<RandomAccessibleInterval< LabelMultisetType >> dataPartitioning()
-	{
-		List<RandomAccessibleInterval< LabelMultisetType >> parts = new ArrayList<RandomAccessibleInterval< LabelMultisetType >>();
-		
-//		int lenght = 0;
-//		if (voxDim[0] == 2 || voxDim[0] == 32)
-//			lenght = 125;
-//		else if (voxDim[0] == 4 || voxDim[0] == 8)
-//			lenght = 127;
-//		else
-//			lenght = 121;
-//
-		int numberOfParts = 4; // TODO: find a way to determine this value according to the size of the volume and voxel
 
+	private List< RandomAccessibleInterval< LabelMultisetType > > dataPartitioning()
+	{
+		List< RandomAccessibleInterval< LabelMultisetType > > parts = new ArrayList< RandomAccessibleInterval< LabelMultisetType > >();
+
+		int numberOfParts = 4; // TODO: find a way to determine this value
+								// according to the size of the volume and voxel
 		// TODO: find a way to divide the volume automatically
 		RandomAccessibleInterval< LabelMultisetType > first =
 				Views.interval( volumeLabels, new long[] { volumeLabels.min( 0 ), volumeLabels.min( 1 ), volumeLabels.min( 2 ) },
-						new long[] { ( volumeLabels.max( 0 ) - volumeLabels.min( 0 ) ) / 2, ( volumeLabels.max( 1 ) - volumeLabels.min( 1 ) ) / 2, volumeLabels.max( 2 ) } );
+						new long[] { ( ( volumeLabels.max( 0 ) - volumeLabels.min( 0 ) ) / 2 ) + 1, ( ( volumeLabels.max( 1 ) - volumeLabels.min( 1 ) ) / 2 ) + 1, volumeLabels.max( 2 ) } );
+
+		System.out.println( "first - from: " + volumeLabels.min( 0 ) + "x" + volumeLabels.min( 1 ) + "x" + volumeLabels.min( 2 ) +
+				" to: " + ( ( ( volumeLabels.max( 0 ) - volumeLabels.min( 0 ) ) / 2 ) + 1 ) + "x" + ( ( ( volumeLabels.max( 1 ) - volumeLabels.min( 1 ) ) / 2 ) + 1 ) + "x" + volumeLabels.max( 2 ) );
 
 		RandomAccessibleInterval< LabelMultisetType > second =
-				Views.interval( volumeLabels, new long[] { ( volumeLabels.max( 0 ) - volumeLabels.min( 0 ) ) / 2, volumeLabels.min( 1 ), volumeLabels.min( 2 ) },
-						new long[] { volumeLabels.max( 0 ), ( volumeLabels.max( 1 ) - volumeLabels.min( 1 ) ) / 2, volumeLabels.max( 2 ) } );
+				Views.interval( volumeLabels, new long[] { ( ( volumeLabels.max( 0 ) - volumeLabels.min( 0 ) ) / 2 ) - 1, volumeLabels.min( 1 ), volumeLabels.min( 2 ) },
+						new long[] { volumeLabels.max( 0 ), ( ( volumeLabels.max( 1 ) - volumeLabels.min( 1 ) ) / 2 ) + 1, volumeLabels.max( 2 ) } );
+
+		System.out.println( "second - from: " + ( ( ( volumeLabels.max( 0 ) - volumeLabels.min( 0 ) ) / 2 ) - 1 ) + "x" + volumeLabels.min( 1 ) + "x" + volumeLabels.min( 2 ) +
+				" to: " + volumeLabels.max( 0 ) + "x" + ( ( ( volumeLabels.max( 1 ) - volumeLabels.min( 1 ) ) / 2 ) + 1 ) + "x" + volumeLabels.max( 2 ) );
 
 		RandomAccessibleInterval< LabelMultisetType > third =
-				Views.interval( volumeLabels, new long[] { volumeLabels.min( 0 ), ( volumeLabels.max( 1 ) - volumeLabels.min( 1 ) ) / 2, volumeLabels.min( 2 ) },
-						new long[] { ( volumeLabels.max( 0 ) - volumeLabels.min( 0 ) ) / 2, volumeLabels.max( 1 ), volumeLabels.max( 2 ) } );
+				Views.interval( volumeLabels, new long[] { volumeLabels.min( 0 ), ( ( volumeLabels.max( 1 ) - volumeLabels.min( 1 ) ) / 2 ) - 1, volumeLabels.min( 2 ) },
+						new long[] { ( ( volumeLabels.max( 0 ) - volumeLabels.min( 0 ) ) / 2 ) + 1, volumeLabels.max( 1 ), volumeLabels.max( 2 ) } );
+
+		System.out.println( "third - from: " + volumeLabels.min( 0 ) + "x" + ( ( ( volumeLabels.max( 1 ) - volumeLabels.min( 1 ) ) / 2 ) - 1 ) + "x" + volumeLabels.min( 2 ) +
+				" to: " + ( ( ( volumeLabels.max( 0 ) - volumeLabels.min( 0 ) ) / 2 ) + 1 ) + "x" + volumeLabels.max( 1 ) + "x" + volumeLabels.max( 2 ) );
 
 		RandomAccessibleInterval< LabelMultisetType > forth =
-				Views.interval( volumeLabels, new long[] { ( volumeLabels.max( 0 ) - volumeLabels.min( 0 ) ) / 2, ( volumeLabels.max( 1 ) - volumeLabels.min( 1 ) ) / 2, volumeLabels.min( 2 ) },
+				Views.interval( volumeLabels, new long[] { ( ( volumeLabels.max( 0 ) - volumeLabels.min( 0 ) ) / 2 ) - 1, ( ( volumeLabels.max( 1 ) - volumeLabels.min( 1 ) ) / 2 ) - 1, volumeLabels.min( 2 ) },
 						new long[] { volumeLabels.max( 0 ), volumeLabels.max( 1 ), volumeLabels.max( 2 ) } );
+
+		System.out.println( "forth - from: " + ( ( ( volumeLabels.max( 0 ) - volumeLabels.min( 0 ) ) / 2 ) - 1 ) + "x" + ( ( ( volumeLabels.max( 1 ) - volumeLabels.min( 1 ) ) / 2 ) - 1 ) + "x" + volumeLabels.min( 2 ) +
+				" to: " + volumeLabels.max( 0 ) + "x" + volumeLabels.max( 1 ) + "x" + volumeLabels.max( 2 ) );
 
 		parts.add( first );
 		parts.add( second );
 		parts.add( third );
 		parts.add( forth );
-		
+
 		return parts;
 	}
-	
-	private void levelOfDetails(Mesh neuron, Scene scene, Camera cam)
+
+	private void levelOfDetails( Mesh neuron, Scene scene, Camera cam )
 	{
 		final Thread neuronPositionThread = new Thread()
 		{
@@ -616,7 +621,7 @@ public class MarchingCubesTest
 					{
 						voxDim = new float[] { 1.0f, 1.0f, 1.0f };
 						System.out.println( "updating mesh dist2" );
-						marchingCube(neuron, scene, cam );
+						marchingCube( neuron, scene, cam );
 						neuron.setVertices( FloatBuffer.wrap( verticesArray ) );
 						neuron.setNormals( FloatBuffer.wrap( normalsArray ) );
 						neuron.setDirty( true );
@@ -630,7 +635,7 @@ public class MarchingCubesTest
 					{
 						voxDim = new float[] { 0.5f, 0.5f, 0.5f };
 						System.out.println( "updating mesh dist1" );
-						marchingCube(neuron, scene, cam);
+						marchingCube( neuron, scene, cam );
 						neuron.setVertices( FloatBuffer.wrap( verticesArray ) );
 						neuron.setNormals( FloatBuffer.wrap( normalsArray ) );
 						neuron.setDirty( true );
