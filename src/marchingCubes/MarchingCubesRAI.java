@@ -2,12 +2,10 @@ package marchingCubes;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.Vector;
 
 import bdv.labels.labelset.Label;
@@ -144,8 +142,8 @@ public class MarchingCubesRAI
 
 			if ( cursorX == -1 || cursorY == -1 || cursorZ == -1 )
 				continue;
-			
-			if ( cursorX == volDim[0] || cursorY == volDim[1] || cursorZ == volDim[2] )
+
+			if ( cursorX == volDim[ 0 ] || cursorY == volDim[ 1 ] || cursorZ == volDim[ 2 ] )
 				continue;
 
 			Cursor< LabelMultisetType > cu = getCube( extended, cursorX, cursorY, cursorZ );
@@ -195,16 +193,15 @@ public class MarchingCubesRAI
 
 			// Calculate table lookup index from those vertices which are
 			// below the isolevel.
-			
-			System.out.println("cube: " + vertex_values[0] + " " +
-					  + vertex_values[1] + " " +
-					  + vertex_values[2] + " " +
-					  + vertex_values[3] + " " +
-					  + vertex_values[4] + " " +
-					  + vertex_values[5] + " " +
-					  + vertex_values[6] + " " +
-					  + vertex_values[7] );
 
+			System.out.println( "cube: " + vertex_values[ 0 ] + " " +
+					+vertex_values[ 1 ] + " " +
+					+vertex_values[ 2 ] + " " +
+					+vertex_values[ 3 ] + " " +
+					+vertex_values[ 4 ] + " " +
+					+vertex_values[ 5 ] + " " +
+					+vertex_values[ 6 ] + " " +
+					+vertex_values[ 7 ] );
 
 			int tableIndex = 0;
 			for ( i = 0; i < 8; i++ )
@@ -214,8 +211,8 @@ public class MarchingCubesRAI
 					tableIndex |= ( int ) Math.pow( 2, i );
 				}
 			}
-			
-			System.out.println("tableIndex: " + tableIndex);
+
+			System.out.println( "tableIndex: " + tableIndex );
 
 			// edge indexes:
 			// @formatter:off
@@ -743,8 +740,8 @@ public class MarchingCubesRAI
 				Views.extendValue( input, new LabelMultisetType() );
 		Cursor< LabelMultisetType > c = Views.flatIterable( Views.interval( extended, new FinalInterval(
 				new long[] { input
-						.min( 0 ) - 1, input.min( 1 ) - 1, input.min( 2 ) - 1 }, new long[] { input.max(
-								0 ) + 1, input.max( 1 ) + 1, input.max( 2 ) + 1 } ) ) )
+						.min( 0 ) - 1 , input.min( 1 ) - 1, input.min( 2 ) - 1 }, new long[] { input.max(
+								0 ) + 1 , input.max( 1 ) + 1, input.max( 2 ) + 1 } ) ) )
 				.localizingCursor();
 
 		List<Long> volume = new ArrayList<Long>();
@@ -766,17 +763,22 @@ public class MarchingCubesRAI
 			}
 		}
 
+		System.out.println("volume size: " + volume.size());
+
 		int xWidth = ( volDim[0] + 1 );
 		int xyWidth = xWidth * ( volDim[1] + 1 );
 
 		double[] vertex_values = new double[ 8 ];
 
-		for( int cursorZ = 0; cursorZ < volDim[2] ; cursorZ++)
+		for( int cursorZ = 0; cursorZ < volDim[2]; cursorZ++)
 		{
 			for( int cursorY = 0; cursorY < volDim[1] ; cursorY++)
 			{
-				for( int cursorX = 0; cursorX < volDim[0] ; cursorX++)
+				for( int cursorX = 0; cursorX < volDim[0]; cursorX++)
 				{
+//					System.out.println("x: " + cursorX + " y: " + cursorY + " z: " + cursorZ);
+//					System.out.println("max: " + (( cursorZ + 1 ) * xyWidth + ( cursorY + 1 ) * xWidth + ( cursorX + 1 )));
+
 					vertex_values[7] = volume.get( cursorZ * xyWidth + cursorY * xWidth + cursorX );
 					vertex_values[6] = volume.get( cursorZ * xyWidth + ( cursorY + 1 ) * xWidth + cursorX );
 					vertex_values[5] = volume.get( cursorZ * xyWidth + ( cursorY + 1 ) * xWidth + ( cursorX + 1 ) );
@@ -785,6 +787,13 @@ public class MarchingCubesRAI
 					vertex_values[2] = volume.get( ( cursorZ + 1 ) * xyWidth + ( cursorY + 1 ) * xWidth + cursorX );
 					vertex_values[1] = volume.get( ( cursorZ + 1 ) * xyWidth + ( cursorY + 1 ) * xWidth + ( cursorX + 1 ) );
 					vertex_values[0] = volume.get( ( cursorZ + 1 ) * xyWidth + cursorY * xWidth + ( cursorX + 1 ) );
+
+//					System.out.println("  " + (int)vertex_values[4] + "------" + (int)vertex_values[5]);
+//					System.out.println(" /|     /|");
+//					System.out.println(" " + (int)vertex_values[7] + "-----" + (int)vertex_values[6] + " |");
+//					System.out.println(" |" + (int)vertex_values[0] + "----|-" + (int)vertex_values[1] + "");
+//					System.out.println(" |/    |/");
+//					System.out.println(" " + (int)vertex_values[3] + "-----" + (int)vertex_values[2] + "");
 
 					// @formatter:off
 					// this algorithm (based on http://paulbourke.net/geometry/polygonise/)
