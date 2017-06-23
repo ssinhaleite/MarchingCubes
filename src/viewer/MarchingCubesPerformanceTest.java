@@ -10,7 +10,6 @@ import bdv.img.h5.H5LabelMultisetSetupImageLoader;
 import bdv.labels.labelset.LabelMultisetType;
 import ch.systemsx.cisd.hdf5.HDF5Factory;
 import ch.systemsx.cisd.hdf5.IHDF5Reader;
-import marchingCubes.CountingVoxels;
 import marchingCubes.MarchingCubesRAI;
 import net.imglib2.RandomAccessibleInterval;
 import util.HDF5Reader;
@@ -55,9 +54,9 @@ public class MarchingCubesPerformanceTest
 		volumeLabels = labels.get( 0 ).getImage( 0 );
 
 		int isoLevel = 0;
-		for ( int size = 32; size > 0; size /= 2 )
+		for ( int size = 1; size < 64; size *= 2 )
 		{
-			filename = "mc_specific" + size + ".txt";
+			filename = "mc_arraylist_" + size + ".txt";
 			PrintStream fileStream = null;
 			try
 			{
@@ -68,7 +67,7 @@ public class MarchingCubesPerformanceTest
 				e1.printStackTrace();
 			}
 			System.setOut( fileStream );
-			
+
 			float[] voxDim = { size, size, size };
 
 			for ( int i = 0; i < 27; i++ )
@@ -78,10 +77,11 @@ public class MarchingCubesPerformanceTest
 				MarchingCubesRAI mc_rai = new MarchingCubesRAI();
 //				CountingVoxels mc_rai = new CountingVoxels();
 
-//				begin = new Timestamp( System.currentTimeMillis() );
-				viewer.Mesh m = mc_rai.generateSurface( volumeLabels, voxDim, volDim, true, isoLevel );
-//				end = new Timestamp( System.currentTimeMillis() );
-//				System.out.println( "complete time for generating mesh: " + ( end.getTime() - begin.getTime() ) );
+				begin = new Timestamp( System.currentTimeMillis() );
+//				viewer.Mesh m = mc_rai.generateSurface( volumeLabels, voxDim, volDim, true, isoLevel );
+				mc_rai.generateSurface2( volumeLabels, voxDim, volDim, true, isoLevel );
+				end = new Timestamp( System.currentTimeMillis() );
+				System.out.println( "complete time for generating mesh: " + ( end.getTime() - begin.getTime() ) );
 
 //				begin = new Timestamp( System.currentTimeMillis() );
 //				int numberOfTriangles = m.getNumberOfTriangles();
