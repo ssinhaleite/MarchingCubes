@@ -173,7 +173,7 @@ public class MarchingCubesTest
 
 			setRenderer( Renderer.Factory.createRenderer( getHub(), getApplicationName(), getScene(), getWindowWidth(),
 					getWindowHeight() ) );
-			getHub().add( SceneryElement.RENDERER, getRenderer() );
+			getHub().add( SceneryElement.Renderer, getRenderer() );
 
 			final Material material = new Material();
 			material.setAmbient( new GLVector( 0.1f * ( 1 ), 1.0f, 1.0f ) );
@@ -533,7 +533,6 @@ public class MarchingCubesTest
 		{
 			verticesArray[ i ] /= maxAxisVal;
 			writer.println( verticesArray[ i ] );
-//			writer2.println(normalsArray[i]);
 		}
 
 		sx /= maxAxisVal;
