@@ -719,11 +719,14 @@ public class MarchingCubesRAI
 		if ( hasValidSurface )
 			deleteSurface();
 
-		float maxX = voxDim[ 0 ] * ( volDim[ 0 ] - 1 );
-		float maxY = voxDim[ 1 ] * ( volDim[ 1 ] - 1 );
-		float maxZ = voxDim[ 2 ] * ( volDim[ 2 ] - 1 );
-		maxAxisVal = Math.max( maxX, Math.max( maxY, maxZ ) );
+//		float maxX = voxDim[ 0 ] * ( volDim[ 0 ] - 1 );
+//		float maxY = voxDim[ 1 ] * ( volDim[ 1 ] - 1 );
+//		float maxZ = voxDim[ 2 ] * ( volDim[ 2 ] - 1 );
+//		maxAxisVal = Math.max( maxX, Math.max( maxY, maxZ ) );
 
+		volDim[0]--;
+		volDim[1]--;
+		volDim[2]--;
 		mesh = new Mesh();
 
 		isoLevel = level;
@@ -756,6 +759,9 @@ public class MarchingCubesRAI
 			
 			if ( cursorX == -1 || cursorY == -1 || cursorZ == -1 )
 				continue;
+			
+			if ( cursorX == volDim[0] || cursorY == volDim[1] || cursorZ == volDim[2] )
+				continue;
 
 			for ( final Multiset.Entry< Label > e : it.entrySet() )
 			{
@@ -772,7 +778,7 @@ public class MarchingCubesRAI
 
 		for( int cursorZ = 0; cursorZ < volDim[2]; cursorZ++)
 		{
-			for( int cursorY = 0; cursorY < volDim[1] ; cursorY++)
+			for( int cursorY = 0; cursorY < volDim[1]; cursorY++)
 			{
 				for( int cursorX = 0; cursorX < volDim[0]; cursorX++)
 				{
@@ -929,8 +935,8 @@ public class MarchingCubesRAI
 		}
 
 		renameVerticesAndTriangles();
-		calculateNormals();
-		normalizeVerticesAndNormals();
+//		calculateNormals();
+//		normalizeVerticesAndNormals();
 		hasValidSurface = true;
 
 		return mesh;
