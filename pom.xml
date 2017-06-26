@@ -1,0 +1,79 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>MarchingCubes-Scenery</groupId>
+  <artifactId>MarchingCubes-Scenery</artifactId>
+  <version>0.0.1-SNAPSHOT</version>
+  <build>
+    <sourceDirectory>src</sourceDirectory>
+    <plugins>
+      <plugin>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.5.1</version>
+        <configuration>
+          <source>1.8</source>
+          <target>1.8</target>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+  <dependencies>
+    <dependency>
+      <groupId>bigcat</groupId>
+      <artifactId>bigcat</artifactId>
+      <version>0.0.1-SNAPSHOT</version>
+      <scope>system</scope>
+      <systemPath>${project.basedir}/resources/bigcat-0.0.1-SNAPSHOT.jar</systemPath>
+    </dependency>
+    <!-- https://mvnrepository.com/artifact/sc.fiji/bigdataviewer-core -->
+    <dependency>
+      <groupId>sc.fiji</groupId>
+      <artifactId>bigdataviewer-core</artifactId>
+      <version>3.0.3</version>
+    </dependency>
+    <dependency>
+      <groupId>sc.fiji</groupId>
+      <artifactId>spim_data</artifactId>
+      <version>2.2.0</version>
+    </dependency>
+    <dependency>
+    	<groupId>org.apache.commons</groupId>
+    	<artifactId>commons-math3</artifactId>
+    	<version>3.6.1</version>
+    </dependency>
+    <!-- https://mvnrepository.com/artifact/graphics.scenery/scenery -->
+    <dependency>
+      <groupId>graphics.scenery</groupId>
+      <artifactId>scenery</artifactId>
+      <version>0.1.0</version>
+    </dependency>
+    <!-- https://mvnrepository.com/artifact/net.clearvolume/cleargl -->
+    <dependency>
+      <groupId>net.clearvolume</groupId>
+      <artifactId>cleargl</artifactId>
+      <version>2.0.1</version>
+    </dependency>
+    <!-- https://mvnrepository.com/artifact/com.esotericsoftware/kryo -->
+    <dependency>
+      <groupId>com.esotericsoftware</groupId>
+      <artifactId>kryo</artifactId>
+      <version>4.0.0</version>
+    </dependency>
+    <dependency>
+      <groupId>org.objenesis</groupId>
+      <artifactId>objenesis</artifactId>
+      <version>2.2</version>
+    </dependency>
+  </dependencies>
+  
+  <repositories>
+  <repository>
+    <id>imagej.releases</id>
+    <url>http://maven.imagej.net/content/repositories/releases/</url>
+  </repository>
+  <repository>
+    <id>imagej.public</id>
+    <url>https://maven.imagej.net/content/groups/public</url>
+  </repository>
+</repositories>
+
+</project>
