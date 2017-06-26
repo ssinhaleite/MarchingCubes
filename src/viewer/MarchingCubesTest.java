@@ -78,7 +78,9 @@ public class MarchingCubesTest
 	static String path = "data/sample_B_20160708_frags_46_50.hdf";
 
 	static String path_label = "/volumes/labels/neuron_ids";
+
 	int isoLevel = 7;
+
 	int[] volDim = { 500, 500, 5 };
 
 //	/** tiny hdf5 for test - dummy values */
@@ -106,7 +108,7 @@ public class MarchingCubesTest
 	PrintWriter writer2 = null;
 
 	float maxAxisVal = 0;
-	
+
 	// float previousDiff = 0.0f;
 
 	/**
@@ -206,7 +208,7 @@ public class MarchingCubesTest
 
 			Mesh neuron = new Mesh();
 			neuron.setMaterial( material );
-			neuron.setGeometryType(GeometryType.POINTS);
+			neuron.setGeometryType( GeometryType.POINTS );
 			neuron.setPosition( new GLVector( 0.0f, 0.0f, 0.0f ) );
 
 			marchingCube( neuron, material, getScene(), cam );
@@ -243,12 +245,12 @@ public class MarchingCubesTest
 		CompletionService< viewer.Mesh > executor = new ExecutorCompletionService< viewer.Mesh >( Executors.newWorkStealingPool() );
 
 		List< Future< viewer.Mesh > > resultMeshList = new ArrayList<>();
-		
+
 		float maxX = voxDim[ 0 ] * ( volDim[ 0 ] - 1 );
 		float maxY = voxDim[ 1 ] * ( volDim[ 1 ] - 1 );
 		float maxZ = voxDim[ 2 ] * ( volDim[ 2 ] - 1 );
 		maxAxisVal = Math.max( maxX, Math.max( maxY, maxZ ) );
-		System.out.println("maxX " + maxX + " maxY: " + maxY + " maxZ: " + maxZ + " maxAxisVal: " + maxAxisVal);
+		System.out.println( "maxX " + maxX + " maxY: " + maxY + " maxZ: " + maxZ + " maxAxisVal: " + maxAxisVal );
 
 		System.out.println( "creating callables..." );
 		for ( int i = 0; i < subvolumes.size(); i++ )
@@ -261,7 +263,6 @@ public class MarchingCubesTest
 			Future< viewer.Mesh > result = executor.submit( callable );
 			resultMeshList.add( result );
 		}
-		
 
 		Future< viewer.Mesh > completedFuture = null;
 
@@ -309,13 +310,13 @@ public class MarchingCubesTest
 				scene.addChild( neuron );
 				first = false;
 			}
-			
-			cam.setPosition( new GLVector( ( (bigx - smallx ) / 2) , (( bigy - smally ) / 2), 5.0f ) );
-			System.out.println("camera position: " + ( (bigx - smallx ) / 2) + ":" + (( bigy - smally ) / 2) + ":" + 5.0f );
+
+			cam.setPosition( new GLVector( ( ( bigx - smallx ) / 2 ), ( ( bigy - smally ) / 2 ), 5.0f ) );
+			System.out.println( "camera position: " + ( ( bigx - smallx ) / 2 ) + ":" + ( ( bigy - smally ) / 2 ) + ":" + 5.0f );
 
 			System.out.println( "size of mesh " + verticesArray.length );
 		}
-		
+
 		writer.close();
 //		writer2.close();
 	}
@@ -342,7 +343,6 @@ public class MarchingCubesTest
 		System.out.println( "size of verticesArray: " + numberOfTriangles * 3 * 3 );
 
 		float[][] vertices = m.getVertices();
-		float[][] normals = m.getNormals();
 		int[] triangles = m.getTriangles();
 
 		float[] point0 = new float[ 3 ];
@@ -402,29 +402,13 @@ public class MarchingCubesTest
 				by = verticesArray[ v - 1 ];
 
 			verticesArray[ v++ ] = point2[ 2 ];
-
-//			point0 = normals[ ( int ) id0 ];
-//			point1 = normals[ ( int ) id1 ];
-//			point2 = normals[ ( int ) id2 ];
-
-//			normalsArray[ n++ ] = point0[ 0 ];
-//			normalsArray[ n++ ] = point0[ 1 ];
-//			normalsArray[ n++ ] = point0[ 2 ];
-//			normalsArray[ n++ ] = point1[ 0 ];
-//			normalsArray[ n++ ] = point1[ 1 ];
-//			normalsArray[ n++ ] = point1[ 2 ];
-//			normalsArray[ n++ ] = point2[ 0 ];
-//			normalsArray[ n++ ] = point2[ 1 ];
-//			normalsArray[ n++ ] = point2[ 2 ];
 		}
 
-		System.out.println("vsize: " + verticesArray.length);
+		System.out.println( "vsize: " + verticesArray.length );
 		for ( int i = 0; i < verticesArray.length; ++i )
 		{
 			verticesArray[ i ] /= maxAxisVal;
-//			normalsArray[ i ] /= maxAxisVal;
-			writer.println(verticesArray[i]);
-//			writer2.println(normalsArray[i]);
+			writer.println( verticesArray[ i ] );
 		}
 
 		sx /= maxAxisVal;
@@ -432,23 +416,19 @@ public class MarchingCubesTest
 		bx /= maxAxisVal;
 		by /= maxAxisVal;
 
-		
-		if (sx < smallx)
+		if ( sx < smallx )
 			smallx = sx;
-		if (sy < smally)
+		if ( sy < smally )
 			smally = sy;
-		
-		if (bx > bigx)
+
+		if ( bx > bigx )
 			bigx = bx;
-		if (by > bigy)
+		if ( by > bigy )
 			bigy = by;
-		
+
 		neuron.setVertices( FloatBuffer.wrap( verticesArray ) );
 		neuron.recalculateNormals();
-//		neuron.setNormals( FloatBuffer.wrap( normalsArray ) );
 		neuron.setDirty( true );
-		
-
 	}
 
 	/**
@@ -471,20 +451,18 @@ public class MarchingCubesTest
 
 		// resize array to fit the new mesh
 		verticesArray = Arrays.copyOf( verticesArray, ( numberOfTriangles * 3 * 3 + vertexCount ) );
-//		normalsArray = Arrays.copyOf( normalsArray, ( numberOfTriangles * 3 * 3 + vertexCount ) );
 		System.out.println( "size of verticesArray: " + ( numberOfTriangles * 3 * 3 + vertexCount ) );
 
 		float[][] vertices = m.getVertices();
-//		float[][] normals = m.getNormals();
 		int[] triangles = m.getTriangles();
 
 		float[] point0 = new float[ 3 ];
 		float[] point1 = new float[ 3 ];
 		float[] point2 = new float[ 3 ];
-		int v = 0, n = 0;
-		
-		float sx = 0, sy= 0, bx = 0, by = 0;
-		vertexCount = 0;
+		int v = 0;
+
+		float sx = 0, sy = 0, bx = 0, by = 0;
+
 		for ( int i = 0; i < numberOfTriangles; i++ )
 		{
 			long id0 = triangles[ i * 3 ];
@@ -546,39 +524,15 @@ public class MarchingCubesTest
 				by = verticesArray[ vertexCount + v - 1 ];
 
 			verticesArray[ vertexCount + v++ ] = point2[ 2 ];
-			
-//			point0 = normals[ ( int ) id0 ];
-//			point1 = normals[ ( int ) id1 ];
-//			point2 = normals[ ( int ) id2 ];
 
-//			writer2.println(point0[ 0 ]);
-//			writer2.println(point0[ 1 ]);
-//			writer2.println(point0[ 2 ]);
-//			writer2.println(point1[ 0 ]);
-//			writer2.println(point1[ 1 ]);
-//			writer2.println(point1[ 2 ]);
-//			writer2.println(point2[ 0 ]);
-//			writer2.println(point2[ 1 ]);
-//			writer2.println(point2[ 2 ]);
-
-//			normalsArray[ vertexCount + n++ ] = point0[ 0 ];
-//			normalsArray[ vertexCount + n++ ] = point0[ 1 ];
-//			normalsArray[ vertexCount + n++ ] = point0[ 2 ];
-//			normalsArray[ vertexCount + n++ ] = point1[ 0 ];
-//			normalsArray[ vertexCount + n++ ] = point1[ 1 ];
-//			normalsArray[ vertexCount + n++ ] = point1[ 2 ];
-//			normalsArray[ vertexCount + n++ ] = point2[ 0 ];
-//			normalsArray[ vertexCount + n++ ] = point2[ 1 ];
-//			normalsArray[ vertexCount + n++ ] = point2[ 2 ];
 		}
 
 		// omp parallel for
-		System.out.println("vsize: " + verticesArray.length);
+		System.out.println( "vsize: " + verticesArray.length );
 		for ( int i = vertexCount; i < verticesArray.length; ++i )
 		{
 			verticesArray[ i ] /= maxAxisVal;
-//			normalsArray[ i ] /= maxAxisVal;
-			writer.println(verticesArray[i]);
+			writer.println( verticesArray[ i ] );
 //			writer2.println(normalsArray[i]);
 		}
 
@@ -587,33 +541,19 @@ public class MarchingCubesTest
 		bx /= maxAxisVal;
 		by /= maxAxisVal;
 
-		
-		if (sx < smallx)
+		if ( sx < smallx )
 			smallx = sx;
-		if (sy < smally)
+		if ( sy < smally )
 			smally = sy;
-		
-		if (bx > bigx)
+
+		if ( bx > bigx )
 			bigx = bx;
-		if (by > bigy)
+		if ( by > bigy )
 			bigy = by;
 
 		neuron.setVertices( FloatBuffer.wrap( verticesArray ) );
-		// TODO: only one of the next two calls must be here :P
-//			neuron.setNormals( FloatBuffer.wrap( normalsArray ) );
 		neuron.recalculateNormals();
-
-//			
-//			float[] v1 = neuron.getVertices().array();
-//			float[] ns = neuron.getNormals().array();
-////			
-
-////
-//			neuron.setVertices( FloatBuffer.wrap( v1 ) );
-//			neuron.setNormals( FloatBuffer.wrap( ns ) );
 		neuron.setDirty( true );
-		System.out.println("neuron is dirty: " + neuron.getDirty());
-
 	}
 
 	private List< RandomAccessibleInterval< LabelMultisetType > > dataPartitioning()
@@ -623,9 +563,9 @@ public class MarchingCubesTest
 		int numberOfParts = 4; // TODO: find a way to determine this value
 								// according to the size of the volume and voxel
 		// TODO: find a way to divide the volume automatically
-		
+
 		RandomAccessibleInterval< LabelMultisetType > first =
-				Views.interval( volumeLabels, new long[] { volumeLabels.min( 0 ), (volumeLabels.max( 1 ) - volumeLabels.min( 1 ))/2 -1, volumeLabels.min( 2 ) },
+				Views.interval( volumeLabels, new long[] { volumeLabels.min( 0 ), ( volumeLabels.max( 1 ) - volumeLabels.min( 1 ) ) / 2 - 1, volumeLabels.min( 2 ) },
 						new long[] { volumeLabels.max( 0 ), volumeLabels.max( 1 ), volumeLabels.max( 2 ) } );
 
 		System.out.println( "first - from: " + volumeLabels.min( 0 ) + "x" + ( ( ( volumeLabels.max( 1 ) - volumeLabels.min( 1 ) ) / 2 ) - 1 ) + "x" + volumeLabels.min( 2 ) +
@@ -633,7 +573,7 @@ public class MarchingCubesTest
 
 		RandomAccessibleInterval< LabelMultisetType > second =
 				Views.interval( volumeLabels, new long[] { volumeLabels.min( 0 ), volumeLabels.min( 1 ), volumeLabels.min( 2 ) },
-				new long[] { volumeLabels.max( 0 ), ( ( volumeLabels.max( 1 ) - volumeLabels.min( 1 ) ) / 2 ) + 1, volumeLabels.max( 2 ) } );
+						new long[] { volumeLabels.max( 0 ), ( ( volumeLabels.max( 1 ) - volumeLabels.min( 1 ) ) / 2 ) + 1, volumeLabels.max( 2 ) } );
 
 		System.out.println( "second - from: " + volumeLabels.min( 0 ) + "x" + volumeLabels.min( 1 ) + "x" + volumeLabels.min( 2 ) +
 				" to: " + volumeLabels.max( 0 ) + "x" + ( ( ( volumeLabels.max( 1 ) - volumeLabels.min( 1 ) ) / 2 ) + 1 ) + "x" + volumeLabels.max( 2 ) );
