@@ -153,7 +153,7 @@ public class MarchingCubesTest
 	{
 		public MarchingCubeApplication( String applicationName, int windowWidth, int windowHeight )
 		{
-			super( applicationName, windowWidth, windowHeight, true );
+			super( applicationName, windowWidth, windowHeight, false );
 		}
 
 		@Override
@@ -171,7 +171,7 @@ public class MarchingCubesTest
 
 			setRenderer( Renderer.Factory.createRenderer( getHub(), getApplicationName(), getScene(), getWindowWidth(),
 					getWindowHeight() ) );
-			getHub().add( SceneryElement.Renderer, getRenderer() );
+			getHub().add( SceneryElement.RENDERER, getRenderer() );
 
 			final Material material = new Material();
 			material.setAmbient( new GLVector( 0.1f * ( 1 ), 1.0f, 1.0f ) );
@@ -261,6 +261,7 @@ public class MarchingCubesTest
 			Future< viewer.Mesh > result = executor.submit( callable );
 			resultMeshList.add( result );
 		}
+		
 
 		Future< viewer.Mesh > completedFuture = null;
 
@@ -483,7 +484,7 @@ public class MarchingCubesTest
 		int v = 0, n = 0;
 		
 		float sx = 0, sy= 0, bx = 0, by = 0;
-
+		vertexCount = 0;
 		for ( int i = 0; i < numberOfTriangles; i++ )
 		{
 			long id0 = triangles[ i * 3 ];
@@ -545,7 +546,7 @@ public class MarchingCubesTest
 				by = verticesArray[ vertexCount + v - 1 ];
 
 			verticesArray[ vertexCount + v++ ] = point2[ 2 ];
-
+			
 //			point0 = normals[ ( int ) id0 ];
 //			point1 = normals[ ( int ) id1 ];
 //			point2 = normals[ ( int ) id2 ];
