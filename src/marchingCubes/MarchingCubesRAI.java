@@ -306,13 +306,13 @@ public class MarchingCubesRAI
 					id2Point3dId.put( id, pt );
 				}
 
-				for ( i = 0; MarchingCubesTables.triTable[ tableIndex ][ i ] != MarchingCubesTables.Invalid; i += 3 )
+				for ( i = 0; MarchingCubesTables.MC_TRI_TABLE[ tableIndex ][ i ] != MarchingCubesTables.Invalid; i += 3 )
 				{
 					Triangle triangle = new Triangle();
 					long pointId0, pointId1, pointId2;
-					pointId0 = getEdgeId( cursorX, cursorY, cursorZ, MarchingCubesTables.triTable[ tableIndex ][ i ] );
-					pointId1 = getEdgeId( cursorX, cursorY, cursorZ, MarchingCubesTables.triTable[ tableIndex ][ i + 1 ] );
-					pointId2 = getEdgeId( cursorX, cursorY, cursorZ, MarchingCubesTables.triTable[ tableIndex ][ i + 2 ] );
+					pointId0 = getEdgeId( cursorX, cursorY, cursorZ, MarchingCubesTables.MC_TRI_TABLE[ tableIndex ][ i ] );
+					pointId1 = getEdgeId( cursorX, cursorY, cursorZ, MarchingCubesTables.MC_TRI_TABLE[ tableIndex ][ i + 1 ] );
+					pointId2 = getEdgeId( cursorX, cursorY, cursorZ, MarchingCubesTables.MC_TRI_TABLE[ tableIndex ][ i + 2 ] );
 					triangle.point[ 0 ] = pointId0;
 					triangle.point[ 1 ] = pointId1;
 					triangle.point[ 2 ] = pointId2;
@@ -917,13 +917,13 @@ public class MarchingCubesRAI
 							id2Point3dId.put( id, pt );
 						}
 		
-						for ( int i = 0; MarchingCubesTables.triTable[ tableIndex ][ i ] != MarchingCubesTables.Invalid; i += 3 )
+						for ( int i = 0; MarchingCubesTables.MC_TRI_TABLE[ tableIndex ][ i ] != MarchingCubesTables.Invalid; i += 3 )
 						{
 							Triangle triangle = new Triangle();
 							long pointId0, pointId1, pointId2;
-							pointId0 = getEdgeId( cursorX, cursorY, cursorZ, MarchingCubesTables.triTable[ tableIndex ][ i ] );
-							pointId1 = getEdgeId( cursorX, cursorY, cursorZ, MarchingCubesTables.triTable[ tableIndex ][ i + 1 ] );
-							pointId2 = getEdgeId( cursorX, cursorY, cursorZ, MarchingCubesTables.triTable[ tableIndex ][ i + 2 ] );
+							pointId0 = getEdgeId( cursorX, cursorY, cursorZ, MarchingCubesTables.MC_TRI_TABLE[ tableIndex ][ i ] );
+							pointId1 = getEdgeId( cursorX, cursorY, cursorZ, MarchingCubesTables.MC_TRI_TABLE[ tableIndex ][ i + 1 ] );
+							pointId2 = getEdgeId( cursorX, cursorY, cursorZ, MarchingCubesTables.MC_TRI_TABLE[ tableIndex ][ i + 2 ] );
 							triangle.point[ 0 ] = pointId0;
 							triangle.point[ 1 ] = pointId1;
 							triangle.point[ 2 ] = pointId2;
