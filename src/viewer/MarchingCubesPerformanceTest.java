@@ -79,61 +79,9 @@ public class MarchingCubesPerformanceTest
 
 				begin = new Timestamp( System.currentTimeMillis() );
 //				viewer.Mesh m = mc_rai.generateSurface( volumeLabels, voxDim, volDim, true, isoLevel );
-				mc_rai.generateSurface2( volumeLabels, voxDim, volDim, true, isoLevel );
+				mc_rai.generateSurface( volumeLabels, volDim, voxDim, true, isoLevel, false );
 				end = new Timestamp( System.currentTimeMillis() );
 				System.out.println( "complete time for generating mesh: " + ( end.getTime() - begin.getTime() ) );
-
-//				begin = new Timestamp( System.currentTimeMillis() );
-//				int numberOfTriangles = m.getNumberOfTriangles();
-//				verticesArray = new float[ numberOfTriangles * 3 * 3 ];
-//				normalsArray = new float[ numberOfTriangles * 3 * 3 ];
-//
-//				float[][] vertices = m.getVertices();
-//				float[][] normals = m.getNormals();
-//				int[] triangles = m.getTriangles();
-//
-//				float[] point0 = new float[ 3 ];
-//				float[] point1 = new float[ 3 ];
-//				float[] point2 = new float[ 3 ];
-//				int v = 0, n = 0;
-//				for ( int t = 0; t < numberOfTriangles; t++ )
-//				{
-//					long id0 = triangles[ t * 3 ];
-//					long id1 = triangles[ t * 3 + 1 ];
-//					long id2 = triangles[ t * 3 + 2 ];
-//
-//					point0 = vertices[ ( int ) id0 ];
-//					point1 = vertices[ ( int ) id1 ];
-//					point2 = vertices[ ( int ) id2 ];
-//
-//					verticesArray[ v++ ] = point0[ 0 ];
-//					verticesArray[ v++ ] = point0[ 1 ];
-//					verticesArray[ v++ ] = point0[ 2 ];
-//					verticesArray[ v++ ] = point1[ 0 ];
-//					verticesArray[ v++ ] = point1[ 1 ];
-//					verticesArray[ v++ ] = point1[ 2 ];
-//					verticesArray[ v++ ] = point2[ 0 ];
-//					verticesArray[ v++ ] = point2[ 1 ];
-//					verticesArray[ v++ ] = point2[ 2 ];
-//
-//					point0 = normals[ ( int ) id0 ];
-//					point1 = normals[ ( int ) id1 ];
-//					point2 = normals[ ( int ) id2 ];
-//
-//					normalsArray[ n++ ] = point0[ 0 ];
-//					normalsArray[ n++ ] = point0[ 1 ];
-//					normalsArray[ n++ ] = point0[ 2 ];
-//					normalsArray[ n++ ] = point1[ 0 ];
-//					normalsArray[ n++ ] = point1[ 1 ];
-//					normalsArray[ n++ ] = point1[ 2 ];
-//					normalsArray[ n++ ] = point2[ 0 ];
-//					normalsArray[ n++ ] = point2[ 1 ];
-//					normalsArray[ n++ ] = point2[ 2 ];
-//				}
-//				end = new Timestamp( System.currentTimeMillis() );
-//				System.out.println( "time for generating arrays: " + ( end.getTime() - begin.getTime() ) );
-//
-//				System.out.println( "number of vertices and normals: " + numberOfTriangles * 3 * 3 );
 			}
 		}
 	}
