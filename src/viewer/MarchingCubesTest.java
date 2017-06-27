@@ -257,7 +257,7 @@ public class MarchingCubesTest
 		{
 			System.out.println( "dimension: " + subvolumes.get( i ).dimension( 0 ) + "x" + subvolumes.get( i ).dimension( 1 ) + "x" + subvolumes.get( i ).dimension( 2 ) );
 			volDim = new int[] { ( int ) subvolumes.get( i ).dimension( 0 ), ( int ) subvolumes.get( i ).dimension( 1 ), ( int ) subvolumes.get( i ).dimension( 2 ) };
-			MarchingCubeCallable callable = new MarchingCubeCallable( subvolumes.get( i ), voxDim, volDim, true, isoLevel );
+			MarchingCubeCallable callable = new MarchingCubeCallable( subvolumes.get( i ), volDim, voxDim, true, isoLevel, true );
 			System.out.println( "callable: " + callable );
 			System.out.println( "input " + subvolumes.get( i ) );
 			Future< viewer.Mesh > result = executor.submit( callable );

@@ -8,32 +8,39 @@ import net.imglib2.RandomAccessibleInterval;
 
 public class MarchingCubeCallable implements Callable< Mesh >
 {
+	/** volume data */
+	RandomAccessibleInterval< LabelMultisetType > volume;
 
-	RandomAccessibleInterval< LabelMultisetType > input;
-
-	float[] voxDim;
-
+	/** volume dimension*/
 	int[] volDim;
 
+	/** marching cube voxel dimension */
+	float[] voxDim;
+
+	/** defines if the mesh must be create for the exact isolevel (true) or for all above isolevels (false) */
 	boolean isExact;
 
-	int level;
+	/** the isolevel */
+	int isolevel;
+	
+	/** indicates if it is to use the implementation directly with RAI (true) or if we must convert for an array first (false) */
+	boolean usingRAI;
 
-	public MarchingCubeCallable( RandomAccessibleInterval< LabelMultisetType > input, float[] voxDim, int[] volDim, boolean isExact, int level )
+	public MarchingCubeCallable( RandomAccessibleInterval< LabelMultisetType > input, int[] volDim, float[] voxDim, boolean isExact, int level, boolean usingRAI )
 	{
-		this.input = input;
-		this.voxDim = voxDim;
+		this.volume = input;
 		this.volDim = volDim;
+		this.voxDim = voxDim;
 		this.isExact = isExact;
-		this.level = level;
+		this.isolevel = level;
+		this.usingRAI = usingRAI;
 	}
 
 	@Override
 	public Mesh call() throws Exception
 	{
-		System.out.println("call " + input);
 		MarchingCubesRAI mc_rai = new MarchingCubesRAI();
-		Mesh m = mc_rai.generateSurface2( input, voxDim, volDim, isExact, level );
+		Mesh m = mc_rai.generateSurface( volume, volDim, voxDim, isExact, isolevel, usingRAI );
 
 		return m;
 	}
