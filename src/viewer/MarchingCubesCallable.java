@@ -6,7 +6,7 @@ import bdv.labels.labelset.LabelMultisetType;
 import marchingCubes.MarchingCubesRAI;
 import net.imglib2.RandomAccessibleInterval;
 
-public class MarchingCubeCallable implements Callable< Mesh >
+public class MarchingCubesCallable implements Callable< Mesh >
 {
 	/** volume data */
 	RandomAccessibleInterval< LabelMultisetType > volume;
@@ -26,7 +26,7 @@ public class MarchingCubeCallable implements Callable< Mesh >
 	/** indicates if it is to use the implementation directly with RAI (true) or if we must convert for an array first (false) */
 	boolean usingRAI;
 
-	public MarchingCubeCallable( RandomAccessibleInterval< LabelMultisetType > input, int[] volDim, float[] voxDim, boolean isExact, int level, boolean usingRAI )
+	public MarchingCubesCallable( RandomAccessibleInterval< LabelMultisetType > input, int[] volDim, float[] voxDim, boolean isExact, int level, boolean usingRAI )
 	{
 		this.volume = input;
 		this.volDim = volDim;
