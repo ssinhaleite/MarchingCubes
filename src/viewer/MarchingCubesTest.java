@@ -24,7 +24,6 @@ import bdv.labels.labelset.LabelMultisetType;
 import ch.systemsx.cisd.hdf5.HDF5Factory;
 import ch.systemsx.cisd.hdf5.IHDF5Reader;
 import cleargl.GLVector;
-import graphics.scenery.BufferUtils;
 import graphics.scenery.Camera;
 import graphics.scenery.DetachedHeadCamera;
 import graphics.scenery.GeometryType;
@@ -38,6 +37,7 @@ import graphics.scenery.backends.Renderer;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.view.Views;
 
+import util.HDF5Reader;
 /**
  * Unit test for marching cubes
  * 
@@ -76,12 +76,10 @@ public class MarchingCubesTest
 
 	/** small hdf5 for test - subset from sample B */
 	static String path = "data/sample_B_20160708_frags_46_50.hdf";
+	int isoLevel = 7;
+	int[] volDim = { 500, 500, 5 };
 
 	static String path_label = "/volumes/labels/neuron_ids";
-
-	int isoLevel = 7;
-
-	int[] volDim = { 500, 500, 5 };
 
 //	/** tiny hdf5 for test - dummy values */
 //	static String path_label = "/volumes/labels/small_neuron_ids";
@@ -117,22 +115,18 @@ public class MarchingCubesTest
 	@BeforeClass
 	public static void loadData()
 	{
-
 		System.out.println( "Opening labels from " + path );
 		final IHDF5Reader reader = HDF5Factory.openForReading( path );
-		System.out.println( "reader: " + reader );
 
 		/* labels */
 		if ( reader.exists( path_label ) )
 		{
-			System.out.println( "path exists " );
 			try
 			{
-				readLabels( reader, path_label );
+				HDF5Reader.readLabels(reader, path_label);
 			}
 			catch ( IOException e )
 			{
-				System.out.println( "exception!" );
 				e.printStackTrace();
 			}
 		}
