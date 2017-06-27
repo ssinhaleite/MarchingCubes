@@ -1,10 +1,8 @@
 package marchingCubes;
 
-
 /**
  * Lookup tables used in the construction of the isosurface.
  */
-
 class MarchingCubesTables
 {
 	static final int Invalid = -1;
