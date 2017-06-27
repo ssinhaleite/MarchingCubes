@@ -27,10 +27,6 @@ public class MarchingCubesPerformanceTest
 
 	static Timestamp end = new Timestamp( System.currentTimeMillis() );
 
-	static float[] verticesArray = null;
-
-	static float[] normalsArray = null;
-
 	// hdf file to use on test
 	static String path = "data/sample_B_20160708_frags_46_50.hdf";
 
