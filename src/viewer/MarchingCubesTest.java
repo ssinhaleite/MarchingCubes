@@ -31,6 +31,7 @@ import graphics.scenery.Scene;
 import graphics.scenery.SceneryDefaultApplication;
 import graphics.scenery.SceneryElement;
 import graphics.scenery.backends.Renderer;
+import marchingCubes.MarchingCubesRAI;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.view.Views;
 import util.HDF5Reader;
@@ -169,7 +170,7 @@ public class MarchingCubesTest {
 
 			Mesh neuron = new Mesh();
 			neuron.setMaterial(material);
-			neuron.setGeometryType(GeometryType.POINTS);
+//			neuron.setGeometryType(GeometryType.POINTS);
 			neuron.setPosition(new GLVector(0.0f, 0.0f, 0.0f));
 
 			marchingCube(neuron, material, getScene(), cam);
@@ -184,8 +185,8 @@ public class MarchingCubesTest {
 		viewer.Mesh m = new viewer.Mesh();
 		List<RandomAccessibleInterval<LabelMultisetType>> subvolumes = dataPartitioning();
 
-		// subvolumes.clear();
-		// subvolumes.add( volumeLabels );
+		 subvolumes.clear();
+		 subvolumes.add( volumeLabels );
 
 		System.out.println("starting executor...");
 		CompletionService<viewer.Mesh> executor = new ExecutorCompletionService<viewer.Mesh>(
@@ -196,68 +197,93 @@ public class MarchingCubesTest {
 		float maxX = voxDim[0] * (volDim[0] - 1);
 		float maxY = voxDim[1] * (volDim[1] - 1);
 		float maxZ = voxDim[2] * (volDim[2] - 1);
+		
 		maxAxisVal = Math.max(maxX, Math.max(maxY, maxZ));
 		System.out.println("maxX " + maxX + " maxY: " + maxY + " maxZ: " + maxZ + " maxAxisVal: " + maxAxisVal);
 
-		System.out.println("creating callables...");
-		for (int i = 0; i < subvolumes.size(); i++) {
-			System.out.println("dimension: " + subvolumes.get(i).dimension(0) + "x" + subvolumes.get(i).dimension(1)
-					+ "x" + subvolumes.get(i).dimension(2));
+//		System.out.println("creating callables...");
+//		for (int i = 1; i < 2; i++) {
+//			System.out.println("dimension: " + subvolumes.get(i).dimension(0) + "x" + subvolumes.get(i).dimension(1)
+//					+ "x" + subvolumes.get(i).dimension(2));
+//			volDim = new int[] { (int) subvolumes.get(i).dimension(0), (int) subvolumes.get(i).dimension(1),
+//					(int) subvolumes.get(i).dimension(2) };
+//			MarchingCubesCallable callable = new MarchingCubesCallable(subvolumes.get(i), volDim, voxDim, true, isoLevel,
+//					false);
+//			System.out.println("callable: " + callable);
+//			System.out.println("input " + subvolumes.get(i));
+//			Future<viewer.Mesh> result = executor.submit(callable);
+//			resultMeshList.add(result);
+//		}
+//
+//		Future<viewer.Mesh> completedFuture = null;
+//
+//		System.out.println("waiting results...");
+//		while (resultMeshList.size() > 0) {
+//			// block until a task completes
+//			try {
+//				completedFuture = executor.take();
+//				System.out.println("task " + completedFuture + " is ready: " + completedFuture.isDone());
+//			} catch (InterruptedException e1) {
+//				// TODO Auto-generated catch block
+//				e1.printStackTrace();
+//			}
+//
+//			resultMeshList.remove(completedFuture);
+//
+//			// get the mesh, if the task was able to create it
+//			try {
+//				m = completedFuture.get();
+//				System.out.println("getting mesh");
+//			} catch (InterruptedException | ExecutionException e) {
+//				Throwable cause = e.getCause();
+//				System.out.println("Mesh creation failed: " + cause);
+//				e.printStackTrace();
+//				break;
+//			}
+//
+//			// a mesh was created, so update the existing mesh
+//			// Mesh n = new Mesh();
+//			// neuron.setMaterial( material );
+//			// n.setPosition( new GLVector( resultMeshList.size() - 4,
+//			// resultMeshList.size() - 4, 0 ) );
+//			System.out.println("updating mesh ");
+//			// neuron.setGeometryType(GeometryType.POINTS);
+//			updateMesh(m, neuron);
+//
+//			if (!first) {
+//				scene.addChild(neuron);
+//				first = false;
+//			}
+//			else
+//				first = false;
+		
+		for (int i = 0 ; i < subvolumes.size(); i++)
+		{
+			MarchingCubesRAI mc_rai = new MarchingCubesRAI();
 			volDim = new int[] { (int) subvolumes.get(i).dimension(0), (int) subvolumes.get(i).dimension(1),
-					(int) subvolumes.get(i).dimension(2) };
-			MarchingCubesCallable callable = new MarchingCubesCallable(subvolumes.get(i), volDim, voxDim, true, isoLevel,
-					false);
-			System.out.println("callable: " + callable);
-			System.out.println("input " + subvolumes.get(i));
-			Future<viewer.Mesh> result = executor.submit(callable);
-			resultMeshList.add(result);
-		}
+			(int) subvolumes.get(i).dimension(2) };
 
-		Future<viewer.Mesh> completedFuture = null;
+			System.out.println("dimension: " + subvolumes.get(i).dimension(0) + "x" + subvolumes.get(i).dimension(1)
+			+ "x" + subvolumes.get(i).dimension(2));
 
-		System.out.println("waiting results...");
-		while (resultMeshList.size() > 0) {
-			// block until a task completes
-			try {
-				completedFuture = executor.take();
-				System.out.println("task " + completedFuture + " is ready: " + completedFuture.isDone());
-			} catch (InterruptedException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-			}
-
-			resultMeshList.remove(completedFuture);
-
-			// get the mesh, if the task was able to create it
-			try {
-				m = completedFuture.get();
-				System.out.println("getting mesh");
-			} catch (InterruptedException | ExecutionException e) {
-				Throwable cause = e.getCause();
-				System.out.println("Mesh creation failed: " + cause);
-				e.printStackTrace();
-				break;
-			}
-
-			// a mesh was created, so update the existing mesh
-			// Mesh n = new Mesh();
-			// neuron.setMaterial( material );
-			// n.setPosition( new GLVector( resultMeshList.size() - 4,
-			// resultMeshList.size() - 4, 0 ) );
+			viewer.Mesh mesh = mc_rai.generateSurface(subvolumes.get(i), volDim, voxDim, true, isoLevel, false);
 			System.out.println("updating mesh ");
-			// neuron.setGeometryType(GeometryType.POINTS);
-			updateMesh(m, neuron);
-
-			if (first) {
-				scene.addChild(neuron);
-				first = false;
-			}
-
-			cam.setPosition(new GLVector(((bigx - smallx) / 2), ((bigy - smally) / 2), 5.0f));
-			System.out.println("camera position: " + ((bigx - smallx) / 2) + ":" + ((bigy - smally) / 2) + ":" + 5.0f);
-
-			System.out.println("size of mesh " + verticesArray.length);
+			updateMesh(mesh, neuron, 300 * i, 0, 0);
 		}
+		
+		neuron.setVertices(FloatBuffer.wrap(verticesArray));
+		neuron.recalculateNormals();
+		neuron.setDirty(true);
+		
+		scene.addChild(neuron);
+		
+		cam.setPosition(new GLVector(((bigx - smallx) / 2), ((bigy - smally) / 2), 5.0f));
+		cam.setPosition(new GLVector(smallx, smally, 5.0f));
+		
+		System.out.println("camera position: " + ((bigx - smallx) / 2) + ":" + ((bigy - smally) / 2) + ":" + 5.0f);
+
+		System.out.println("size of mesh " + verticesArray.length);
+
 
 		writer.close();
 	}
@@ -378,7 +404,7 @@ public class MarchingCubesTest {
 	 * @param neuron
 	 *            scenery mesh that will receive the information
 	 */
-	public void updateMesh(viewer.Mesh m, Mesh neuron) {
+	public void updateMesh(viewer.Mesh m, Mesh neuron, int offsetx, int offsety, int offsetz) {
 		System.out.println("previous size of vertices: " + verticesArray.length);
 		int vertexCount = verticesArray.length;
 
@@ -418,50 +444,51 @@ public class MarchingCubesTest {
 			// writer.println(point2[ 1 ]);
 			// writer.println(point2[ 2 ]);
 
-			verticesArray[vertexCount + v++] = point0[0];
-			if (verticesArray[vertexCount + v - 1] < sx)
-				sx = verticesArray[vertexCount + v - 1];
-			if (verticesArray[vertexCount + v - 1] > bx)
-				bx = verticesArray[vertexCount + v - 1];
+			verticesArray[vertexCount + v++] = point0[0] + offsetx;
+//			if (verticesArray[vertexCount + v - 1] < sx)
+//				sx = verticesArray[vertexCount + v - 1];
+//			if (verticesArray[vertexCount + v - 1] > bx)
+//				bx = verticesArray[vertexCount + v - 1];
 
-			verticesArray[vertexCount + v++] = point0[1];
-			if (verticesArray[vertexCount + v - 1] < sy)
-				sy = verticesArray[vertexCount + v - 1];
-			if (verticesArray[vertexCount + v - 1] > by)
-				by = verticesArray[vertexCount + v - 1];
+			verticesArray[vertexCount + v++] = point0[1] + offsety;
+//			if (verticesArray[vertexCount + v - 1] < sy)
+//				sy = verticesArray[vertexCount + v - 1];
+//			if (verticesArray[vertexCount + v - 1] > by)
+//				by = verticesArray[vertexCount + v - 1];
 
-			verticesArray[vertexCount + v++] = point0[2];
+			verticesArray[vertexCount + v++] = point0[2] + offsetz;
 
-			verticesArray[vertexCount + v++] = point1[0];
-			if (verticesArray[vertexCount + v - 1] < sx)
-				sx = verticesArray[vertexCount + v - 1];
-			if (verticesArray[vertexCount + v - 1] > bx)
-				bx = verticesArray[vertexCount + v - 1];
+			verticesArray[vertexCount + v++] = point1[0] + offsetx;
+//			if (verticesArray[vertexCount + v - 1] < sx)
+//				sx = verticesArray[vertexCount + v - 1];
+//			if (verticesArray[vertexCount + v - 1] > bx)
+//				bx = verticesArray[vertexCount + v - 1];
 
-			verticesArray[vertexCount + v++] = point1[1];
-			if (verticesArray[vertexCount + v - 1] < sy)
-				sy = verticesArray[vertexCount + v - 1];
-			if (verticesArray[vertexCount + v - 1] > by)
-				by = verticesArray[vertexCount + v - 1];
+			verticesArray[vertexCount + v++] = point1[1] + offsety;
+//			if (verticesArray[vertexCount + v - 1] < sy)
+//				sy = verticesArray[vertexCount + v - 1];
+//			if (verticesArray[vertexCount + v - 1] > by)
+//				by = verticesArray[vertexCount + v - 1];
 
-			verticesArray[vertexCount + v++] = point1[2];
+			verticesArray[vertexCount + v++] = point1[2] + offsetz;
 
-			verticesArray[vertexCount + v++] = point2[0];
-			if (verticesArray[vertexCount + v - 1] < sx)
-				sx = verticesArray[vertexCount + v - 1];
-			if (verticesArray[vertexCount + v - 1] > bx)
-				bx = verticesArray[vertexCount + v - 1];
+			verticesArray[vertexCount + v++] = point2[0] + offsetx;
+//			if (verticesArray[vertexCount + v - 1] < sx)
+//				sx = verticesArray[vertexCount + v - 1];
+//			if (verticesArray[vertexCount + v - 1] > bx)
+//				bx = verticesArray[vertexCount + v - 1];
 
-			verticesArray[vertexCount + v++] = point2[1];
-			if (verticesArray[vertexCount + v - 1] < sy)
-				sy = verticesArray[vertexCount + v - 1];
-			if (verticesArray[vertexCount + v - 1] > by)
-				by = verticesArray[vertexCount + v - 1];
+			verticesArray[vertexCount + v++] = point2[1] + offsety;
+//			if (verticesArray[vertexCount + v - 1] < sy)
+//				sy = verticesArray[vertexCount + v - 1];
+//			if (verticesArray[vertexCount + v - 1] > by)
+//				by = verticesArray[vertexCount + v - 1];
 
-			verticesArray[vertexCount + v++] = point2[2];
+			verticesArray[vertexCount + v++] = point2[2] + offsetz;
 
 		}
 
+		maxAxisVal = 499;
 		// omp parallel for
 		System.out.println("vsize: " + verticesArray.length);
 		for (int i = vertexCount; i < verticesArray.length; ++i) {
@@ -469,24 +496,20 @@ public class MarchingCubesTest {
 			writer.println(verticesArray[i]);
 		}
 
-		sx /= maxAxisVal;
-		sy /= maxAxisVal;
-		bx /= maxAxisVal;
-		by /= maxAxisVal;
-
-		if (sx < smallx)
-			smallx = sx;
-		if (sy < smally)
-			smally = sy;
-
-		if (bx > bigx)
-			bigx = bx;
-		if (by > bigy)
-			bigy = by;
-
-		neuron.setVertices(FloatBuffer.wrap(verticesArray));
-		neuron.recalculateNormals();
-		neuron.setDirty(true);
+//		sx /= maxAxisVal;
+//		sy /= maxAxisVal;
+//		bx /= maxAxisVal;
+//		by /= maxAxisVal;
+//
+//		if (sx < smallx)
+//			smallx = sx;
+//		if (sy < smally)
+//			smally = sy;
+//
+//		if (bx > bigx)
+//			bigx = bx;
+//		if (by > bigy)
+//			bigy = by;
 	}
 
 	private List<RandomAccessibleInterval<LabelMultisetType>> dataPartitioning() {
@@ -497,22 +520,12 @@ public class MarchingCubesTest {
 		// TODO: find a way to divide the volume automatically
 
 		RandomAccessibleInterval<LabelMultisetType> first = Views.interval(volumeLabels,
-				new long[] { volumeLabels.min(0), (volumeLabels.max(1) - volumeLabels.min(1)) / 2 - 1,
-						volumeLabels.min(2) },
-				new long[] { volumeLabels.max(0), volumeLabels.max(1), volumeLabels.max(2) });
-
-		System.out.println("first - from: " + volumeLabels.min(0) + "x"
-				+ (((volumeLabels.max(1) - volumeLabels.min(1)) / 2) - 1) + "x" + volumeLabels.min(2) + " to: "
-				+ volumeLabels.max(0) + "x" + volumeLabels.max(1) + "x" + volumeLabels.max(2));
+				new long[] { volumeLabels.min(0), volumeLabels.min(1), volumeLabels.min(2) },
+				new long[] { (volumeLabels.max(0) - volumeLabels.min(0))/2, volumeLabels.max(1), volumeLabels.max(2) });
 
 		RandomAccessibleInterval<LabelMultisetType> second = Views.interval(volumeLabels,
-				new long[] { volumeLabels.min(0), volumeLabels.min(1), volumeLabels.min(2) },
-				new long[] { volumeLabels.max(0), ((volumeLabels.max(1) - volumeLabels.min(1)) / 2) + 1,
-						volumeLabels.max(2) });
-
-		System.out.println("second - from: " + volumeLabels.min(0) + "x" + volumeLabels.min(1) + "x"
-				+ volumeLabels.min(2) + " to: " + volumeLabels.max(0) + "x"
-				+ (((volumeLabels.max(1) - volumeLabels.min(1)) / 2) + 1) + "x" + volumeLabels.max(2));
+				new long[] { ((volumeLabels.max(0) - volumeLabels.min(0)) / 2) - 50, volumeLabels.min(1), volumeLabels.min(2) },
+				new long[] { volumeLabels.max(0), volumeLabels.max(1), volumeLabels.max(2) });
 
 		// RandomAccessibleInterval< LabelMultisetType > first =
 		// Views.interval( volumeLabels, new long[] { volumeLabels.min( 0 ),
