@@ -201,9 +201,9 @@ public class MarchingCubesRAI {
 		if (hasValidSurface)
 			deleteSurface();
 
-		volDim[0]--;
-		volDim[1]--;
-		volDim[2]--;
+//		volDim[0]--;
+//		volDim[1]--;
+//		volDim[2]--;
 		mesh = new Mesh();
 
 		isoLevel = level;
@@ -216,8 +216,10 @@ public class MarchingCubesRAI {
 				.extendValue(input, new LabelMultisetType());
 		Cursor<LabelMultisetType> c = Views
 				.flatIterable(Views.interval(extended,
-						new FinalInterval(new long[] { input.min(0) - 1, input.min(1) - 1, input.min(2) - 1 },
-								new long[] { input.max(0) + 1, input.max(1) + 1, input.max(2) + 1 })))
+//						new FinalInterval(new long[] { input.min(0) - 1, input.min(1) - 1, input.min(2) - 1 },
+//								new long[] { input.max(0) + 1, input.max(1) + 1, input.max(2) + 1 })))
+				new FinalInterval(new long[] { input.min(0) , input.min(1) , input.min(2) },
+						new long[] { input.max(0) , input.max(1) , input.max(2)  })))
 				.localizingCursor();
 
 		List<Long> volume = new ArrayList<Long>();
@@ -229,11 +231,11 @@ public class MarchingCubesRAI {
 			int cursorY = c.getIntPosition(1);
 			int cursorZ = c.getIntPosition(2);
 
-			if (cursorX == -1 || cursorY == -1 || cursorZ == -1)
-				continue;
-
-			if (cursorX == volDim[0] || cursorY == volDim[1] || cursorZ == volDim[2])
-				continue;
+//			if (cursorX == -1 || cursorY == -1 || cursorZ == -1)
+//				continue;
+//
+//			if (cursorX == volDim[0] || cursorY == volDim[1] || cursorZ == volDim[2])
+//				continue;
 
 			for (final Multiset.Entry<Label> e : it.entrySet()) {
 				volume.add(e.getElement().id());
@@ -242,18 +244,17 @@ public class MarchingCubesRAI {
 
 		System.out.println("volume size: " + volume.size());
 
-		int xWidth = (volDim[0] + 1);
-		int xyWidth = xWidth * (volDim[1] + 1);
+		int xWidth = (volDim[0] );
+		int xyWidth = xWidth * (volDim[1] );
 
 		double[] vertex_values = new double[8];
 
-		for (int cursorZ = 0; cursorZ < volDim[2]; cursorZ++) {
-			for (int cursorY = 0; cursorY < volDim[1]; cursorY++) {
-				for (int cursorX = 0; cursorX < volDim[0]; cursorX++) {
-					// System.out.println("x: " + cursorX + " y: " + cursorY + "
-					// z: " + cursorZ);
-					// System.out.println("max: " + (( cursorZ + 1 ) * xyWidth +
-					// ( cursorY + 1 ) * xWidth + ( cursorX + 1 )));
+		for (int cursorZ = 0; cursorZ < volDim[2] -1; cursorZ++) {
+			for (int cursorY = 0; cursorY < volDim[1]-1; cursorY++) {
+				for (int cursorX = 0; cursorX < volDim[0]-1; cursorX++) {
+//					 System.out.println("x: " + cursorX + " y: " + cursorY + " z: " + cursorZ);
+//					 System.out.println("max: " + (( cursorZ + 1 ) * xyWidth +
+//					 ( cursorY + 1 ) * xWidth + ( cursorX + 1 )));
 
 					vertex_values[7] = volume.get(cursorZ * xyWidth + cursorY * xWidth + cursorX);
 					vertex_values[6] = volume.get(cursorZ * xyWidth + (cursorY + 1) * xWidth + cursorX);
