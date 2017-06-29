@@ -7,6 +7,7 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Vector;
 import java.util.concurrent.CompletionService;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorCompletionService;
@@ -60,13 +61,12 @@ public class MarchingCubesTest {
 	static String path = "data/sample_B_20160708_frags_46_50.hdf";
 	int isoLevel = 7;
 	int[] volDim = { 500, 500, 5 };
-
 	static String path_label = "/volumes/labels/neuron_ids";
 
 	// /** tiny hdf5 for test - dummy values */
-	// static String path_label = "/volumes/labels/small_neuron_ids";
-	// int isoLevel = 2;
-	// int[] volDim = {3, 3, 3};
+//	 static String path_label = "/volumes/labels/small_neuron_ids";
+//	 int isoLevel = 2;
+//	 int[] volDim = {3, 3, 3};
 
 	float[] voxDim = { 1f, 1f, 1f };
 
@@ -142,7 +142,7 @@ public class MarchingCubesTest {
 			material.setAmbient(new GLVector(0.1f * (1), 1.0f, 1.0f));
 			material.setDiffuse(new GLVector(0.1f * (1), 0.0f, 1.0f));
 			material.setSpecular(new GLVector(0.1f * (1), 0f, 0f));
-			// material.setDoubleSided(true);
+//			 material.setDoubleSided(true);
 
 			final Camera cam = new DetachedHeadCamera();
 
@@ -185,8 +185,8 @@ public class MarchingCubesTest {
 		viewer.Mesh m = new viewer.Mesh();
 		List<RandomAccessibleInterval<LabelMultisetType>> subvolumes = dataPartitioning();
 
-		 subvolumes.clear();
-		 subvolumes.add( volumeLabels );
+//		 subvolumes.clear();
+//		 subvolumes.add( volumeLabels );
 
 		System.out.println("starting executor...");
 		CompletionService<viewer.Mesh> executor = new ExecutorCompletionService<viewer.Mesh>(
@@ -266,9 +266,16 @@ public class MarchingCubesTest {
 			System.out.println("dimension: " + subvolumes.get(i).dimension(0) + "x" + subvolumes.get(i).dimension(1)
 			+ "x" + subvolumes.get(i).dimension(2));
 
-			viewer.Mesh mesh = mc_rai.generateSurface(subvolumes.get(i), volDim, voxDim, true, isoLevel, false);
+			viewer.Mesh mesh = mc_rai.generateSurface(subvolumes.get(i), volDim, voxDim, true, isoLevel, true);
 			System.out.println("updating mesh ");
-			updateMesh(mesh, neuron, 300 * i, 0, 0);
+			if (i == 0)
+				updateMesh(mesh, neuron, 0, 0, 0);
+			if (i == 1)
+				updateMesh(mesh, neuron, 250, 0, 0);
+			if (i==2)
+				updateMesh(mesh, neuron, 0, 250, 0);
+			if (i == 3)
+				updateMesh(mesh, neuron, 250, 250, 0);
 		}
 		
 		neuron.setVertices(FloatBuffer.wrap(verticesArray));
@@ -423,8 +430,6 @@ public class MarchingCubesTest {
 		float[] point2 = new float[3];
 		int v = 0;
 
-		float sx = 0, sy = 0, bx = 0, by = 0;
-
 		for (int i = 0; i < numberOfTriangles; i++) {
 			long id0 = triangles[i * 3];
 			long id1 = triangles[i * 3 + 1];
@@ -434,82 +439,28 @@ public class MarchingCubesTest {
 			point1 = vertices[(int) id1];
 			point2 = vertices[(int) id2];
 
-			// writer.println(point0[ 0 ]);
-			// writer.println(point0[ 1 ]);
-			// writer.println(point0[ 2 ]);
-			// writer.println(point1[ 0 ]);
-			// writer.println(point1[ 1 ]);
-			// writer.println(point1[ 2 ]);
-			// writer.println(point2[ 0 ]);
-			// writer.println(point2[ 1 ]);
-			// writer.println(point2[ 2 ]);
-
 			verticesArray[vertexCount + v++] = point0[0] + offsetx;
-//			if (verticesArray[vertexCount + v - 1] < sx)
-//				sx = verticesArray[vertexCount + v - 1];
-//			if (verticesArray[vertexCount + v - 1] > bx)
-//				bx = verticesArray[vertexCount + v - 1];
-
 			verticesArray[vertexCount + v++] = point0[1] + offsety;
-//			if (verticesArray[vertexCount + v - 1] < sy)
-//				sy = verticesArray[vertexCount + v - 1];
-//			if (verticesArray[vertexCount + v - 1] > by)
-//				by = verticesArray[vertexCount + v - 1];
-
 			verticesArray[vertexCount + v++] = point0[2] + offsetz;
 
 			verticesArray[vertexCount + v++] = point1[0] + offsetx;
-//			if (verticesArray[vertexCount + v - 1] < sx)
-//				sx = verticesArray[vertexCount + v - 1];
-//			if (verticesArray[vertexCount + v - 1] > bx)
-//				bx = verticesArray[vertexCount + v - 1];
-
 			verticesArray[vertexCount + v++] = point1[1] + offsety;
-//			if (verticesArray[vertexCount + v - 1] < sy)
-//				sy = verticesArray[vertexCount + v - 1];
-//			if (verticesArray[vertexCount + v - 1] > by)
-//				by = verticesArray[vertexCount + v - 1];
-
 			verticesArray[vertexCount + v++] = point1[2] + offsetz;
 
 			verticesArray[vertexCount + v++] = point2[0] + offsetx;
-//			if (verticesArray[vertexCount + v - 1] < sx)
-//				sx = verticesArray[vertexCount + v - 1];
-//			if (verticesArray[vertexCount + v - 1] > bx)
-//				bx = verticesArray[vertexCount + v - 1];
-
 			verticesArray[vertexCount + v++] = point2[1] + offsety;
-//			if (verticesArray[vertexCount + v - 1] < sy)
-//				sy = verticesArray[vertexCount + v - 1];
-//			if (verticesArray[vertexCount + v - 1] > by)
-//				by = verticesArray[vertexCount + v - 1];
-
 			verticesArray[vertexCount + v++] = point2[2] + offsetz;
-
 		}
 
+		// TODO: to define this value in a global way
 		maxAxisVal = 499;
+
 		// omp parallel for
 		System.out.println("vsize: " + verticesArray.length);
 		for (int i = vertexCount; i < verticesArray.length; ++i) {
 			verticesArray[i] /= maxAxisVal;
 			writer.println(verticesArray[i]);
 		}
-
-//		sx /= maxAxisVal;
-//		sy /= maxAxisVal;
-//		bx /= maxAxisVal;
-//		by /= maxAxisVal;
-//
-//		if (sx < smallx)
-//			smallx = sx;
-//		if (sy < smally)
-//			smally = sy;
-//
-//		if (bx > bigx)
-//			bigx = bx;
-//		if (by > bigy)
-//			bigy = by;
 	}
 
 	private List<RandomAccessibleInterval<LabelMultisetType>> dataPartitioning() {
@@ -519,71 +470,39 @@ public class MarchingCubesTest {
 								// according to the size of the volume and voxel
 		// TODO: find a way to divide the volume automatically
 
-		RandomAccessibleInterval<LabelMultisetType> first = Views.interval(volumeLabels,
-				new long[] { volumeLabels.min(0), volumeLabels.min(1), volumeLabels.min(2) },
-				new long[] { (volumeLabels.max(0) - volumeLabels.min(0))/2, volumeLabels.max(1), volumeLabels.max(2) });
+//		RandomAccessibleInterval<LabelMultisetType> first = Views.interval(volumeLabels,
+//				new long[] { volumeLabels.min(0), volumeLabels.min(1), volumeLabels.min(2) },
+//				new long[] { (volumeLabels.max(0) - volumeLabels.min(0))/2, volumeLabels.max(1), volumeLabels.max(2) });
+//
+//		RandomAccessibleInterval<LabelMultisetType> second = Views.interval(volumeLabels,
+//				new long[] { ((volumeLabels.max(0) - volumeLabels.min(0))/2)-1, volumeLabels.min(1), volumeLabels.min(2) },
+//				new long[] { volumeLabels.max(0), volumeLabels.max(1), volumeLabels.max(2) });
 
-		RandomAccessibleInterval<LabelMultisetType> second = Views.interval(volumeLabels,
-				new long[] { ((volumeLabels.max(0) - volumeLabels.min(0)) / 2) - 50, volumeLabels.min(1), volumeLabels.min(2) },
-				new long[] { volumeLabels.max(0), volumeLabels.max(1), volumeLabels.max(2) });
+		 RandomAccessibleInterval< LabelMultisetType > first =
+		 Views.interval( volumeLabels, 
+				 new long[] { volumeLabels.min( 0 ), volumeLabels.min( 1 ), volumeLabels.min( 2 ) },
+				 new long[] { ( ( volumeLabels.max( 0 ) - volumeLabels.min( 0 ) ) / 2 ) + 1, ( ( volumeLabels.max( 1 ) - volumeLabels.min( 1 ) ) / 2 ) + 1,
+		 volumeLabels.max( 2 ) } );
 
-		// RandomAccessibleInterval< LabelMultisetType > first =
-		// Views.interval( volumeLabels, new long[] { volumeLabels.min( 0 ),
-		// volumeLabels.min( 1 ), volumeLabels.min( 2 ) },
-		// new long[] { ( ( volumeLabels.max( 0 ) - volumeLabels.min( 0 ) ) / 2
-		// ) + 1, ( ( volumeLabels.max( 1 ) - volumeLabels.min( 1 ) ) / 2 ) + 1,
-		// volumeLabels.max( 2 ) } );
-		//
-		// System.out.println( "first - from: " + volumeLabels.min( 0 ) + "x" +
-		// volumeLabels.min( 1 ) + "x" + volumeLabels.min( 2 ) +
-		// " to: " + ( ( ( volumeLabels.max( 0 ) - volumeLabels.min( 0 ) ) / 2 )
-		// + 1 ) + "x" + ( ( ( volumeLabels.max( 1 ) - volumeLabels.min( 1 ) ) /
-		// 2 ) + 1 ) + "x" + volumeLabels.max( 2 ) );
-		//
-		// RandomAccessibleInterval< LabelMultisetType > second =
-		// Views.interval( volumeLabels, new long[] { ( ( volumeLabels.max( 0 )
-		// - volumeLabels.min( 0 ) ) / 2 ) - 1, volumeLabels.min( 1 ),
-		// volumeLabels.min( 2 ) },
-		// new long[] { volumeLabels.max( 0 ), ( ( volumeLabels.max( 1 ) -
-		// volumeLabels.min( 1 ) ) / 2 ) + 1, volumeLabels.max( 2 ) } );
-		//
-		// System.out.println( "second - from: " + ( ( ( volumeLabels.max( 0 ) -
-		// volumeLabels.min( 0 ) ) / 2 ) - 1 ) + "x" + volumeLabels.min( 1 ) +
-		// "x" + volumeLabels.min( 2 ) +
-		// " to: " + volumeLabels.max( 0 ) + "x" + ( ( ( volumeLabels.max( 1 ) -
-		// volumeLabels.min( 1 ) ) / 2 ) + 1 ) + "x" + volumeLabels.max( 2 ) );
-		//
-		// RandomAccessibleInterval< LabelMultisetType > third =
-		// Views.interval( volumeLabels, new long[] { volumeLabels.min( 0 ), ( (
-		// volumeLabels.max( 1 ) - volumeLabels.min( 1 ) ) / 2 ) - 1,
-		// volumeLabels.min( 2 ) },
-		// new long[] { ( ( volumeLabels.max( 0 ) - volumeLabels.min( 0 ) ) / 2
-		// ) + 1, volumeLabels.max( 1 ), volumeLabels.max( 2 ) } );
-		//
-		// System.out.println( "third - from: " + volumeLabels.min( 0 ) + "x" +
-		// ( ( ( volumeLabels.max( 1 ) - volumeLabels.min( 1 ) ) / 2 ) - 1 ) +
-		// "x" + volumeLabels.min( 2 ) +
-		// " to: " + ( ( ( volumeLabels.max( 0 ) - volumeLabels.min( 0 ) ) / 2 )
-		// + 1 ) + "x" + volumeLabels.max( 1 ) + "x" + volumeLabels.max( 2 ) );
-		//
-		// RandomAccessibleInterval< LabelMultisetType > forth =
-		// Views.interval( volumeLabels, new long[] { ( ( volumeLabels.max( 0 )
-		// - volumeLabels.min( 0 ) ) / 2 ) - 1, ( ( volumeLabels.max( 1 ) -
-		// volumeLabels.min( 1 ) ) / 2 ) - 1, volumeLabels.min( 2 ) },
-		// new long[] { volumeLabels.max( 0 ), volumeLabels.max( 1 ),
-		// volumeLabels.max( 2 ) } );
-		//
-		// System.out.println( "forth - from: " + ( ( ( volumeLabels.max( 0 ) -
-		// volumeLabels.min( 0 ) ) / 2 ) - 1 ) + "x" + ( ( ( volumeLabels.max( 1
-		// ) - volumeLabels.min( 1 ) ) / 2 ) - 1 ) + "x" + volumeLabels.min( 2 )
-		// +
-		// " to: " + volumeLabels.max( 0 ) + "x" + volumeLabels.max( 1 ) + "x" +
-		// volumeLabels.max( 2 ) );
+		 RandomAccessibleInterval< LabelMultisetType > second =
+		 Views.interval( volumeLabels, 
+				 new long[] { ( ( volumeLabels.max( 0 ) - volumeLabels.min( 0 ) ) / 2 ) - 1, volumeLabels.min( 1 ), volumeLabels.min( 2 ) },
+				 new long[] { volumeLabels.max( 0 ), ( ( volumeLabels.max( 1 ) - volumeLabels.min( 1 ) ) / 2 ) + 1, volumeLabels.max( 2 ) } );
+
+		 RandomAccessibleInterval< LabelMultisetType > third =
+		 Views.interval( volumeLabels, 
+				 new long[] { volumeLabels.min( 0 ), ( ( volumeLabels.max( 1 ) - volumeLabels.min( 1 ) ) / 2 ) - 1, volumeLabels.min( 2 ) },
+				 new long[] { ( ( volumeLabels.max( 0 ) - volumeLabels.min( 0 ) ) / 2 ) + 1, volumeLabels.max( 1 ), volumeLabels.max( 2 ) } );
+
+		 RandomAccessibleInterval< LabelMultisetType > forth =
+		 Views.interval( volumeLabels, 
+				 new long[] { ( ( volumeLabels.max( 0 ) - volumeLabels.min( 0 ) ) / 2 ) - 1, ( ( volumeLabels.max( 1 ) - volumeLabels.min( 1 ) ) / 2 ) - 1, volumeLabels.min( 2 ) },
+				 new long[] { volumeLabels.max( 0 ), volumeLabels.max( 1 ), volumeLabels.max( 2 ) } );
 
 		parts.add(first);
 		parts.add(second);
-		// parts.add( third );
-		// parts.add( forth );
+		parts.add( third );
+		parts.add( forth );
 
 		return parts;
 	}
