@@ -163,6 +163,7 @@ public class MarchingCubesTest
 
 			cam.perspectiveCamera( 50f, getWindowHeight(), getWindowWidth(), 0.1f, 1000.0f );
 			cam.setActive( true );
+			cam.setPosition( new GLVector( 0, 0, 5 ) );
 			getScene().addChild( cam );
 
 			PointLight[] lights = new PointLight[ 4 ];
@@ -188,21 +189,23 @@ public class MarchingCubesTest
 			neuron.setMaterial( material );
 //			neuron.setGeometryType( GeometryType.POINTS );
 			neuron.setPosition( new GLVector( 0.0f, 0.0f, 0.0f ) );
+			
+			marchingCube( neuron, material, getScene(), cam, true );
+//			levelOfDetails( neuron, getScene(), cam );
+			
 
-			marchingCube( neuron, material, getScene(), cam );
-
-			// levelOfDetails( neuron, getScene(), cam );
 		}
 	}
 
-	private void marchingCube( Mesh neuron, Material material, Scene scene, Camera cam )
+	private void marchingCube( Mesh neuron, Material material, Scene scene, Camera cam, boolean add )
 	{
-
-		boolean first = true;
 		viewer.Mesh m = new viewer.Mesh();
 		int numberOfPartitions = 4;
 		int[][] offset = new int[ numberOfPartitions ][ 3 ];
 		List< RandomAccessibleInterval< LabelMultisetType > > subvolumes = dataPartitioning( numberOfPartitions, offset );
+
+//		subvolumes.clear();
+//		subvolumes.add( volumeLabels );
 
 		System.out.println( "starting executor..." );
 		CompletionService< viewer.Mesh > executor = new ExecutorCompletionService< viewer.Mesh >(
@@ -233,10 +236,8 @@ public class MarchingCubesTest
 		}
 
 		Future< viewer.Mesh > completedFuture = null;
-		cam.setPosition( new GLVector( ( ( bigx - smallx ) / 2 ), ( ( bigy - smally ) / 2 ), 5.0f ) );
-		cam.setPosition( new GLVector( smallx, smally, 5.0f ) );
-
 		System.out.println( "waiting results..." );
+
 		while ( resultMeshList.size() > 0 )
 		{
 			// block until a task completes
@@ -269,17 +270,15 @@ public class MarchingCubesTest
 
 			// a mesh was created, so update the existing mesh
 			System.out.println( "updating mesh " );
-			updateMesh( m, neuron );
+			Mesh newNeuron = new Mesh();
+			newNeuron.setMaterial( neuron.getMaterial() );
+			newNeuron.setPosition( new GLVector( 0, 0, 0 ) );
+			updateMeshComplete( m, newNeuron );
 
-			neuron.setVertices( FloatBuffer.wrap( verticesArray ) );
-			neuron.recalculateNormals();
-			neuron.setDirty( true );
-
-			scene.addChild( neuron );
+			scene.addChild( newNeuron );
+			add = false;
 
 		}
-
-		System.out.println( "camera position: " + ( ( bigx - smallx ) / 2 ) + ":" + ( ( bigy - smally ) / 2 ) + ":" + 5.0f );
 
 		System.out.println( "size of mesh " + verticesArray.length );
 
@@ -375,21 +374,6 @@ public class MarchingCubesTest
 			writer.println( verticesArray[ i ] );
 		}
 
-		sx /= maxAxisVal;
-		sy /= maxAxisVal;
-		bx /= maxAxisVal;
-		by /= maxAxisVal;
-
-		if ( sx < smallx )
-			smallx = sx;
-		if ( sy < smally )
-			smally = sy;
-
-		if ( bx > bigx )
-			bigx = bx;
-		if ( by > bigy )
-			bigy = by;
-
 		neuron.setVertices( FloatBuffer.wrap( verticesArray ) );
 		neuron.recalculateNormals();
 		neuron.setDirty( true );
@@ -458,6 +442,10 @@ public class MarchingCubesTest
 			verticesArray[ i ] /= maxAxisVal;
 			writer.println( verticesArray[ i ] );
 		}
+		
+		neuron.setVertices( FloatBuffer.wrap( verticesArray ) );
+		neuron.recalculateNormals();
+		neuron.setDirty( true );
 	}
 
 	private List< RandomAccessibleInterval< LabelMultisetType > > dataPartitioning( int numberOfPartitions, int[][] offset )
@@ -479,7 +467,7 @@ public class MarchingCubesTest
 				new long[] { volumeLabels.max( 0 ), ( ( volumeLabels.max( 1 ) - volumeLabels.min( 1 ) ) / 2 ) + 1,
 						volumeLabels.max( 2 ) } );
 
-		offset[ 1 ][ 0 ] = ( int ) ( ( ( volumeLabels.max( 0 ) - volumeLabels.min( 0 ) ) / 2 ) - 1 );
+		offset[ 1 ][ 0 ] = ( int ) ( ( ( volumeLabels.max( 0 ) - volumeLabels.min( 0 ) ) / 2 ) - 1 ) + 20;
 		offset[ 1 ][ 1 ] = 0;
 		offset[ 1 ][ 2 ] = 0;
 
@@ -490,7 +478,7 @@ public class MarchingCubesTest
 						volumeLabels.max( 2 ) } );
 
 		offset[ 2 ][ 0 ] = 0;
-		offset[ 2 ][ 1 ] = ( int ) ( ( ( volumeLabels.max( 1 ) - volumeLabels.min( 1 ) ) / 2 ) - 1 );
+		offset[ 2 ][ 1 ] = ( int ) ( ( ( volumeLabels.max( 1 ) - volumeLabels.min( 1 ) ) / 2 ) - 1 ) + 20;
 		offset[ 2 ][ 2 ] = 0;
 
 		RandomAccessibleInterval< LabelMultisetType > forth = Views.interval( volumeLabels,
@@ -498,8 +486,8 @@ public class MarchingCubesTest
 						( ( volumeLabels.max( 1 ) - volumeLabels.min( 1 ) ) / 2 ) - 1, volumeLabels.min( 2 ) },
 				new long[] { volumeLabels.max( 0 ), volumeLabels.max( 1 ), volumeLabels.max( 2 ) } );
 
-		offset[ 3 ][ 0 ] = ( int ) ( ( ( volumeLabels.max( 0 ) - volumeLabels.min( 0 ) ) / 2 ) - 1 );
-		offset[ 3 ][ 1 ] = ( int ) ( ( ( volumeLabels.max( 1 ) - volumeLabels.min( 1 ) ) / 2 ) - 1 );
+		offset[ 3 ][ 0 ] = ( int ) ( ( ( volumeLabels.max( 0 ) - volumeLabels.min( 0 ) ) / 2 ) - 1 ) + 20;
+		offset[ 3 ][ 1 ] = ( int ) ( ( ( volumeLabels.max( 1 ) - volumeLabels.min( 1 ) ) / 2 ) - 1 ) + 20;
 		offset[ 3 ][ 2 ] = 0;
 
 		parts.add( first );
@@ -523,54 +511,43 @@ public class MarchingCubesTest
 				while ( true )
 				{
 					neuron.setNeedsUpdate( true );
+//
+//					float diff = cam.getPosition().minus( neuron.getPosition() ).magnitude();
+//					System.out.println(" camera position: " + cam.getPosition().get( 0 ) + ":" + cam.getPosition().get( 1 ) + ":" + cam.getPosition().get( 2 ));
+//					System.out.println(" mesh position: " + neuron.getPosition().get( 0 ) + ":" + neuron.getPosition().get( 1 ) + ":" + neuron.getPosition().get( 2 ));
+//					System.out.println( "distance to camera: " + diff );
+//					System.out.println( "dists - 4: " + dist3 + " 2: " + dist2 + " 1: " + dist1 );
+//					if ( diff < 6 && diff >= 3 && dist3 )
+//					{
+//						voxDim = new float[] { 1.0f, 1.0f, 1.0f };
+//						System.out.println( "updating mesh dist4" );
+//						System.out.println( "position before: " + neuron.getPosition() );
+//						marchingCube( neuron, neuron.getMaterial(), scene, cam, false );
+//						System.out.println( "position after: " + neuron.getPosition() );
+//
+//						dist3 = false;
+//						dist2 = true;
+//						dist1 = true;
+//					}
 
-					float diff = cam.getPosition().minus( neuron.getPosition() ).magnitude();
-					System.out.println( "distance to camera: " + diff );
-					System.out.println( "dists - 4: " + dist3 + " 2: " + dist2 + " 1: " + dist1 );
-					if ( diff < 4 && diff >= 3 && dist3 )
-					{
-						voxDim = new float[] { 5.0f, 5.0f, 5.0f };
-						System.out.println( "updating mesh dist4" );
-						System.out.println( "position before: " + neuron.getPosition() );
-						marchingCube( neuron, neuron.getMaterial(), scene, cam );
-						neuron.setVertices( FloatBuffer.wrap( verticesArray ) );
-						neuron.recalculateNormals();
-						neuron.setDirty( true );
-						System.out.println( "position after: " + neuron.getPosition() );
-
-						cam.setPosition( new GLVector( ( bigx - smallx ) / 2, ( bigy - smally ) / 2, diff ) );
-						dist3 = false;
-						dist2 = true;
-						dist1 = true;
-					}
-
-					else if ( diff < 3 && diff >= 2 && dist2 )
-					{
-						voxDim = new float[] { 1.0f, 1.0f, 1.0f };
-						System.out.println( "updating mesh dist2" );
-						marchingCube( neuron, neuron.getMaterial(), scene, cam );
-						neuron.setVertices( FloatBuffer.wrap( verticesArray ) );
-						neuron.recalculateNormals();
-						neuron.setDirty( true );
-
-						cam.setPosition( new GLVector( ( bigx - smallx ) / 2, ( bigy - smally ) / 2, diff ) );
-						dist2 = false;
-						dist3 = true;
-						dist1 = true;
-					}
-					else if ( diff < 2 && diff >= 1 && dist1 )
-					{
-						voxDim = new float[] { 0.5f, 0.5f, 0.5f };
-						System.out.println( "updating mesh dist1" );
-						marchingCube( neuron, neuron.getMaterial(), scene, cam );
-						neuron.setVertices( FloatBuffer.wrap( verticesArray ) );
-						neuron.recalculateNormals();
-						neuron.setDirty( true );
-						cam.setPosition( new GLVector( ( bigx - smallx ) / 2, ( bigy - smally ) / 2, diff ) );
-						dist1 = false;
-						dist2 = false;
-						dist3 = false;
-					}
+//					else if ( diff < 3 && diff >= 2 && dist2 )
+//					{
+//						voxDim = new float[] { 1.0f, 1.0f, 1.0f };
+//						System.out.println( "updating mesh dist2" );
+//						marchingCube( neuron, neuron.getMaterial(), scene, cam );
+//						dist2 = false;
+//						dist3 = true;
+//						dist1 = true;
+//					}
+//					else if ( diff < 2 && diff >= 1 && dist1 )
+//					{
+//						voxDim = new float[] { 0.5f, 0.5f, 0.5f };
+//						System.out.println( "updating mesh dist1" );
+//						marchingCube( neuron, neuron.getMaterial(), scene, cam );
+//						dist1 = false;
+//						dist2 = false;
+//						dist3 = false;
+//					}
 
 					try
 					{
