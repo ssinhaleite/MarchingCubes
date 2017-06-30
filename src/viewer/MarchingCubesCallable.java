@@ -11,22 +11,28 @@ public class MarchingCubesCallable implements Callable< Mesh >
 	/** volume data */
 	RandomAccessibleInterval< LabelMultisetType > volume;
 
-	/** volume dimension*/
+	/** volume dimension */
 	int[] volDim;
-	
+
 	/** offset to positioning the vertices in global coordinates */
 	int[] offset;
 
 	/** marching cube voxel dimension */
 	float[] voxDim;
 
-	/** defines if the mesh must be create for the exact isolevel (true) or for all above isolevels (false) */
+	/**
+	 * defines if the mesh must be create for the exact isolevel (true) or for
+	 * all above isolevels (false)
+	 */
 	boolean isExact;
 
 	/** the isolevel */
 	int isolevel;
-	
-	/** indicates if it is to use the implementation directly with RAI (true) or if we must convert for an array first (false) */
+
+	/**
+	 * indicates if it is to use the implementation directly with RAI (true) or
+	 * if we must convert for an array first (false)
+	 */
 	boolean usingRAI;
 
 	public MarchingCubesCallable( RandomAccessibleInterval< LabelMultisetType > input, int[] volDim, int[] offset, float[] voxDim, boolean isExact, int level, boolean usingRAI )
