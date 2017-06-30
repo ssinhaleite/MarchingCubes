@@ -13,6 +13,9 @@ public class MarchingCubesCallable implements Callable< Mesh >
 
 	/** volume dimension*/
 	int[] volDim;
+	
+	/** offset to positioning the vertices in global coordinates */
+	int[] offset;
 
 	/** marching cube voxel dimension */
 	float[] voxDim;
@@ -26,10 +29,11 @@ public class MarchingCubesCallable implements Callable< Mesh >
 	/** indicates if it is to use the implementation directly with RAI (true) or if we must convert for an array first (false) */
 	boolean usingRAI;
 
-	public MarchingCubesCallable( RandomAccessibleInterval< LabelMultisetType > input, int[] volDim, float[] voxDim, boolean isExact, int level, boolean usingRAI )
+	public MarchingCubesCallable( RandomAccessibleInterval< LabelMultisetType > input, int[] volDim, int[] offset, float[] voxDim, boolean isExact, int level, boolean usingRAI )
 	{
 		this.volume = input;
 		this.volDim = volDim;
+		this.offset = offset;
 		this.voxDim = voxDim;
 		this.isExact = isExact;
 		this.isolevel = level;
@@ -40,7 +44,7 @@ public class MarchingCubesCallable implements Callable< Mesh >
 	public Mesh call() throws Exception
 	{
 		MarchingCubesRAI mc_rai = new MarchingCubesRAI();
-		Mesh m = mc_rai.generateSurface( volume, volDim, voxDim, isExact, isolevel, usingRAI );
+		Mesh m = mc_rai.generateSurface( volume, volDim, offset, voxDim, isExact, isolevel, usingRAI );
 
 		return m;
 	}
