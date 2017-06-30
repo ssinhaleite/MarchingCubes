@@ -23,6 +23,7 @@ import ch.systemsx.cisd.hdf5.IHDF5Reader;
 import cleargl.GLVector;
 import graphics.scenery.Camera;
 import graphics.scenery.DetachedHeadCamera;
+import graphics.scenery.GeometryType;
 import graphics.scenery.Material;
 import graphics.scenery.Mesh;
 import graphics.scenery.PointLight;
@@ -157,7 +158,6 @@ public class MarchingCubesTest
 			material.setAmbient( new GLVector( 0.1f * ( 1 ), 1.0f, 1.0f ) );
 			material.setDiffuse( new GLVector( 0.1f * ( 1 ), 0.0f, 1.0f ) );
 			material.setSpecular( new GLVector( 0.1f * ( 1 ), 0f, 0f ) );
-//			 material.setDoubleSided(true);
 
 			final Camera cam = new DetachedHeadCamera();
 
@@ -186,6 +186,7 @@ public class MarchingCubesTest
 
 			Mesh neuron = new Mesh();
 			neuron.setMaterial( material );
+//			neuron.setGeometryType( GeometryType.POINTS );
 			neuron.setPosition( new GLVector( 0.0f, 0.0f, 0.0f ) );
 
 			marchingCube( neuron, material, getScene(), cam );
@@ -274,11 +275,7 @@ public class MarchingCubesTest
 			neuron.recalculateNormals();
 			neuron.setDirty( true );
 
-			if ( resultMeshList.size() == 0 )
-			{
-				scene.addChild( neuron );
-				first = false;
-			}
+			scene.addChild( neuron );
 
 		}
 
