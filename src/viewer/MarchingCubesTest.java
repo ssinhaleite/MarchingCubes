@@ -180,7 +180,6 @@ public class MarchingCubesTest
 
 			Mesh neuron = new Mesh();
 			neuron.setMaterial( material );
-//			neuron.setGeometryType( GeometryType.POINTS );
 			neuron.setPosition( new GLVector( 0.0f, 0.0f, 0.0f ) );
 
 			marchingCube( neuron, material, getScene(), cam );
@@ -269,9 +268,9 @@ public class MarchingCubesTest
 			neuron.recalculateNormals();
 			neuron.setDirty( true );
 
-			scene.addChild( neuron );
-
 		}
+
+		scene.addChild(neuron);
 
 		System.out.println( "camera position: " + ( ( bigx - smallx ) / 2 ) + ":" + ( ( bigy - smally ) / 2 ) + ":" + 5.0f );
 
