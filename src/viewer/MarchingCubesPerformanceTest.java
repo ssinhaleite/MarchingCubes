@@ -1,11 +1,5 @@
 package viewer;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.PrintStream;
-import java.sql.Timestamp;
-import java.util.ArrayList;
-
 import bdv.img.h5.H5LabelMultisetSetupImageLoader;
 import bdv.labels.labelset.LabelMultisetType;
 import ch.systemsx.cisd.hdf5.HDF5Factory;
@@ -13,6 +7,12 @@ import ch.systemsx.cisd.hdf5.IHDF5Reader;
 import marchingCubes.MarchingCubesRAI;
 import net.imglib2.RandomAccessibleInterval;
 import util.HDF5Reader;
+
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.sql.Timestamp;
+import java.util.ArrayList;
 
 /**
  * Unit test for marching cubes
@@ -33,6 +33,8 @@ public class MarchingCubesPerformanceTest
 	static String path_label = "/volumes/labels/neuron_ids";
 
 	static int[] volDim = { 500, 500, 5 };
+
+	static int[] offsets = {0, 0, 0};
 
 	static String filename = "";
 
@@ -75,7 +77,7 @@ public class MarchingCubesPerformanceTest
 
 				begin = new Timestamp( System.currentTimeMillis() );
 //				viewer.Mesh m = mc_rai.generateSurface( volumeLabels, voxDim, volDim, true, isoLevel );
-				mc_rai.generateSurface( volumeLabels, volDim, voxDim, true, isoLevel, false );
+				mc_rai.generateSurface( volumeLabels, volDim, offsets, voxDim, true, isoLevel, false );
 				end = new Timestamp( System.currentTimeMillis() );
 				System.out.println( "complete time for generating mesh: " + ( end.getTime() - begin.getTime() ) );
 			}
