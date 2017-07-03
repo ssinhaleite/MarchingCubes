@@ -142,6 +142,11 @@ public class MarchingCubesTest
 					getWindowHeight() ) );
 			getHub().add( SceneryElement.Renderer, getRenderer() );
 
+			final Box hull = new Box(new GLVector(50.0f, 50.0f, 50.0f), true);
+			hull.getMaterial().setDiffuse(new GLVector(0.5f, 0.5f, 0.5f));
+			hull.getMaterial().setDoubleSided(true);
+			getScene().addChild(hull);
+
 			final Material material = new Material();
 			material.setAmbient( new GLVector( 0.1f * ( 1 ), 1.0f, 1.0f ) );
 			material.setDiffuse( new GLVector( 0.1f * ( 1 ), 0.0f, 1.0f ) );
