@@ -1,5 +1,19 @@
 package viewer;
 
+import bdv.img.h5.H5LabelMultisetSetupImageLoader;
+import bdv.labels.labelset.LabelMultisetType;
+import ch.systemsx.cisd.hdf5.HDF5Factory;
+import ch.systemsx.cisd.hdf5.IHDF5Reader;
+import cleargl.GLVector;
+import graphics.scenery.*;
+import graphics.scenery.Mesh;
+import graphics.scenery.backends.Renderer;
+import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.view.Views;
+import org.junit.BeforeClass;
+import org.junit.Test;
+import util.HDF5Reader;
+
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.FloatBuffer;
@@ -7,33 +21,7 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.CompletionService;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorCompletionService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-
-import org.junit.BeforeClass;
-import org.junit.Test;
-
-import bdv.img.h5.H5LabelMultisetSetupImageLoader;
-import bdv.labels.labelset.LabelMultisetType;
-import ch.systemsx.cisd.hdf5.HDF5Factory;
-import ch.systemsx.cisd.hdf5.IHDF5Reader;
-import cleargl.GLVector;
-import graphics.scenery.Camera;
-import graphics.scenery.DetachedHeadCamera;
-import graphics.scenery.GeometryType;
-import graphics.scenery.Material;
-import graphics.scenery.Mesh;
-import graphics.scenery.PointLight;
-import graphics.scenery.Scene;
-import graphics.scenery.SceneryDefaultApplication;
-import graphics.scenery.SceneryElement;
-import graphics.scenery.backends.Renderer;
-import net.imglib2.RandomAccessibleInterval;
-import net.imglib2.view.Views;
-import util.HDF5Reader;
+import java.util.concurrent.*;
 
 /**
  * Unit test for marching cubes
@@ -135,7 +123,7 @@ public class MarchingCubesTest
 	{
 		public MarchingCubeApplication( String applicationName, int windowWidth, int windowHeight )
 		{
-			super( applicationName, windowWidth, windowHeight, false );
+			super( applicationName, windowWidth, windowHeight, true);
 		}
 
 		@Override
@@ -173,6 +161,7 @@ public class MarchingCubesTest
 				lights[ i ].setEmissionColor( new GLVector( 1.0f, 1.0f, 1.0f ) );
 				lights[ i ].setIntensity( 100.2f * 5 );
 				lights[ i ].setLinear( 0.0f );
+				lights[ i ].setQuadratic(0.1f);
 				// lights[ i ].showLightBox();
 			}
 
