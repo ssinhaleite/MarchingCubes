@@ -10,6 +10,10 @@ import graphics.scenery.Camera;
 import graphics.scenery.DetachedHeadCamera;
 import graphics.scenery.Material;
 import graphics.scenery.Mesh;
+import graphics.scenery.PointLight;
+import graphics.scenery.Scene;
+import graphics.scenery.SceneryDefaultApplication;
+import graphics.scenery.SceneryElement;
 import graphics.scenery.backends.Renderer;
 import graphics.scenery.*;
 import net.imglib2.RandomAccessibleInterval;
@@ -82,8 +86,6 @@ public class MarchingCubesTest
 
 	float maxAxisVal = 0;
 
-	// float previousDiff = 0.0f;
-
 	/**
 	 * This method load the hdf file
 	 */
@@ -127,7 +129,7 @@ public class MarchingCubesTest
 	{
 		public MarchingCubeApplication( String applicationName, int windowWidth, int windowHeight )
 		{
-			super( applicationName, windowWidth, windowHeight, true);
+			super( applicationName, windowWidth, windowHeight, false );
 		}
 
 		@Override
@@ -146,10 +148,10 @@ public class MarchingCubesTest
 					getWindowHeight() ) );
 			getHub().add( SceneryElement.Renderer, getRenderer() );
 
-			final Box hull = new Box(new GLVector(50.0f, 50.0f, 50.0f), true);
-			hull.getMaterial().setDiffuse(new GLVector(0.5f, 0.5f, 0.5f));
-			hull.getMaterial().setDoubleSided(true);
-			getScene().addChild(hull);
+			final Box hull = new Box( new GLVector( 50.0f, 50.0f, 50.0f ), true );
+			hull.getMaterial().setDiffuse( new GLVector( 0.5f, 0.5f, 0.5f ) );
+			hull.getMaterial().setDoubleSided( true );
+			getScene().addChild( hull );
 
 			final Material material = new Material();
 			material.setAmbient( new GLVector( 0.1f * ( 1 ), 1.0f, 1.0f ) );
@@ -171,7 +173,7 @@ public class MarchingCubesTest
 				lights[ i ].setEmissionColor( new GLVector( 1.0f, 1.0f, 1.0f ) );
 				lights[ i ].setIntensity( 100.2f * 5 );
 				lights[ i ].setLinear( 0.0f );
-				lights[ i ].setQuadratic(0.1f);
+				lights[ i ].setQuadratic( 0.1f );
 				// lights[ i ].showLightBox();
 			}
 
@@ -188,19 +190,18 @@ public class MarchingCubesTest
 			neuron.setPosition( new GLVector( 0.0f, 0.0f, 0.0f ) );
 			getScene().addChild(neuron);
 
-//			getScene().addChild(neuron);
-
 			new Thread() {
 				public void run() {
 					marchingCube(neuron, material, getScene(), cam, true);
 				}
 			}.start();
+
 //			levelOfDetails( neuron, getScene(), cam );
 
 		}
 	}
 
-	private void marchingCube( Mesh neuron, Material material, Scene scene, Camera cam, boolean add )
+	private void marchingCube( Mesh neuron, Material material, Scene scene, Camera cam )
 	{
 		viewer.Mesh m = new viewer.Mesh();
 		int numberOfPartitions = 4;
@@ -241,6 +242,7 @@ public class MarchingCubesTest
 		Future< viewer.Mesh > completedFuture = null;
 		System.out.println( "waiting results..." );
 
+		boolean first = true;
 		while ( resultMeshList.size() > 0 )
 		{
 			// block until a task completes
@@ -277,6 +279,13 @@ public class MarchingCubesTest
 			neuron.setVertices( FloatBuffer.wrap( verticesArray ) );
 			neuron.recalculateNormals();
 			neuron.setDirty( true );
+
+			if ( first )
+			{
+				scene.addChild( neuron );
+				first = false;
+			}
+
 //			Mesh newNeuron = new Mesh();
 //			newNeuron.setMaterial( neuron.getMaterial() );
 //			newNeuron.setPosition( new GLVector( 0, 0, 0 ) );
@@ -526,7 +535,7 @@ public class MarchingCubesTest
 //						voxDim = new float[] { 1.0f, 1.0f, 1.0f };
 //						System.out.println( "updating mesh dist4" );
 //						System.out.println( "position before: " + neuron.getPosition() );
-//						marchingCube( neuron, neuron.getMaterial(), scene, cam, false );
+//						marchingCube( neuron, neuron.getMaterial(), scene, cam );
 //						System.out.println( "position after: " + neuron.getPosition() );
 //
 //						dist3 = false;
