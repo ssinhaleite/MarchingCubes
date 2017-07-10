@@ -15,6 +15,7 @@ import graphics.scenery.Scene;
 import graphics.scenery.SceneryDefaultApplication;
 import graphics.scenery.SceneryElement;
 import graphics.scenery.backends.Renderer;
+import graphics.scenery.*;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.view.Views;
 import org.junit.BeforeClass;
@@ -187,10 +188,14 @@ public class MarchingCubesTest
 			Mesh neuron = new Mesh();
 			neuron.setMaterial( material );
 			neuron.setPosition( new GLVector( 0.0f, 0.0f, 0.0f ) );
+			getScene().addChild(neuron);
 
-//			getScene().addChild(neuron);
+			new Thread() {
+				public void run() {
+					marchingCube(neuron, material, getScene(), cam, true);
+				}
+			}.start();
 
-			marchingCube( neuron, material, getScene(), cam );
 //			levelOfDetails( neuron, getScene(), cam );
 
 		}
