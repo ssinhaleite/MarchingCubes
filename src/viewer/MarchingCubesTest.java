@@ -21,9 +21,9 @@ import bdv.labels.labelset.LabelMultisetType;
 import ch.systemsx.cisd.hdf5.HDF5Factory;
 import ch.systemsx.cisd.hdf5.IHDF5Reader;
 import cleargl.GLVector;
+import graphics.scenery.Box;
 import graphics.scenery.Camera;
 import graphics.scenery.DetachedHeadCamera;
-import graphics.scenery.GeometryType;
 import graphics.scenery.Material;
 import graphics.scenery.Mesh;
 import graphics.scenery.PointLight;
@@ -154,6 +154,11 @@ public class MarchingCubesTest
 					getWindowHeight() ) );
 			getHub().add( SceneryElement.Renderer, getRenderer() );
 
+			final Box hull = new Box( new GLVector( 50.0f, 50.0f, 50.0f ), true );
+			hull.getMaterial().setDiffuse( new GLVector( 0.5f, 0.5f, 0.5f ) );
+			hull.getMaterial().setDoubleSided( true );
+			getScene().addChild( hull );
+
 			final Material material = new Material();
 			material.setAmbient( new GLVector( 0.1f * ( 1 ), 1.0f, 1.0f ) );
 			material.setDiffuse( new GLVector( 0.1f * ( 1 ), 0.0f, 1.0f ) );
@@ -174,6 +179,7 @@ public class MarchingCubesTest
 				lights[ i ].setEmissionColor( new GLVector( 1.0f, 1.0f, 1.0f ) );
 				lights[ i ].setIntensity( 100.2f * 5 );
 				lights[ i ].setLinear( 0.0f );
+				lights[ i ].setQuadratic( 0.1f );
 				// lights[ i ].showLightBox();
 			}
 
@@ -187,12 +193,12 @@ public class MarchingCubesTest
 
 			Mesh neuron = new Mesh();
 			neuron.setMaterial( material );
-//			neuron.setGeometryType( GeometryType.POINTS );
 			neuron.setPosition( new GLVector( 0.0f, 0.0f, 0.0f ) );
-			
+
+//			getScene().addChild(neuron);
+
 			marchingCube( neuron, material, getScene(), cam, true );
 //			levelOfDetails( neuron, getScene(), cam );
-			
 
 		}
 	}
@@ -270,15 +276,18 @@ public class MarchingCubesTest
 
 			// a mesh was created, so update the existing mesh
 			System.out.println( "updating mesh " );
-			Mesh newNeuron = new Mesh();
-			newNeuron.setMaterial( neuron.getMaterial() );
-			newNeuron.setPosition( new GLVector( 0, 0, 0 ) );
-			updateMeshComplete( m, newNeuron );
-
-			scene.addChild( newNeuron );
-			add = false;
-
+			updateMesh( m, neuron );
+			neuron.setVertices( FloatBuffer.wrap( verticesArray ) );
+			neuron.recalculateNormals();
+			neuron.setDirty( true );
+//			Mesh newNeuron = new Mesh();
+//			newNeuron.setMaterial( neuron.getMaterial() );
+//			newNeuron.setPosition( new GLVector( 0, 0, 0 ) );
+//			updateMeshComplete( m, newNeuron );
+//			scene.addChild( newNeuron );
 		}
+
+		scene.addChild( neuron );
 
 		System.out.println( "size of mesh " + verticesArray.length );
 
@@ -442,7 +451,7 @@ public class MarchingCubesTest
 			verticesArray[ i ] /= maxAxisVal;
 			writer.println( verticesArray[ i ] );
 		}
-		
+
 		neuron.setVertices( FloatBuffer.wrap( verticesArray ) );
 		neuron.recalculateNormals();
 		neuron.setDirty( true );
