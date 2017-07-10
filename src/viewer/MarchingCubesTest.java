@@ -11,6 +11,7 @@ import graphics.scenery.DetachedHeadCamera;
 import graphics.scenery.Material;
 import graphics.scenery.Mesh;
 import graphics.scenery.backends.Renderer;
+import graphics.scenery.*;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.view.Views;
 import org.junit.BeforeClass;
@@ -185,10 +186,15 @@ public class MarchingCubesTest
 			Mesh neuron = new Mesh();
 			neuron.setMaterial( material );
 			neuron.setPosition( new GLVector( 0.0f, 0.0f, 0.0f ) );
+			getScene().addChild(neuron);
 
 //			getScene().addChild(neuron);
 
-			marchingCube( neuron, material, getScene(), cam, true );
+			new Thread() {
+				public void run() {
+					marchingCube(neuron, material, getScene(), cam, true);
+				}
+			}.start();
 //			levelOfDetails( neuron, getScene(), cam );
 
 		}
@@ -277,8 +283,6 @@ public class MarchingCubesTest
 //			updateMeshComplete( m, newNeuron );
 //			scene.addChild( newNeuron );
 		}
-
-		scene.addChild( neuron );
 
 		System.out.println( "size of mesh " + verticesArray.length );
 
