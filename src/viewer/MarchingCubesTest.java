@@ -187,15 +187,16 @@ public class MarchingCubesTest
 
 			Mesh neuron = new Mesh();
 			neuron.setMaterial( material );
+			neuron.setName("neuron");
 			neuron.setPosition( new GLVector( 0.0f, 0.0f, 0.0f ) );
 			getScene().addChild(neuron);
 
 			new Thread() {
 				public void run() {
-					marchingCube(neuron, material, getScene(), cam, true);
+
+				marchingCube(neuron, material, getScene(), cam );
 				}
 			}.start();
-
 //			levelOfDetails( neuron, getScene(), cam );
 
 		}
@@ -280,17 +281,6 @@ public class MarchingCubesTest
 			neuron.recalculateNormals();
 			neuron.setDirty( true );
 
-			if ( first )
-			{
-				scene.addChild( neuron );
-				first = false;
-			}
-
-//			Mesh newNeuron = new Mesh();
-//			newNeuron.setMaterial( neuron.getMaterial() );
-//			newNeuron.setPosition( new GLVector( 0, 0, 0 ) );
-//			updateMeshComplete( m, newNeuron );
-//			scene.addChild( newNeuron );
 		}
 
 		System.out.println( "size of mesh " + verticesArray.length );
