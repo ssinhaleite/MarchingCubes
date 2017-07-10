@@ -180,16 +180,32 @@ public class MarchingCubesTest
 
 			Mesh neuron = new Mesh();
 			neuron.setMaterial( material );
+			neuron.setName("neuron");
 			neuron.setPosition( new GLVector( 0.0f, 0.0f, 0.0f ) );
+			getScene().addChild(neuron);
 
-			marchingCube( neuron, material, getScene(), cam );
-
-			// levelOfDetails( neuron, getScene(), cam );
+			new Thread() {
+				public void run() {
+					marchingCube( neuron, material, getScene(), cam );
+				}
+			}.start();
 		}
 	}
 
 	private void marchingCube( Mesh neuron, Material material, Scene scene, Camera cam )
 	{
+		while(!scene.getInitialized()) {
+			System.out.println("Waiting for scene initialisation...");
+			try {
+				Thread.sleep(50);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+
+		try {
+			Thread.sleep(2500);
+		} catch(Exception e) {}
 
 		boolean first = true;
 		viewer.Mesh m = new viewer.Mesh();
@@ -262,15 +278,24 @@ public class MarchingCubesTest
 
 			// a mesh was created, so update the existing mesh
 			System.out.println( "updating mesh " );
-			updateMesh( m, neuron );
 
-			neuron.setVertices( FloatBuffer.wrap( verticesArray ) );
-			neuron.recalculateNormals();
-			neuron.setDirty( true );
+			if(neuron.getLock().tryLock()) {
+				updateMesh(m, neuron);
 
+				neuron.setVertices(BufferUtils.BufferUtils.allocateFloatAndPut(verticesArray));
+				neuron.recalculateNormals();
+//			neuron.getVertices().flip();
+				neuron.setDirty(true);
+
+				System.out.println("Vertices of neuron: " + neuron.getVertices().remaining());
+				System.out.println("Normals of neuron: " + neuron.getNormals().remaining());
+				neuron.getLock().unlock();
+
+				try {
+					Thread.sleep(500);
+				} catch(Exception e) {}
+			}
 		}
-
-		scene.addChild(neuron);
 
 		System.out.println( "camera position: " + ( ( bigx - smallx ) / 2 ) + ":" + ( ( bigy - smally ) / 2 ) + ":" + 5.0f );
 
