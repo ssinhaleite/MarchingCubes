@@ -1,21 +1,5 @@
 package viewer;
 
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.nio.FloatBuffer;
-import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.concurrent.CompletionService;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorCompletionService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-
-import org.junit.BeforeClass;
-import org.junit.Test;
-
 import bdv.img.h5.H5LabelMultisetSetupImageLoader;
 import bdv.labels.labelset.LabelMultisetType;
 import ch.systemsx.cisd.hdf5.HDF5Factory;
@@ -26,14 +10,21 @@ import graphics.scenery.Camera;
 import graphics.scenery.DetachedHeadCamera;
 import graphics.scenery.Material;
 import graphics.scenery.Mesh;
-import graphics.scenery.PointLight;
-import graphics.scenery.Scene;
-import graphics.scenery.SceneryDefaultApplication;
-import graphics.scenery.SceneryElement;
 import graphics.scenery.backends.Renderer;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.view.Views;
+import org.junit.BeforeClass;
+import org.junit.Test;
 import util.HDF5Reader;
+
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.nio.FloatBuffer;
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.*;
 
 /**
  * Unit test for marching cubes
@@ -135,7 +126,7 @@ public class MarchingCubesTest
 	{
 		public MarchingCubeApplication( String applicationName, int windowWidth, int windowHeight )
 		{
-			super( applicationName, windowWidth, windowHeight, false );
+			super( applicationName, windowWidth, windowHeight, true);
 		}
 
 		@Override
@@ -154,10 +145,10 @@ public class MarchingCubesTest
 					getWindowHeight() ) );
 			getHub().add( SceneryElement.Renderer, getRenderer() );
 
-			final Box hull = new Box( new GLVector( 50.0f, 50.0f, 50.0f ), true );
-			hull.getMaterial().setDiffuse( new GLVector( 0.5f, 0.5f, 0.5f ) );
-			hull.getMaterial().setDoubleSided( true );
-			getScene().addChild( hull );
+			final Box hull = new Box(new GLVector(50.0f, 50.0f, 50.0f), true);
+			hull.getMaterial().setDiffuse(new GLVector(0.5f, 0.5f, 0.5f));
+			hull.getMaterial().setDoubleSided(true);
+			getScene().addChild(hull);
 
 			final Material material = new Material();
 			material.setAmbient( new GLVector( 0.1f * ( 1 ), 1.0f, 1.0f ) );
@@ -179,7 +170,7 @@ public class MarchingCubesTest
 				lights[ i ].setEmissionColor( new GLVector( 1.0f, 1.0f, 1.0f ) );
 				lights[ i ].setIntensity( 100.2f * 5 );
 				lights[ i ].setLinear( 0.0f );
-				lights[ i ].setQuadratic( 0.1f );
+				lights[ i ].setQuadratic(0.1f);
 				// lights[ i ].showLightBox();
 			}
 
