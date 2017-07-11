@@ -206,8 +206,8 @@ public class MarchingCubesTest
 	private void marchingCube( Mesh neuron, Material material, Scene scene, Camera cam )
 	{
 		viewer.Mesh m = new viewer.Mesh();
-		int numberOfPartitions = 4;
-		int[][] offset = new int[ numberOfPartitions ][ 3 ];
+		int numberOfPartitions = 2;
+		int[][] offset = new int[ 8 ][ 3 ];
 		List< RandomAccessibleInterval< LabelMultisetType > > subvolumes = dataPartitioning( numberOfPartitions, offset );
 
 //		subvolumes.clear();
@@ -453,20 +453,62 @@ public class MarchingCubesTest
 	{
 		List< RandomAccessibleInterval< LabelMultisetType > > parts = new ArrayList< RandomAccessibleInterval< LabelMultisetType > >();
 
-		int partitionXSize = ( int ) (( volumeLabels.max( 0 ) - volumeLabels.min( 0 ) ) + numberOfPartitions - 1 ) / numberOfPartitions;
+		int partitionXSize = ( int ) (( volumeLabels.max( 0 ) - volumeLabels.min( 0 ) ) ) / numberOfPartitions;
 		System.out.println("partition size - X: " + partitionXSize);
 		
-		int partitionYSize = ( int ) (( volumeLabels.max( 1 ) - volumeLabels.min( 1 ) ) + numberOfPartitions - 1 ) / numberOfPartitions;
+		int partitionYSize = ( int ) (( volumeLabels.max( 1 ) - volumeLabels.min( 1 ) ) ) / numberOfPartitions;
 		System.out.println("partition size - Y: " + partitionYSize);
 		
-		int partitionZSize = ( int ) (( volumeLabels.max( 2 ) - volumeLabels.min( 2 ) ) + numberOfPartitions - 1 ) / numberOfPartitions;
+		int partitionZSize = ( int ) (( volumeLabels.max( 2 ) - volumeLabels.min( 2 ) ) ) / numberOfPartitions;
 		System.out.println("partition size - Z: " + partitionZSize);
+		System.out.println("zsize: " + volumeLabels.max(2));
 
 		// volume size + numberOfPartition - 1 / numberOfPartition == size of
 		// each partition
 		// voxel size
 		//
 
+		long overlap = 2	;
+		int offsetIdx = 0;
+		
+		for (long bx = volumeLabels.min(0); (bx + partitionXSize) <= volumeLabels.max(0); bx += partitionXSize)
+			for (long by = volumeLabels.min(1); (by + partitionYSize)  <= volumeLabels.max(1); by += partitionYSize)
+				for (long bz = volumeLabels.min(2); (bz + partitionZSize) <= volumeLabels.max(2); bz += partitionZSize)
+				{
+					long [] begin = new long[] {bx, by, bz};
+					
+					long[] end = new long[] { begin[ 0 ] + partitionXSize,
+							  begin[ 1 ] + partitionYSize,
+							  begin[ 2 ] + partitionZSize };
+					
+					if (begin[0] - overlap >= 0) begin[0] -= overlap;
+					if (begin[1] - overlap >= 0) begin[1] -= overlap;
+					if (begin[2] - overlap >= 0) begin[2] -= overlap;
+					
+					if (volumeLabels.max(0) - end[0] < partitionXSize )
+						end[0] = volumeLabels.max(0);
+					
+					if (volumeLabels.max(1) - end[1] < partitionYSize )
+						end[1] = volumeLabels.max(1);
+					
+					if (volumeLabels.max(2) - end[2] < partitionZSize )
+						end[2] = volumeLabels.max(2);
+	
+					
+					RandomAccessibleInterval< LabelMultisetType > partition = Views.interval( volumeLabels, begin, end );
+		
+					offset[ offsetIdx ][ 0 ] = ( int ) begin[ 0 ];
+					offset[ offsetIdx ][ 1 ] = ( int ) begin[ 1 ];
+					offset[ offsetIdx ][ 2 ] = ( int ) begin[ 2 ];
+		
+					System.out.println( " partition begins at: " + begin[ 0 ] + " x " + begin[ 1 ] + " x " + begin[ 2 ] );
+					System.out.println( " partition ends at: " + end[ 0 ] + " x " + end[ 1 ] + " x " + end[ 2 ] );
+					System.out.println( "offset: " + offset[ offsetIdx ][ 0 ] + " x " + offset[ offsetIdx ][ 1 ] + " x " + offset[ offsetIdx ][ 2 ] );
+		
+					offsetIdx++;
+					
+					parts.add( partition );
+				}
 //		for ( int d = 0; d < volumeLabels.numDimensions(); d++ )
 //		{
 //			long[] begin = new long[] { volumeLabels.min( 0 ), volumeLabels.min( 1 ), volumeLabels.min( 2 ) };
@@ -496,48 +538,48 @@ public class MarchingCubesTest
 //			}
 //		}
 
-		RandomAccessibleInterval< LabelMultisetType > first = Views.interval( volumeLabels,
-				new long[] { volumeLabels.min( 0 ), volumeLabels.min( 1 ), volumeLabels.min( 2 ) },
-				new long[] { ( ( volumeLabels.max( 0 ) - volumeLabels.min( 0 ) ) / 2 ) + 1,
-						( ( volumeLabels.max( 1 ) - volumeLabels.min( 1 ) ) / 2 ) + 1, volumeLabels.max( 2 ) } );
-
-		offset[ 0 ][ 0 ] = 0;
-		offset[ 0 ][ 1 ] = 0;
-		offset[ 0 ][ 2 ] = 0;
-
-		RandomAccessibleInterval< LabelMultisetType > second = Views.interval( volumeLabels,
-				new long[] { ( ( volumeLabels.max( 0 ) - volumeLabels.min( 0 ) ) / 2 ) - 1, volumeLabels.min( 1 ),
-						volumeLabels.min( 2 ) },
-				new long[] { volumeLabels.max( 0 ), ( ( volumeLabels.max( 1 ) - volumeLabels.min( 1 ) ) / 2 ) + 1,
-						volumeLabels.max( 2 ) } );
-
-		offset[ 1 ][ 0 ] = ( int ) ( ( ( volumeLabels.max( 0 ) - volumeLabels.min( 0 ) ) / 2 ) - 1 ) + 20;
-		offset[ 1 ][ 1 ] = 0;
-		offset[ 1 ][ 2 ] = 0;
-
-		RandomAccessibleInterval< LabelMultisetType > third = Views.interval( volumeLabels,
-				new long[] { volumeLabels.min( 0 ), ( ( volumeLabels.max( 1 ) - volumeLabels.min( 1 ) ) / 2 ) - 1,
-						volumeLabels.min( 2 ) },
-				new long[] { ( ( volumeLabels.max( 0 ) - volumeLabels.min( 0 ) ) / 2 ) + 1, volumeLabels.max( 1 ),
-						volumeLabels.max( 2 ) } );
-
-		offset[ 2 ][ 0 ] = 0;
-		offset[ 2 ][ 1 ] = ( int ) ( ( ( volumeLabels.max( 1 ) - volumeLabels.min( 1 ) ) / 2 ) - 1 ) + 20;
-		offset[ 2 ][ 2 ] = 0;
-
-		RandomAccessibleInterval< LabelMultisetType > forth = Views.interval( volumeLabels,
-				new long[] { ( ( volumeLabels.max( 0 ) - volumeLabels.min( 0 ) ) / 2 ) - 1,
-						( ( volumeLabels.max( 1 ) - volumeLabels.min( 1 ) ) / 2 ) - 1, volumeLabels.min( 2 ) },
-				new long[] { volumeLabels.max( 0 ), volumeLabels.max( 1 ), volumeLabels.max( 2 ) } );
-
-		offset[ 3 ][ 0 ] = ( int ) ( ( ( volumeLabels.max( 0 ) - volumeLabels.min( 0 ) ) / 2 ) - 1 ) + 20;
-		offset[ 3 ][ 1 ] = ( int ) ( ( ( volumeLabels.max( 1 ) - volumeLabels.min( 1 ) ) / 2 ) - 1 ) + 20;
-		offset[ 3 ][ 2 ] = 0;
-
-		parts.add( first );
-		parts.add( second );
-		parts.add( third );
-		parts.add( forth );
+//		RandomAccessibleInterval< LabelMultisetType > first = Views.interval( volumeLabels,
+//				new long[] { volumeLabels.min( 0 ), volumeLabels.min( 1 ), volumeLabels.min( 2 ) },
+//				new long[] { ( ( volumeLabels.max( 0 ) - volumeLabels.min( 0 ) ) / 2 ) + 1,
+//						( ( volumeLabels.max( 1 ) - volumeLabels.min( 1 ) ) / 2 ) + 1, volumeLabels.max( 2 ) } );
+//
+//		offset[ 0 ][ 0 ] = 0;
+//		offset[ 0 ][ 1 ] = 0;
+//		offset[ 0 ][ 2 ] = 0;
+//
+//		RandomAccessibleInterval< LabelMultisetType > second = Views.interval( volumeLabels,
+//				new long[] { ( ( volumeLabels.max( 0 ) - volumeLabels.min( 0 ) ) / 2 ) - 1, volumeLabels.min( 1 ),
+//						volumeLabels.min( 2 ) },
+//				new long[] { volumeLabels.max( 0 ), ( ( volumeLabels.max( 1 ) - volumeLabels.min( 1 ) ) / 2 ) + 1,
+//						volumeLabels.max( 2 ) } );
+//
+//		offset[ 1 ][ 0 ] = ( int ) ( ( ( volumeLabels.max( 0 ) - volumeLabels.min( 0 ) ) / 2 ) - 1 ) + 20;
+//		offset[ 1 ][ 1 ] = 0;
+//		offset[ 1 ][ 2 ] = 0;
+//
+//		RandomAccessibleInterval< LabelMultisetType > third = Views.interval( volumeLabels,
+//				new long[] { volumeLabels.min( 0 ), ( ( volumeLabels.max( 1 ) - volumeLabels.min( 1 ) ) / 2 ) - 1,
+//						volumeLabels.min( 2 ) },
+//				new long[] { ( ( volumeLabels.max( 0 ) - volumeLabels.min( 0 ) ) / 2 ) + 1, volumeLabels.max( 1 ),
+//						volumeLabels.max( 2 ) } );
+//
+//		offset[ 2 ][ 0 ] = 0;
+//		offset[ 2 ][ 1 ] = ( int ) ( ( ( volumeLabels.max( 1 ) - volumeLabels.min( 1 ) ) / 2 ) - 1 ) + 20;
+//		offset[ 2 ][ 2 ] = 0;
+//
+//		RandomAccessibleInterval< LabelMultisetType > forth = Views.interval( volumeLabels,
+//				new long[] { ( ( volumeLabels.max( 0 ) - volumeLabels.min( 0 ) ) / 2 ) - 1,
+//						( ( volumeLabels.max( 1 ) - volumeLabels.min( 1 ) ) / 2 ) - 1, volumeLabels.min( 2 ) },
+//				new long[] { volumeLabels.max( 0 ), volumeLabels.max( 1 ), volumeLabels.max( 2 ) } );
+//
+//		offset[ 3 ][ 0 ] = ( int ) ( ( ( volumeLabels.max( 0 ) - volumeLabels.min( 0 ) ) / 2 ) - 1 ) + 20;
+//		offset[ 3 ][ 1 ] = ( int ) ( ( ( volumeLabels.max( 1 ) - volumeLabels.min( 1 ) ) / 2 ) - 1 ) + 20;
+//		offset[ 3 ][ 2 ] = 0;
+//
+//		parts.add( first );
+//		parts.add( second );
+//		parts.add( third );
+//		parts.add( forth );
 
 		return parts;
 	}
