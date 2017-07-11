@@ -162,7 +162,7 @@ public class MarchingCubesTest
 
 			cam.perspectiveCamera( 50f, getWindowHeight(), getWindowWidth(), 0.1f, 1000.0f );
 			cam.setActive( true );
-			cam.setPosition( new GLVector( 0, 0, 5 ) );
+			cam.setPosition( new GLVector( 0.5f, 0.5f, 5 ) );
 			getScene().addChild( cam );
 
 			PointLight[] lights = new PointLight[ 4 ];
@@ -189,6 +189,7 @@ public class MarchingCubesTest
 			neuron.setMaterial( material );
 			neuron.setName("neuron");
 			neuron.setPosition( new GLVector( 0.0f, 0.0f, 0.0f ) );
+//			neuron.setScale( new GLVector( 1.0f, 1.0f, 100.0f ) );
 			getScene().addChild(neuron);
 
 			new Thread() {
@@ -435,9 +436,6 @@ public class MarchingCubesTest
 			verticesArray[ vertexCount + v++ ] = point2[ 2 ];
 		}
 
-		// TODO: to define this value in a global way
-		maxAxisVal = 499;
-
 		// omp parallel for
 		System.out.println( "vsize: " + verticesArray.length );
 		for ( int i = vertexCount; i < verticesArray.length; ++i )
@@ -454,6 +452,49 @@ public class MarchingCubesTest
 	private List< RandomAccessibleInterval< LabelMultisetType > > dataPartitioning( int numberOfPartitions, int[][] offset )
 	{
 		List< RandomAccessibleInterval< LabelMultisetType > > parts = new ArrayList< RandomAccessibleInterval< LabelMultisetType > >();
+
+		int partitionXSize = ( int ) (( volumeLabels.max( 0 ) - volumeLabels.min( 0 ) ) + numberOfPartitions - 1 ) / numberOfPartitions;
+		System.out.println("partition size - X: " + partitionXSize);
+		
+		int partitionYSize = ( int ) (( volumeLabels.max( 1 ) - volumeLabels.min( 1 ) ) + numberOfPartitions - 1 ) / numberOfPartitions;
+		System.out.println("partition size - Y: " + partitionYSize);
+		
+		int partitionZSize = ( int ) (( volumeLabels.max( 2 ) - volumeLabels.min( 2 ) ) + numberOfPartitions - 1 ) / numberOfPartitions;
+		System.out.println("partition size - Z: " + partitionZSize);
+
+		// volume size + numberOfPartition - 1 / numberOfPartition == size of
+		// each partition
+		// voxel size
+		//
+
+//		for ( int d = 0; d < volumeLabels.numDimensions(); d++ )
+//		{
+//			long[] begin = new long[] { volumeLabels.min( 0 ), volumeLabels.min( 1 ), volumeLabels.min( 2 ) };
+//
+//			for (int i = 0; i < numberOfPartitions - 1; i++)
+//			{
+//				begin = new long[] { begin[ 0 ] + (d == 0 ? partitionXSize : 0), 
+//									 begin[ 1 ] + (d == 1 ? partitionXSize : 0), 
+//									 begin[ 2 ] + (d == 2 ? partitionXSize : 0)};
+//				
+//				long[] end = new long[] { begin[ 0 ] + partitionXSize,
+//										  begin[ 1 ] + partitionYSize,
+//										  begin[ 2 ] + partitionZSize };
+//	
+//				RandomAccessibleInterval< LabelMultisetType > partition = Views.interval( volumeLabels, begin, end );
+//	
+//				offset[ i ][ 0 ] = ( int ) begin[ 0 ];
+//				offset[ i ][ 1 ] = ( int ) begin[ 1 ];
+//				offset[ i ][ 2 ] = ( int ) begin[ 2 ];
+//	
+//				System.out.println( " partition begins at: " + begin[ 0 ] + " x " + begin[ 1 ] + " x " + begin[ 2 ] );
+//				System.out.println( " partition ends at: " + end[ 0 ] + " x " + end[ 1 ] + " x " + end[ 2 ] );
+//				System.out.println( "offset: " + offset[ i ][ 0 ] + " x " + offset[ i ][ 1 ] + " x " + offset[ i ][ 2 ] );
+//	
+//				begin = end;
+//				parts.add( partition );
+//			}
+//		}
 
 		RandomAccessibleInterval< LabelMultisetType > first = Views.interval( volumeLabels,
 				new long[] { volumeLabels.min( 0 ), volumeLabels.min( 1 ), volumeLabels.min( 2 ) },
