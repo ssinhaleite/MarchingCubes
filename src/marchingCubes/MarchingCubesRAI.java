@@ -47,13 +47,14 @@ public class MarchingCubesRAI
 	 * it
 	 */
 	private boolean acceptExactly = false;
-	
+
 	List< Long > volume = new ArrayList< Long >();
-	
+
 	int xWidth = 0;
+
 	int xyWidth = 0;
-	
-	float[] voxDim; 
+
+	float[] voxDim;
 
 	/**
 	 * A point in 3D with an id
@@ -244,7 +245,7 @@ public class MarchingCubesRAI
 								new long[] { input.max( 0 ) + 1, input.max( 1 ) + 1, input.max( 2 ) + 1 } ) ) )
 				.localizingCursor();
 
-		//List< Long > volume = new ArrayList< Long >();
+		// List< Long > volume = new ArrayList< Long >();
 
 		while ( c.hasNext() )
 		{
@@ -256,11 +257,11 @@ public class MarchingCubesRAI
 			}
 		}
 
-		//System.out.println( "volume size: " + volume.size() );
+		// System.out.println( "volume size: " + volume.size() );
 
 		// two dimensions more: from 'min minus one' to 'max plus one'
-		/*int */xWidth = ( volDim[ 0 ] + 2 );
-		/*int */xyWidth = xWidth * ( volDim[ 1 ] + 2 );
+		/* int */xWidth = ( volDim[ 0 ] + 2 );
+		/* int */xyWidth = xWidth * ( volDim[ 1 ] + 2 );
 
 		double[] vertex_values = new double[ 8 ];
 
@@ -306,12 +307,16 @@ public class MarchingCubesRAI
 					vertex_values[ 5 ] = volume.get( ( cursorZ + 1 ) * xyWidth + ( cursorY + 1 ) * xWidth + cursorX );
 					vertex_values[ 1 ] = volume.get( ( cursorZ + 1 ) * xyWidth + ( cursorY + 1 ) * xWidth + ( cursorX + 1 ) );
 
-					//System.out.println( "  " + ( int ) vertex_values[ 4 ] + "------" + ( int ) vertex_values[ 5 ] );
-					//System.out.println( " /|     /|" );
-					//System.out.println( " " + ( int ) vertex_values[ 7 ] + "-----" + ( int ) vertex_values[ 6 ] + " |" );
-					//System.out.println( " |" + ( int ) vertex_values[ 0 ] + "----|-" + ( int ) vertex_values[ 1 ] );
-					//System.out.println( " |/    |/" );
-					//System.out.println( " " + ( int ) vertex_values[ 3 ] + "-----" + ( int ) vertex_values[ 2 ] );
+					// System.out.println( " " + ( int ) vertex_values[ 4 ] +
+					// "------" + ( int ) vertex_values[ 5 ] );
+					// System.out.println( " /| /|" );
+					// System.out.println( " " + ( int ) vertex_values[ 7 ] +
+					// "-----" + ( int ) vertex_values[ 6 ] + " |" );
+					// System.out.println( " |" + ( int ) vertex_values[ 0 ] +
+					// "----|-" + ( int ) vertex_values[ 1 ] );
+					// System.out.println( " |/ |/" );
+					// System.out.println( " " + ( int ) vertex_values[ 3 ] +
+					// "-----" + ( int ) vertex_values[ 2 ] );
 
 					triangulation( vertex_values, cursorX, cursorY, cursorZ );
 
