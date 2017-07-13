@@ -117,7 +117,7 @@ public class MarchingCubesApplication
 		volumeLabels = labels.get( 0 ).getImage( 0 );
 	}
 
-	public static void main(String[] args) throws Exception
+	public static void main( String[] args ) throws Exception
 	{
 		MarchingCubeApplication viewer = new MarchingCubeApplication( "Marching cube", 800, 600 );
 		viewer.main();
@@ -186,15 +186,17 @@ public class MarchingCubesApplication
 
 			Mesh neuron = new Mesh();
 			neuron.setMaterial( material );
-			neuron.setName("neuron");
+			neuron.setName( "neuron" );
 			neuron.setPosition( new GLVector( 0.0f, 0.0f, 0.0f ) );
 			neuron.setScale( new GLVector( 1.0f, 1.0f, 10.0f ) );
-			getScene().addChild(neuron);
+			getScene().addChild( neuron );
 
-			new Thread() {
-				public void run() {
+			new Thread()
+			{
+				public void run()
+				{
 
-				marchingCube(neuron, material, getScene(), cam );
+					marchingCube( neuron, material, getScene(), cam );
 				}
 			}.start();
 //			levelOfDetails( neuron, getScene(), cam );
@@ -204,35 +206,35 @@ public class MarchingCubesApplication
 	private static void marchingCube( Mesh neuron, Material material, Scene scene, Camera cam )
 	{
 		viewer.Mesh m = new viewer.Mesh();
-		
-		int x = ( int ) (( volumeLabels.max( 0 ) - volumeLabels.min( 0 ) ) + 1) / 32;
-		int y = ( int ) (( volumeLabels.max( 1 ) - volumeLabels.min( 1 ) ) + 1) / 32;
-		int z = ( int ) (( volumeLabels.max( 2 ) - volumeLabels.min( 2 ) ) + 1) / 32;
-		
-		System.out.println("division: " + x + " " + y + " " + z );
 
-		x = (x >= 7)?  7 * 32 : x * 32;
-		y = (y >= 7)?  7 * 32 : y * 32;
-		z = (z >= 7)?  7 * 32 : z * 32;
+		int x = ( int ) ( ( volumeLabels.max( 0 ) - volumeLabels.min( 0 ) ) + 1 ) / 32;
+		int y = ( int ) ( ( volumeLabels.max( 1 ) - volumeLabels.min( 1 ) ) + 1 ) / 32;
+		int z = ( int ) ( ( volumeLabels.max( 2 ) - volumeLabels.min( 2 ) ) + 1 ) / 32;
 
-		System.out.println("partition size 1: " + x + " " + y + " " + z );
+		System.out.println( "division: " + x + " " + y + " " + z );
 
-		x = (x == 0)?  1 : x;
-		y = (y == 0)?  1 : y;
-		z = (z == 0)?  1 : z;
-		
-		System.out.println("zero verification: " + x + " " + y + " " + z );
+		x = ( x >= 7 ) ? 7 * 32 : x * 32;
+		y = ( y >= 7 ) ? 7 * 32 : y * 32;
+		z = ( z >= 7 ) ? 7 * 32 : z * 32;
 
-		int[] partitionSize = new int[] {x, y, z};
-		System.out.println(" final partition size: " + x + " " + y + " " + z );
-		
+		System.out.println( "partition size 1: " + x + " " + y + " " + z );
+
+		x = ( x == 0 ) ? 1 : x;
+		y = ( y == 0 ) ? 1 : y;
+		z = ( z == 0 ) ? 1 : z;
+
+		System.out.println( "zero verification: " + x + " " + y + " " + z );
+
+		int[] partitionSize = new int[] { x, y, z };
+		System.out.println( " final partition size: " + x + " " + y + " " + z );
+
 		List< int[] > offsets = new ArrayList<>();
 		util.VolumePartitioner partitioner = new util.VolumePartitioner( volumeLabels, partitionSize );
 		List< RandomAccessibleInterval< LabelMultisetType > > subvolumes = partitioner.dataPartitioning( offsets );
 
 		subvolumes.clear();
 		subvolumes.add( volumeLabels );
-		offsets.set( 0, new int[]{0, 0, 0} );
+		offsets.set( 0, new int[] { 0, 0, 0 } );
 
 		System.out.println( "starting executor..." );
 		CompletionService< viewer.Mesh > executor = new ExecutorCompletionService< viewer.Mesh >(
@@ -254,19 +256,19 @@ public class MarchingCubesApplication
 //			voxDim[1] = voxSize;
 //			voxDim[2] = voxSize;
 
-			for ( int i = 0; i < subvolumes.size(); i++ )
-			{
-				System.out.println( "dimension: " + subvolumes.get( i ).dimension( 0 ) + "x" + subvolumes.get( i ).dimension( 1 )
-						+ "x" + subvolumes.get( i ).dimension( 2 ) );
-				volDim = new int[] { ( int ) subvolumes.get( i ).dimension( 0 ), ( int ) subvolumes.get( i ).dimension( 1 ),
-						( int ) subvolumes.get( i ).dimension( 2 ) };
-				MarchingCubesCallable callable = new MarchingCubesCallable( subvolumes.get( i ), volDim, offsets.get( i ), voxDim, true, isoLevel,
-						false );
-				System.out.println( "callable: " + callable );
-				System.out.println( "input " + subvolumes.get( i ) );
-				Future< viewer.Mesh > result = executor.submit( callable );
-				resultMeshList.add( result );
-			}
+		for ( int i = 0; i < subvolumes.size(); i++ )
+		{
+			System.out.println( "dimension: " + subvolumes.get( i ).dimension( 0 ) + "x" + subvolumes.get( i ).dimension( 1 )
+					+ "x" + subvolumes.get( i ).dimension( 2 ) );
+			volDim = new int[] { ( int ) subvolumes.get( i ).dimension( 0 ), ( int ) subvolumes.get( i ).dimension( 1 ),
+					( int ) subvolumes.get( i ).dimension( 2 ) };
+			MarchingCubesCallable callable = new MarchingCubesCallable( subvolumes.get( i ), volDim, offsets.get( i ), voxDim, true, isoLevel,
+					false );
+			System.out.println( "callable: " + callable );
+			System.out.println( "input " + subvolumes.get( i ) );
+			Future< viewer.Mesh > result = executor.submit( callable );
+			resultMeshList.add( result );
+		}
 //		}
 
 		Future< viewer.Mesh > completedFuture = null;
