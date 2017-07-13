@@ -47,6 +47,13 @@ public class MarchingCubesRAI
 	 * it
 	 */
 	private boolean acceptExactly = false;
+	
+	List< Long > volume = new ArrayList< Long >();
+	
+	int xWidth = 0;
+	int xyWidth = 0;
+	
+	float[] voxDim; 
 
 	/**
 	 * A point in 3D with an id
@@ -223,6 +230,7 @@ public class MarchingCubesRAI
 		this.offset = offset;
 		isoLevel = level;
 
+		this.voxDim = voxDim;
 		nCellsX = ( long ) Math.ceil( volDim[ 0 ] / voxDim[ 0 ] ) - 1;
 		nCellsY = ( long ) Math.ceil( volDim[ 1 ] / voxDim[ 1 ] ) - 1;
 		acceptExactly = isExact;
@@ -236,7 +244,7 @@ public class MarchingCubesRAI
 								new long[] { input.max( 0 ) + 1, input.max( 1 ) + 1, input.max( 2 ) + 1 } ) ) )
 				.localizingCursor();
 
-		List< Long > volume = new ArrayList< Long >();
+		//List< Long > volume = new ArrayList< Long >();
 
 		while ( c.hasNext() )
 		{
@@ -248,11 +256,11 @@ public class MarchingCubesRAI
 			}
 		}
 
-		System.out.println( "volume size: " + volume.size() );
+		//System.out.println( "volume size: " + volume.size() );
 
 		// two dimensions more: from 'min minus one' to 'max plus one'
-		int xWidth = ( volDim[ 0 ] + 2 );
-		int xyWidth = xWidth * ( volDim[ 1 ] + 2 );
+		/*int */xWidth = ( volDim[ 0 ] + 2 );
+		/*int */xyWidth = xWidth * ( volDim[ 1 ] + 2 );
 
 		double[] vertex_values = new double[ 8 ];
 
@@ -297,6 +305,13 @@ public class MarchingCubesRAI
 					vertex_values[ 0 ] = volume.get( ( cursorZ + 1 ) * xyWidth + cursorY * xWidth + ( cursorX + 1 ) );
 					vertex_values[ 5 ] = volume.get( ( cursorZ + 1 ) * xyWidth + ( cursorY + 1 ) * xWidth + cursorX );
 					vertex_values[ 1 ] = volume.get( ( cursorZ + 1 ) * xyWidth + ( cursorY + 1 ) * xWidth + ( cursorX + 1 ) );
+
+					//System.out.println( "  " + ( int ) vertex_values[ 4 ] + "------" + ( int ) vertex_values[ 5 ] );
+					//System.out.println( " /|     /|" );
+					//System.out.println( " " + ( int ) vertex_values[ 7 ] + "-----" + ( int ) vertex_values[ 6 ] + " |" );
+					//System.out.println( " |" + ( int ) vertex_values[ 0 ] + "----|-" + ( int ) vertex_values[ 1 ] );
+					//System.out.println( " |/    |/" );
+					//System.out.println( " " + ( int ) vertex_values[ 3 ] + "-----" + ( int ) vertex_values[ 2 ] );
 
 					triangulation( vertex_values, cursorX, cursorY, cursorZ );
 
@@ -358,7 +373,6 @@ public class MarchingCubesRAI
 		//   3-----*2*----2
 		// @formatter: on
 
-		float[][] vertlist = new float[12][3];
 		// Now create a triangulation of the isosurface in this cell.
 		if (MarchingCubesTables.MC_EDGE_TABLE[tableIndex] != 0)
 		{
@@ -493,6 +507,11 @@ public class MarchingCubesRAI
 			vertices[i][0] = entry.getValue().x;
 			vertices[i][1] = entry.getValue().y;
 			vertices[i][2] = entry.getValue().z;
+			
+			//System.out.println( "vertex x: " + vertices[i][0]);
+			//System.out.println( "vertex y: " + vertices[i][1]);
+			//System.out.println( "vertex z: " + vertices[i][2]);
+
 		}
 
 		mesh.setVertices(vertices);
@@ -645,13 +664,20 @@ public class MarchingCubesRAI
 			break;
 		}
 
-		p1.setPosition((v1x + offset[0]), 0);
-		p1.setPosition((v1y + offset[1]), 1);
-		p1.setPosition((v1z + offset[2]), 2);
-		p2.setPosition((v2x + offset[0]), 0);
-		p2.setPosition((v2y + offset[1]), 1);
-		p2.setPosition((v2z + offset[2]), 2);
+		p1.setPosition((((v1x/* - 1*/) + offset[0])/* * voxDim[0]*/), 0);
+		p1.setPosition((((v1y/* - 1*/) + offset[1])/* * voxDim[1]*/), 1);
+		p1.setPosition((((v1z/* - 1*/) + offset[2])/* * voxDim[2]*/), 2);
+		p2.setPosition((((v2x/* - 1*/) + offset[0])/* * voxDim[0]*/), 0);
+		p2.setPosition((((v2y/* - 1*/) + offset[1])/* * voxDim[1]*/), 1);
+		p2.setPosition((((v2z/* - 1*/) + offset[2])/* * voxDim[2]*/), 2);
+		
 
+		//System.out.println("p1: " + p1.getDoublePosition( 0 ) + " " + p1.getDoublePosition( 1 ) + " " + p1.getDoublePosition( 2 ));
+		//System.out.println("p2: " + p2.getDoublePosition( 0 ) + " " + p2.getDoublePosition( 1 ) + " " + p2.getDoublePosition( 2 ));
+		//System.out.println("p1 value: " + volume.get( (int)(p1.getDoublePosition( 2 ) * xyWidth + p1.getDoublePosition( 1 ) * xWidth + p1.getDoublePosition( 0 ) ) ));
+		//System.out.println(" should be: " + vertex_values);
+		//System.out.println("p2 value: " + volume.get( (int)(p2.getDoublePosition( 2 ) * xyWidth + p2.getDoublePosition( 1 ) * xWidth + p2.getDoublePosition( 0 ) ) ));
+		//System.out.println(" should be: " + vertex_values2);
 		if (interiorTest(vertex_values) && !interiorTest(vertex_values2))
 		{
 			return findSurfaceIntersection(p2, p1, vertex_values2, vertex_values);
@@ -662,31 +688,44 @@ public class MarchingCubesRAI
 
 	private long getEdgeId(long nX, long nY, long nZ, int nEdgeNo)
 	{
+		//System.out.println("x, y, z: " + nX + " " + nY + " " +  nZ);
 		switch (nEdgeNo)
 		{
 		case 0:
+			//System.out.println("vertex id: " + (getVertexId(nX, nY, nZ) + 1));
 			return getVertexId(nX, nY, nZ) + 1;
 		case 1:
+			//System.out.println("vertex id: " + getVertexId(nX, nY + 1, nZ));
 			return getVertexId(nX, nY + 1, nZ);
 		case 2:
+			//System.out.println("vertex id: " + (getVertexId(nX + 1, nY, nZ) + 1));
 			return getVertexId(nX + 1, nY, nZ) + 1;
 		case 3:
+			//System.out.println("vertex id: " + getVertexId(nX, nY, nZ));
 			return getVertexId(nX, nY, nZ);
 		case 4:
+			//System.out.println("vertex id: " + (getVertexId(nX, nY, nZ + 1) + 1));
 			return getVertexId(nX, nY, nZ + 1) + 1;
 		case 5:
+			//System.out.println("vertex id: " + getVertexId(nX, nY + 1, nZ + 1));
 			return getVertexId(nX, nY + 1, nZ + 1);
 		case 6:
+			//System.out.println("vertex id: " + (getVertexId(nX + 1, nY, nZ + 1) + 1));
 			return getVertexId(nX + 1, nY, nZ + 1) + 1;
 		case 7:
+			//System.out.println("vertex id: " + getVertexId(nX, nY, nZ + 1));
 			return getVertexId(nX, nY, nZ + 1);
 		case 8:
+			//System.out.println("vertex id: " + (getVertexId(nX, nY, nZ) + 2));
 			return getVertexId(nX, nY, nZ) + 2;
 		case 9:
+			//System.out.println("vertex id: " + (getVertexId(nX, nY + 1, nZ) + 2));
 			return getVertexId(nX, nY + 1, nZ) + 2;
 		case 10:
+			//System.out.println("vertex id: " + (getVertexId(nX + 1, nY + 1, nZ) + 2));
 			return getVertexId(nX + 1, nY + 1, nZ) + 2;
 		case 11:
+			//System.out.println("vertex id: " + (getVertexId(nX + 1, nY, nZ) + 2));
 			return getVertexId(nX + 1, nY, nZ) + 2;
 		default:
 			// Invalid edge no.
