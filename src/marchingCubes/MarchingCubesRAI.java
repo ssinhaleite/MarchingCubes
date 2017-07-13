@@ -34,7 +34,7 @@ public class MarchingCubesRAI
 	private Vector< Triangle > triangleVector = new Vector< Triangle >();
 
 	/** No. of cells in x and y directions. */
-	private long nCellsX, nCellsY;
+	private long nCellsX, nCellsY, nCellsZ;
 
 	/** The isosurface value. */
 	private int isoLevel;
@@ -232,8 +232,6 @@ public class MarchingCubesRAI
 		isoLevel = level;
 
 		this.voxDim = voxDim;
-		nCellsX = ( long ) Math.ceil( volDim[ 0 ] / voxDim[ 0 ] ) - 1;
-		nCellsY = ( long ) Math.ceil( volDim[ 1 ] / voxDim[ 1 ] ) - 1;
 		acceptExactly = isExact;
 
 		ExtendedRandomAccessibleInterval< LabelMultisetType, RandomAccessibleInterval< LabelMultisetType > > extended = Views
@@ -254,6 +252,7 @@ public class MarchingCubesRAI
 			for ( final Multiset.Entry< Label > e : it.entrySet() )
 			{
 				volume.add( e.getElement().id() );
+				//System.out.println("  " + e.getElement().id());
 			}
 		}
 
@@ -263,13 +262,18 @@ public class MarchingCubesRAI
 		/* int */xWidth = ( volDim[ 0 ] + 2 );
 		/* int */xyWidth = xWidth * ( volDim[ 1 ] + 2 );
 
+		nCellsX = ( long ) Math.ceil( (volDim[ 0 ]+ 2) / voxDim[ 0 ] ) - 1;
+		nCellsY = ( long ) Math.ceil( (volDim[ 1 ] +2)/ voxDim[ 1 ] ) - 1;
+		nCellsZ = ( long ) Math.ceil( (volDim[ 2 ]+2) / voxDim[ 2 ] ) - 1;
+
+		
 		double[] vertex_values = new double[ 8 ];
 
-		for ( int cursorZ = 0; cursorZ < volDim[ 2 ] + 1; cursorZ++ )
+		for ( int cursorZ = 0; cursorZ < nCellsZ /*volDim[ 2 ]*/ /*+ 1*/; cursorZ += voxDim[2] )
 		{
-			for ( int cursorY = 0; cursorY < volDim[ 1 ] + 1; cursorY++ )
+			for ( int cursorY = 0; cursorY < nCellsY /*volDim[ 1 ]*/ /*+ 1*/; cursorY += voxDim[1] )
 			{
-				for ( int cursorX = 0; cursorX < volDim[ 0 ] + 1; cursorX++ )
+				for ( int cursorX = 0; cursorX < nCellsX/*volDim[ 0 ]*/ /*+ 1*/; cursorX += voxDim[0] )
 				{
 
 					// @formatter:off
@@ -307,16 +311,16 @@ public class MarchingCubesRAI
 					vertex_values[ 5 ] = volume.get( ( cursorZ + 1 ) * xyWidth + ( cursorY + 1 ) * xWidth + cursorX );
 					vertex_values[ 1 ] = volume.get( ( cursorZ + 1 ) * xyWidth + ( cursorY + 1 ) * xWidth + ( cursorX + 1 ) );
 
-					// System.out.println( " " + ( int ) vertex_values[ 4 ] +
-					// "------" + ( int ) vertex_values[ 5 ] );
-					// System.out.println( " /| /|" );
-					// System.out.println( " " + ( int ) vertex_values[ 7 ] +
-					// "-----" + ( int ) vertex_values[ 6 ] + " |" );
-					// System.out.println( " |" + ( int ) vertex_values[ 0 ] +
-					// "----|-" + ( int ) vertex_values[ 1 ] );
-					// System.out.println( " |/ |/" );
-					// System.out.println( " " + ( int ) vertex_values[ 3 ] +
-					// "-----" + ( int ) vertex_values[ 2 ] );
+//					System.out.println( " " + ( int ) vertex_values[ 4 ] +
+//					"------" + ( int ) vertex_values[ 5 ] );
+//					System.out.println( " /|     /|" );
+//					System.out.println( " " + ( int ) vertex_values[ 7 ] +
+//					"-----" + ( int ) vertex_values[ 6 ] + " |" );
+//					System.out.println( " |" + ( int ) vertex_values[ 0 ] +
+//					"----|-" + ( int ) vertex_values[ 1 ] );
+//					System.out.println( " |/    |/" );
+//					System.out.println( " " + ( int ) vertex_values[ 3 ] +
+//					"-----" + ( int ) vertex_values[ 2 ] );
 
 					triangulation( vertex_values, cursorX, cursorY, cursorZ );
 
@@ -356,7 +360,7 @@ public class MarchingCubesRAI
 		int tableIndex = 0;
 		for ( int i = 0; i < 8; i++ )
 		{
-			if ( !interiorTest( vertex_values[ i ] ) )
+			if ( interiorTest( vertex_values[ i ] ) )
 			{
 				tableIndex |= ( int ) Math.pow( 2, i );
 			}
