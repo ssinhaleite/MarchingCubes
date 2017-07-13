@@ -47,17 +47,17 @@ public class MarchingCubesApplication
 	static float[] verticesArray = new float[ 0 ];
 
 	/** big hdf5 for test - whole sample B */
-//	 static String path = "data/sample_B.augmented.0.hdf";
-////	 int isoLevel = 73396;
-//	 int isoLevel = 1854;
-//	 int[] volDim = {2340, 1685, 153};
+	static String path = "data/sample_B.augmented.0.hdf";
+	static int isoLevel = 73396;
+//	static int isoLevel = 1854;
+	static int[] volDim = {2340, 1685, 153};
 
 	/** small hdf5 for test - subset from sample B */
-	static String path = "data/sample_B_20160708_frags_46_50.hdf";
-
-	static int isoLevel = 7;
-
-	static int[] volDim = { 500, 500, 5 };
+//	static String path = "data/sample_B_20160708_frags_46_50.hdf";
+//
+//	static int isoLevel = 12;
+//
+//	static int[] volDim = { 500, 500, 5 };
 
 	static String path_label = "/volumes/labels/neuron_ids";
 
@@ -67,6 +67,7 @@ public class MarchingCubesApplication
 //	 int[] volDim = {3, 3, 3};
 
 	static float[] voxDim = { 1f, 1f, 1f };
+//	static float[] voxDim = { 2f, 2f, 2f };
 
 	float smallx = 0.0f;
 
@@ -188,7 +189,7 @@ public class MarchingCubesApplication
 			neuron.setMaterial( material );
 			neuron.setName( "neuron" );
 			neuron.setPosition( new GLVector( 0.0f, 0.0f, 0.0f ) );
-//			neuron.setScale( new GLVector( 1.0f, 1.0f, 10.0f ) );
+			neuron.setScale( new GLVector( 1.0f, 1.0f, 10.0f ) );
 			getScene().addChild( neuron );
 
 			new Thread()
@@ -249,7 +250,7 @@ public class MarchingCubesApplication
 		maxAxisVal = Math.max( maxX, Math.max( maxY, maxZ ) );
 		System.out.println( "maxX " + maxX + " maxY: " + maxY + " maxZ: " + maxZ + " maxAxisVal: " + maxAxisVal );
 
-		System.out.println( "creating callables..." );
+		System.out.println( "creating callables for " + subvolumes.size() + " partitions..." );
 //		for ( int voxSize = 32; voxSize > 0; voxSize /= 2 )
 //		{
 //			voxDim[0] = voxSize;
@@ -305,16 +306,18 @@ public class MarchingCubesApplication
 			}
 
 			// a mesh was created, so update the existing mesh
-			System.out.println( "updating mesh " );
-			updateMesh( m, neuron );
-			neuron.setVertices( FloatBuffer.wrap( verticesArray ) );
-			neuron.recalculateNormals();
-			neuron.setDirty( true );
-
+			if (m.getNumberOfTriangles() > 0)
+			{
+				System.out.println( "updating mesh " );
+				updateMesh( m, neuron );
+				neuron.setVertices( FloatBuffer.wrap( verticesArray ) );
+				neuron.recalculateNormals();
+				neuron.setDirty( true );
+			}
 		}
 
 		System.out.println( "size of mesh " + verticesArray.length );
-
+		System.out.println( "all results generated!");
 		writer.close();
 	}
 
@@ -424,6 +427,7 @@ public class MarchingCubesApplication
 	 */
 	public static void updateMesh( viewer.Mesh m, Mesh neuron )
 	{
+		/**max value int =  2,147,483,647 */
 		System.out.println( "previous size of vertices: " + verticesArray.length );
 		int vertexCount = verticesArray.length;
 
