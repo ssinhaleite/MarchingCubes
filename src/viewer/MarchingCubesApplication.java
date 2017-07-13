@@ -188,7 +188,7 @@ public class MarchingCubesApplication
 			neuron.setMaterial( material );
 			neuron.setName( "neuron" );
 			neuron.setPosition( new GLVector( 0.0f, 0.0f, 0.0f ) );
-			neuron.setScale( new GLVector( 1.0f, 1.0f, 10.0f ) );
+//			neuron.setScale( new GLVector( 1.0f, 1.0f, 10.0f ) );
 			getScene().addChild( neuron );
 
 			new Thread()
@@ -232,9 +232,9 @@ public class MarchingCubesApplication
 		util.VolumePartitioner partitioner = new util.VolumePartitioner( volumeLabels, partitionSize );
 		List< RandomAccessibleInterval< LabelMultisetType > > subvolumes = partitioner.dataPartitioning( offsets );
 
-		subvolumes.clear();
-		subvolumes.add( volumeLabels );
-		offsets.set( 0, new int[] { 0, 0, 0 } );
+//		subvolumes.clear();
+//		subvolumes.add( volumeLabels );
+//		offsets.set( 0, new int[] { 0, 0, 0 } );
 
 		System.out.println( "starting executor..." );
 		CompletionService< viewer.Mesh > executor = new ExecutorCompletionService< viewer.Mesh >(
