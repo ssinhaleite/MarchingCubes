@@ -36,7 +36,7 @@ import java.util.concurrent.*;
  * 
  * @author vleite
  */
-public class MarchingCubesTest
+public class MarchingCubesApplication
 {
 	private static RandomAccessibleInterval< LabelMultisetType > volumeLabels = null;
 
@@ -44,20 +44,20 @@ public class MarchingCubesTest
 
 	Timestamp end = new Timestamp( System.currentTimeMillis() );
 
-	float[] verticesArray = new float[ 0 ];
+	static float[] verticesArray = new float[ 0 ];
 
 	/** big hdf5 for test - whole sample B */
-	// static String path = "data/sample_B.augmented.0.hdf";
-	// int isoLevel = 73396;
-	// int isoLevel = 1854;
-	// int[] volDim = {2340, 1685, 153};
+//	 static String path = "data/sample_B.augmented.0.hdf";
+////	 int isoLevel = 73396;
+//	 int isoLevel = 1854;
+//	 int[] volDim = {2340, 1685, 153};
 
 	/** small hdf5 for test - subset from sample B */
 	static String path = "data/sample_B_20160708_frags_46_50.hdf";
 
-	int isoLevel = 7;
+	static int isoLevel = 7;
 
-	int[] volDim = { 500, 500, 5 };
+	static int[] volDim = { 500, 500, 5 };
 
 	static String path_label = "/volumes/labels/neuron_ids";
 
@@ -66,7 +66,7 @@ public class MarchingCubesTest
 //	 int isoLevel = 2;
 //	 int[] volDim = {3, 3, 3};
 
-	float[] voxDim = { 1f, 1f, 1f };
+	static float[] voxDim = { 1f, 1f, 1f };
 
 	float smallx = 0.0f;
 
@@ -80,16 +80,15 @@ public class MarchingCubesTest
 
 	float bigz = 0.0f;
 
-	PrintWriter writer = null;
+	static PrintWriter writer = null;
 
 	PrintWriter writer2 = null;
 
-	float maxAxisVal = 0;
+	static float maxAxisVal = 0;
 
 	/**
-	 * This method load the hdf file
+	 * This method loads the hdf file
 	 */
-	@BeforeClass
 	public static void loadData()
 	{
 		System.out.println( "Opening labels from " + path );
@@ -118,14 +117,13 @@ public class MarchingCubesTest
 		volumeLabels = labels.get( 0 ).getImage( 0 );
 	}
 
-	@Test
-	public void testExample() throws Exception
+	public static void main(String[] args) throws Exception
 	{
 		MarchingCubeApplication viewer = new MarchingCubeApplication( "Marching cube", 800, 600 );
 		viewer.main();
 	}
 
-	private class MarchingCubeApplication extends SceneryDefaultApplication
+	private static class MarchingCubeApplication extends SceneryDefaultApplication
 	{
 		public MarchingCubeApplication( String applicationName, int windowWidth, int windowHeight )
 		{
@@ -135,6 +133,8 @@ public class MarchingCubesTest
 		@Override
 		public void init()
 		{
+			loadData();
+
 			try
 			{
 				writer = new PrintWriter( "vertices_.txt", "UTF-8" );
@@ -160,7 +160,7 @@ public class MarchingCubesTest
 
 			final Camera cam = new DetachedHeadCamera();
 
-			cam.perspectiveCamera( 50f, getWindowHeight(), getWindowWidth(), 0.1f, 1000.0f );
+			cam.perspectiveCamera( 50f, getWindowHeight(), getWindowWidth(), 0.001f, 1000.0f );
 			cam.setActive( true );
 			cam.setPosition( new GLVector( 0.5f, 0.5f, 5 ) );
 			getScene().addChild( cam );
@@ -174,7 +174,6 @@ public class MarchingCubesTest
 				lights[ i ].setIntensity( 100.2f * 5 );
 				lights[ i ].setLinear( 0.0f );
 				lights[ i ].setQuadratic( 0.1f );
-				// lights[ i ].showLightBox();
 			}
 
 			lights[ 0 ].setPosition( new GLVector( 1.0f, 0f, -1.0f / ( float ) Math.sqrt( 2.0 ) ) );
@@ -189,7 +188,7 @@ public class MarchingCubesTest
 			neuron.setMaterial( material );
 			neuron.setName("neuron");
 			neuron.setPosition( new GLVector( 0.0f, 0.0f, 0.0f ) );
-//			neuron.setScale( new GLVector( 1.0f, 1.0f, 100.0f ) );
+			neuron.setScale( new GLVector( 1.0f, 1.0f, 10.0f ) );
 			getScene().addChild(neuron);
 
 			new Thread() {
@@ -199,19 +198,41 @@ public class MarchingCubesTest
 				}
 			}.start();
 //			levelOfDetails( neuron, getScene(), cam );
-
 		}
 	}
 
-	private void marchingCube( Mesh neuron, Material material, Scene scene, Camera cam )
+	private static void marchingCube( Mesh neuron, Material material, Scene scene, Camera cam )
 	{
 		viewer.Mesh m = new viewer.Mesh();
-		int numberOfPartitions = 2;
-		int[][] offset = new int[ 8 ][ 3 ];
-		List< RandomAccessibleInterval< LabelMultisetType > > subvolumes = dataPartitioning( numberOfPartitions, offset );
+		
+		int x = ( int ) (( volumeLabels.max( 0 ) - volumeLabels.min( 0 ) ) + 1) / 32;
+		int y = ( int ) (( volumeLabels.max( 1 ) - volumeLabels.min( 1 ) ) + 1) / 32;
+		int z = ( int ) (( volumeLabels.max( 2 ) - volumeLabels.min( 2 ) ) + 1) / 32;
+		
+		System.out.println("division: " + x + " " + y + " " + z );
 
-//		subvolumes.clear();
-//		subvolumes.add( volumeLabels );
+		x = (x >= 7)?  7 * 32 : x * 32;
+		y = (y >= 7)?  7 * 32 : y * 32;
+		z = (z >= 7)?  7 * 32 : z * 32;
+
+		System.out.println("partition size 1: " + x + " " + y + " " + z );
+
+		x = (x == 0)?  1 : x;
+		y = (y == 0)?  1 : y;
+		z = (z == 0)?  1 : z;
+		
+		System.out.println("zero verification: " + x + " " + y + " " + z );
+
+		int[] partitionSize = new int[] {x, y, z};
+		System.out.println(" final partition size: " + x + " " + y + " " + z );
+		
+		List< int[] > offsets = new ArrayList<>();
+		util.VolumePartitioner partitioner = new util.VolumePartitioner( volumeLabels, partitionSize );
+		List< RandomAccessibleInterval< LabelMultisetType > > subvolumes = partitioner.dataPartitioning( offsets );
+
+		subvolumes.clear();
+		subvolumes.add( volumeLabels );
+		offsets.set( 0, new int[]{0, 0, 0} );
 
 		System.out.println( "starting executor..." );
 		CompletionService< viewer.Mesh > executor = new ExecutorCompletionService< viewer.Mesh >(
@@ -227,24 +248,30 @@ public class MarchingCubesTest
 		System.out.println( "maxX " + maxX + " maxY: " + maxY + " maxZ: " + maxZ + " maxAxisVal: " + maxAxisVal );
 
 		System.out.println( "creating callables..." );
-		for ( int i = 0; i < subvolumes.size(); i++ )
-		{
-			System.out.println( "dimension: " + subvolumes.get( i ).dimension( 0 ) + "x" + subvolumes.get( i ).dimension( 1 )
-					+ "x" + subvolumes.get( i ).dimension( 2 ) );
-			volDim = new int[] { ( int ) subvolumes.get( i ).dimension( 0 ), ( int ) subvolumes.get( i ).dimension( 1 ),
-					( int ) subvolumes.get( i ).dimension( 2 ) };
-			MarchingCubesCallable callable = new MarchingCubesCallable( subvolumes.get( i ), volDim, offset[ i ], voxDim, true, isoLevel,
-					false );
-			System.out.println( "callable: " + callable );
-			System.out.println( "input " + subvolumes.get( i ) );
-			Future< viewer.Mesh > result = executor.submit( callable );
-			resultMeshList.add( result );
-		}
+//		for ( int voxSize = 32; voxSize > 0; voxSize /= 2 )
+//		{
+//			voxDim[0] = voxSize;
+//			voxDim[1] = voxSize;
+//			voxDim[2] = voxSize;
+
+			for ( int i = 0; i < subvolumes.size(); i++ )
+			{
+				System.out.println( "dimension: " + subvolumes.get( i ).dimension( 0 ) + "x" + subvolumes.get( i ).dimension( 1 )
+						+ "x" + subvolumes.get( i ).dimension( 2 ) );
+				volDim = new int[] { ( int ) subvolumes.get( i ).dimension( 0 ), ( int ) subvolumes.get( i ).dimension( 1 ),
+						( int ) subvolumes.get( i ).dimension( 2 ) };
+				MarchingCubesCallable callable = new MarchingCubesCallable( subvolumes.get( i ), volDim, offsets.get( i ), voxDim, true, isoLevel,
+						false );
+				System.out.println( "callable: " + callable );
+				System.out.println( "input " + subvolumes.get( i ) );
+				Future< viewer.Mesh > result = executor.submit( callable );
+				resultMeshList.add( result );
+			}
+//		}
 
 		Future< viewer.Mesh > completedFuture = null;
 		System.out.println( "waiting results..." );
 
-		boolean first = true;
 		while ( resultMeshList.size() > 0 )
 		{
 			// block until a task completes
@@ -393,7 +420,7 @@ public class MarchingCubesTest
 	 * @param neuron
 	 *            scenery mesh that will receive the information
 	 */
-	public void updateMesh( viewer.Mesh m, Mesh neuron )
+	public static void updateMesh( viewer.Mesh m, Mesh neuron )
 	{
 		System.out.println( "previous size of vertices: " + verticesArray.length );
 		int vertexCount = verticesArray.length;
@@ -449,140 +476,142 @@ public class MarchingCubesTest
 		neuron.setDirty( true );
 	}
 
-	private List< RandomAccessibleInterval< LabelMultisetType > > dataPartitioning( int numberOfPartitions, int[][] offset )
-	{
-		List< RandomAccessibleInterval< LabelMultisetType > > parts = new ArrayList< RandomAccessibleInterval< LabelMultisetType > >();
-
-		int partitionXSize = ( int ) (( volumeLabels.max( 0 ) - volumeLabels.min( 0 ) ) ) / numberOfPartitions;
-		System.out.println("partition size - X: " + partitionXSize);
-		
-		int partitionYSize = ( int ) (( volumeLabels.max( 1 ) - volumeLabels.min( 1 ) ) ) / numberOfPartitions;
-		System.out.println("partition size - Y: " + partitionYSize);
-		
-		int partitionZSize = ( int ) (( volumeLabels.max( 2 ) - volumeLabels.min( 2 ) ) ) / numberOfPartitions;
-		System.out.println("partition size - Z: " + partitionZSize);
-		System.out.println("zsize: " + volumeLabels.max(2));
-
-		// volume size + numberOfPartition - 1 / numberOfPartition == size of
-		// each partition
-		// voxel size
-		//
-
-		long overlap = 2	;
-		int offsetIdx = 0;
-		
-		for (long bx = volumeLabels.min(0); (bx + partitionXSize) <= volumeLabels.max(0); bx += partitionXSize)
-			for (long by = volumeLabels.min(1); (by + partitionYSize)  <= volumeLabels.max(1); by += partitionYSize)
-				for (long bz = volumeLabels.min(2); (bz + partitionZSize) <= volumeLabels.max(2); bz += partitionZSize)
-				{
-					long [] begin = new long[] {bx, by, bz};
-					
-					long[] end = new long[] { begin[ 0 ] + partitionXSize,
-							  begin[ 1 ] + partitionYSize,
-							  begin[ 2 ] + partitionZSize };
-					
-					if (begin[0] - overlap >= 0) begin[0] -= overlap;
-					if (begin[1] - overlap >= 0) begin[1] -= overlap;
-					if (begin[2] - overlap >= 0) begin[2] -= overlap;
-					
-					if (volumeLabels.max(0) - end[0] < partitionXSize )
-						end[0] = volumeLabels.max(0);
-					
-					if (volumeLabels.max(1) - end[1] < partitionYSize )
-						end[1] = volumeLabels.max(1);
-					
-					if (volumeLabels.max(2) - end[2] < partitionZSize )
-						end[2] = volumeLabels.max(2);
-	
-					
-					RandomAccessibleInterval< LabelMultisetType > partition = Views.interval( volumeLabels, begin, end );
-		
-					offset[ offsetIdx ][ 0 ] = ( int ) begin[ 0 ];
-					offset[ offsetIdx ][ 1 ] = ( int ) begin[ 1 ];
-					offset[ offsetIdx ][ 2 ] = ( int ) begin[ 2 ];
-		
-					System.out.println( " partition begins at: " + begin[ 0 ] + " x " + begin[ 1 ] + " x " + begin[ 2 ] );
-					System.out.println( " partition ends at: " + end[ 0 ] + " x " + end[ 1 ] + " x " + end[ 2 ] );
-					System.out.println( "offset: " + offset[ offsetIdx ][ 0 ] + " x " + offset[ offsetIdx ][ 1 ] + " x " + offset[ offsetIdx ][ 2 ] );
-		
-					offsetIdx++;
-					
-					parts.add( partition );
-				}
-//		for ( int d = 0; d < volumeLabels.numDimensions(); d++ )
-//		{
-//			long[] begin = new long[] { volumeLabels.min( 0 ), volumeLabels.min( 1 ), volumeLabels.min( 2 ) };
+//	private List< RandomAccessibleInterval< LabelMultisetType > > dataPartitioning( int numberOfPartitions, List< int[] > offsets )
+//	{
+//		List< RandomAccessibleInterval< LabelMultisetType > > parts = new ArrayList< RandomAccessibleInterval< LabelMultisetType > >();
 //
-//			for (int i = 0; i < numberOfPartitions - 1; i++)
-//			{
-//				begin = new long[] { begin[ 0 ] + (d == 0 ? partitionXSize : 0), 
-//									 begin[ 1 ] + (d == 1 ? partitionXSize : 0), 
-//									 begin[ 2 ] + (d == 2 ? partitionXSize : 0)};
-//				
-//				long[] end = new long[] { begin[ 0 ] + partitionXSize,
-//										  begin[ 1 ] + partitionYSize,
-//										  begin[ 2 ] + partitionZSize };
+//		int partitionXSize = ( int ) (( volumeLabels.max( 0 ) - volumeLabels.min( 0 ) ) / voxDim[0] );
+//		System.out.println("partition size - X: " + partitionXSize);
+//		
+//		int partitionYSize = ( int ) (( volumeLabels.max( 1 ) - volumeLabels.min( 1 ) ) / voxDim[1]);
+//		System.out.println("partition size - Y: " + partitionYSize);
+//		
+//		int partitionZSize = ( int ) (( volumeLabels.max( 2 ) - volumeLabels.min( 2 ) ) ) / numberOfPartitions;
+//		System.out.println("partition size - Z: " + partitionZSize);
+//		System.out.println("zsize: " + volumeLabels.max(2));
+//
+//		// volume size + numberOfPartition - 1 / numberOfPartition == size of
+//		// each partition
+//		// voxel size
+//		//
+//
+//		partitionXSize = partitionYSize = 100;
+//		long overlap = 2	;
+//		int offsetIdx = 0;
+//		
+//		for (long bx = volumeLabels.min(0); (bx + partitionXSize) <= volumeLabels.max(0); bx += partitionXSize)
+//			for (long by = volumeLabels.min(1); (by + partitionYSize)  <= volumeLabels.max(1); by += partitionYSize)
+//				for (long bz = volumeLabels.min(2); (bz + partitionZSize) <= volumeLabels.max(2); bz += partitionZSize)
+//				{
+//					long [] begin = new long[] {bx, by, bz};
+//					
+//					long[] end = new long[] { begin[ 0 ] + partitionXSize,
+//							  begin[ 1 ] + partitionYSize,
+//							  begin[ 2 ] + partitionZSize };
+//					
+//					if (begin[0] - overlap >= 0) begin[0] -= overlap;
+//					if (begin[1] - overlap >= 0) begin[1] -= overlap;
+//					if (begin[2] - overlap >= 0) begin[2] -= overlap;
+//					
+//					if (volumeLabels.max(0) - end[0] < partitionXSize )
+//						end[0] = volumeLabels.max(0);
+//					
+//					if (volumeLabels.max(1) - end[1] < partitionYSize )
+//						end[1] = volumeLabels.max(1);
+//					
+//					if (volumeLabels.max(2) - end[2] < partitionZSize )
+//						end[2] = volumeLabels.max(2);
 //	
-//				RandomAccessibleInterval< LabelMultisetType > partition = Views.interval( volumeLabels, begin, end );
-//	
-//				offset[ i ][ 0 ] = ( int ) begin[ 0 ];
-//				offset[ i ][ 1 ] = ( int ) begin[ 1 ];
-//				offset[ i ][ 2 ] = ( int ) begin[ 2 ];
-//	
-//				System.out.println( " partition begins at: " + begin[ 0 ] + " x " + begin[ 1 ] + " x " + begin[ 2 ] );
-//				System.out.println( " partition ends at: " + end[ 0 ] + " x " + end[ 1 ] + " x " + end[ 2 ] );
-//				System.out.println( "offset: " + offset[ i ][ 0 ] + " x " + offset[ i ][ 1 ] + " x " + offset[ i ][ 2 ] );
-//	
-//				begin = end;
-//				parts.add( partition );
-//			}
-//		}
-
-//		RandomAccessibleInterval< LabelMultisetType > first = Views.interval( volumeLabels,
-//				new long[] { volumeLabels.min( 0 ), volumeLabels.min( 1 ), volumeLabels.min( 2 ) },
-//				new long[] { ( ( volumeLabels.max( 0 ) - volumeLabels.min( 0 ) ) / 2 ) + 1,
-//						( ( volumeLabels.max( 1 ) - volumeLabels.min( 1 ) ) / 2 ) + 1, volumeLabels.max( 2 ) } );
+//					
+//					RandomAccessibleInterval< LabelMultisetType > partition = Views.interval( volumeLabels, begin, end );
+//		
+//					offsets.add( new int[]{ ( int ) begin[0], ( int ) begin[1], ( int ) begin[2]} );
+////					offset[ offsetIdx ][ 0 ] = ( int ) begin[ 0 ];
+////					offset[ offsetIdx ][ 1 ] = ( int ) begin[ 1 ];
+////					offset[ offsetIdx ][ 2 ] = ( int ) begin[ 2 ];
+//		
+//					System.out.println( " partition begins at: " + begin[ 0 ] + " x " + begin[ 1 ] + " x " + begin[ 2 ] );
+//					System.out.println( " partition ends at: " + end[ 0 ] + " x " + end[ 1 ] + " x " + end[ 2 ] );
+//					System.out.println( "offset: " + offsets.get( offsetIdx )[0] + " x " + offsets.get( offsetIdx )[1] + " x " + offsets.get( offsetIdx )[2] );
+//		
+//					offsetIdx++;
+//					
+//					parts.add( partition );
+//				}
+////		for ( int d = 0; d < volumeLabels.numDimensions(); d++ )
+////		{
+////			long[] begin = new long[] { volumeLabels.min( 0 ), volumeLabels.min( 1 ), volumeLabels.min( 2 ) };
+////
+////			for (int i = 0; i < numberOfPartitions - 1; i++)
+////			{
+////				begin = new long[] { begin[ 0 ] + (d == 0 ? partitionXSize : 0), 
+////									 begin[ 1 ] + (d == 1 ? partitionXSize : 0), 
+////									 begin[ 2 ] + (d == 2 ? partitionXSize : 0)};
+////				
+////				long[] end = new long[] { begin[ 0 ] + partitionXSize,
+////										  begin[ 1 ] + partitionYSize,
+////										  begin[ 2 ] + partitionZSize };
+////	
+////				RandomAccessibleInterval< LabelMultisetType > partition = Views.interval( volumeLabels, begin, end );
+////	
+////				offset[ i ][ 0 ] = ( int ) begin[ 0 ];
+////				offset[ i ][ 1 ] = ( int ) begin[ 1 ];
+////				offset[ i ][ 2 ] = ( int ) begin[ 2 ];
+////	
+////				System.out.println( " partition begins at: " + begin[ 0 ] + " x " + begin[ 1 ] + " x " + begin[ 2 ] );
+////				System.out.println( " partition ends at: " + end[ 0 ] + " x " + end[ 1 ] + " x " + end[ 2 ] );
+////				System.out.println( "offset: " + offset[ i ][ 0 ] + " x " + offset[ i ][ 1 ] + " x " + offset[ i ][ 2 ] );
+////	
+////				begin = end;
+////				parts.add( partition );
+////			}
+////		}
 //
-//		offset[ 0 ][ 0 ] = 0;
-//		offset[ 0 ][ 1 ] = 0;
-//		offset[ 0 ][ 2 ] = 0;
+////		RandomAccessibleInterval< LabelMultisetType > first = Views.interval( volumeLabels,
+////				new long[] { volumeLabels.min( 0 ), volumeLabels.min( 1 ), volumeLabels.min( 2 ) },
+////				new long[] { ( ( volumeLabels.max( 0 ) - volumeLabels.min( 0 ) ) / 2 ) + 1,
+////						( ( volumeLabels.max( 1 ) - volumeLabels.min( 1 ) ) / 2 ) + 1, volumeLabels.max( 2 ) } );
+////
+////		offset[ 0 ][ 0 ] = 0;
+////		offset[ 0 ][ 1 ] = 0;
+////		offset[ 0 ][ 2 ] = 0;
+////
+////		RandomAccessibleInterval< LabelMultisetType > second = Views.interval( volumeLabels,
+////				new long[] { ( ( volumeLabels.max( 0 ) - volumeLabels.min( 0 ) ) / 2 ) - 1, volumeLabels.min( 1 ),
+////						volumeLabels.min( 2 ) },
+////				new long[] { volumeLabels.max( 0 ), ( ( volumeLabels.max( 1 ) - volumeLabels.min( 1 ) ) / 2 ) + 1,
+////						volumeLabels.max( 2 ) } );
+////
+////		offset[ 1 ][ 0 ] = ( int ) ( ( ( volumeLabels.max( 0 ) - volumeLabels.min( 0 ) ) / 2 ) - 1 ) + 20;
+////		offset[ 1 ][ 1 ] = 0;
+////		offset[ 1 ][ 2 ] = 0;
+////
+////		RandomAccessibleInterval< LabelMultisetType > third = Views.interval( volumeLabels,
+////				new long[] { volumeLabels.min( 0 ), ( ( volumeLabels.max( 1 ) - volumeLabels.min( 1 ) ) / 2 ) - 1,
+////						volumeLabels.min( 2 ) },
+////				new long[] { ( ( volumeLabels.max( 0 ) - volumeLabels.min( 0 ) ) / 2 ) + 1, volumeLabels.max( 1 ),
+////						volumeLabels.max( 2 ) } );
+////
+////		offset[ 2 ][ 0 ] = 0;
+////		offset[ 2 ][ 1 ] = ( int ) ( ( ( volumeLabels.max( 1 ) - volumeLabels.min( 1 ) ) / 2 ) - 1 ) + 20;
+////		offset[ 2 ][ 2 ] = 0;
+////
+////		RandomAccessibleInterval< LabelMultisetType > forth = Views.interval( volumeLabels,
+////				new long[] { ( ( volumeLabels.max( 0 ) - volumeLabels.min( 0 ) ) / 2 ) - 1,
+////						( ( volumeLabels.max( 1 ) - volumeLabels.min( 1 ) ) / 2 ) - 1, volumeLabels.min( 2 ) },
+////				new long[] { volumeLabels.max( 0 ), volumeLabels.max( 1 ), volumeLabels.max( 2 ) } );
+////
+////		offset[ 3 ][ 0 ] = ( int ) ( ( ( volumeLabels.max( 0 ) - volumeLabels.min( 0 ) ) / 2 ) - 1 ) + 20;
+////		offset[ 3 ][ 1 ] = ( int ) ( ( ( volumeLabels.max( 1 ) - volumeLabels.min( 1 ) ) / 2 ) - 1 ) + 20;
+////		offset[ 3 ][ 2 ] = 0;
+////
+////		parts.add( first );
+////		parts.add( second );
+////		parts.add( third );
+////		parts.add( forth );
 //
-//		RandomAccessibleInterval< LabelMultisetType > second = Views.interval( volumeLabels,
-//				new long[] { ( ( volumeLabels.max( 0 ) - volumeLabels.min( 0 ) ) / 2 ) - 1, volumeLabels.min( 1 ),
-//						volumeLabels.min( 2 ) },
-//				new long[] { volumeLabels.max( 0 ), ( ( volumeLabels.max( 1 ) - volumeLabels.min( 1 ) ) / 2 ) + 1,
-//						volumeLabels.max( 2 ) } );
-//
-//		offset[ 1 ][ 0 ] = ( int ) ( ( ( volumeLabels.max( 0 ) - volumeLabels.min( 0 ) ) / 2 ) - 1 ) + 20;
-//		offset[ 1 ][ 1 ] = 0;
-//		offset[ 1 ][ 2 ] = 0;
-//
-//		RandomAccessibleInterval< LabelMultisetType > third = Views.interval( volumeLabels,
-//				new long[] { volumeLabels.min( 0 ), ( ( volumeLabels.max( 1 ) - volumeLabels.min( 1 ) ) / 2 ) - 1,
-//						volumeLabels.min( 2 ) },
-//				new long[] { ( ( volumeLabels.max( 0 ) - volumeLabels.min( 0 ) ) / 2 ) + 1, volumeLabels.max( 1 ),
-//						volumeLabels.max( 2 ) } );
-//
-//		offset[ 2 ][ 0 ] = 0;
-//		offset[ 2 ][ 1 ] = ( int ) ( ( ( volumeLabels.max( 1 ) - volumeLabels.min( 1 ) ) / 2 ) - 1 ) + 20;
-//		offset[ 2 ][ 2 ] = 0;
-//
-//		RandomAccessibleInterval< LabelMultisetType > forth = Views.interval( volumeLabels,
-//				new long[] { ( ( volumeLabels.max( 0 ) - volumeLabels.min( 0 ) ) / 2 ) - 1,
-//						( ( volumeLabels.max( 1 ) - volumeLabels.min( 1 ) ) / 2 ) - 1, volumeLabels.min( 2 ) },
-//				new long[] { volumeLabels.max( 0 ), volumeLabels.max( 1 ), volumeLabels.max( 2 ) } );
-//
-//		offset[ 3 ][ 0 ] = ( int ) ( ( ( volumeLabels.max( 0 ) - volumeLabels.min( 0 ) ) / 2 ) - 1 ) + 20;
-//		offset[ 3 ][ 1 ] = ( int ) ( ( ( volumeLabels.max( 1 ) - volumeLabels.min( 1 ) ) / 2 ) - 1 ) + 20;
-//		offset[ 3 ][ 2 ] = 0;
-//
-//		parts.add( first );
-//		parts.add( second );
-//		parts.add( third );
-//		parts.add( forth );
-
-		return parts;
-	}
+//		return parts;
+//	}
 
 	private void levelOfDetails( Mesh neuron, Scene scene, Camera cam )
 	{
