@@ -43,7 +43,7 @@ import util.HDF5Reader;
 public class MarchingCubesApplication
 {
 	/** logger */
-	static final Logger logger = LoggerFactory.getLogger(MarchingCubesApplication.class);
+	static final Logger logger = LoggerFactory.getLogger( MarchingCubesApplication.class );
 
 	private static RandomAccessibleInterval< LabelMultisetType > volumeLabels = null;
 
@@ -128,7 +128,7 @@ public class MarchingCubesApplication
 	public static void main( String[] args ) throws Exception
 	{
 		// Set the log level
-		System.setProperty(org.slf4j.impl.SimpleLogger.DEFAULT_LOG_LEVEL_KEY, "INFO");
+		System.setProperty( org.slf4j.impl.SimpleLogger.DEFAULT_LOG_LEVEL_KEY, "INFO" );
 		MarchingCubeApplication viewer = new MarchingCubeApplication( "Marching cube", 800, 600 );
 		viewer.main();
 	}
@@ -282,7 +282,7 @@ public class MarchingCubesApplication
 //		}
 
 		Future< viewer.Mesh > completedFuture = null;
-		System.out.println( "waiting results..." );
+		logger.info( "waiting results..." );
 
 		while ( resultMeshList.size() > 0 )
 		{
@@ -295,7 +295,7 @@ public class MarchingCubesApplication
 			catch ( InterruptedException e )
 			{
 				// TODO Auto-generated catch block
-				logger.error(" task interrupted: " + e.getCause());
+				logger.error( " task interrupted: " + e.getCause() );
 				e.printStackTrace();
 			}
 
@@ -316,7 +316,7 @@ public class MarchingCubesApplication
 			}
 
 			// a mesh was created, so update the existing mesh
-			if (m.getNumberOfTriangles() > 0)
+			if ( m.getNumberOfTriangles() > 0 )
 			{
 				logger.info( "updating mesh..." );
 				updateMesh( m, neuron );
@@ -327,7 +327,7 @@ public class MarchingCubesApplication
 		}
 
 		logger.debug( "size of mesh " + verticesArray.length );
-		logger.info( "all results generated!");
+		logger.info( "all results generated!" );
 		writer.close();
 	}
 
@@ -343,13 +343,13 @@ public class MarchingCubesApplication
 	 */
 	public void updateMeshComplete( viewer.Mesh m, Mesh neuron )
 	{
-		System.out.println( "previous size of vertices: " + verticesArray.length );
+		logger.debug( "previous size of vertices: " + verticesArray.length );
 
 		int numberOfTriangles = m.getNumberOfTriangles();
-		System.out.println( "number of triangles: " + numberOfTriangles );
+		logger.debug( "number of triangles: " + numberOfTriangles );
 		verticesArray = new float[ numberOfTriangles * 3 * 3 ];
 
-		System.out.println( "size of verticesArray: " + numberOfTriangles * 3 * 3 );
+		logger.debug( "size of verticesArray: " + numberOfTriangles * 3 * 3 );
 
 		float[][] vertices = m.getVertices();
 		int[] triangles = m.getTriangles();
@@ -413,7 +413,7 @@ public class MarchingCubesApplication
 			verticesArray[ v++ ] = point2[ 2 ];
 		}
 
-		System.out.println( "vsize: " + verticesArray.length );
+		logger.debug( "vsize: " + verticesArray.length );
 		for ( int i = 0; i < verticesArray.length; ++i )
 		{
 			verticesArray[ i ] /= maxAxisVal;
@@ -437,16 +437,16 @@ public class MarchingCubesApplication
 	 */
 	public static void updateMesh( viewer.Mesh m, Mesh neuron )
 	{
-		/**max value int =  2,147,483,647 */
-		System.out.println( "previous size of vertices: " + verticesArray.length );
+		/** max value int = 2,147,483,647 */
+		logger.debug( "previous size of vertices: " + verticesArray.length );
 		int vertexCount = verticesArray.length;
 
 		int numberOfTriangles = m.getNumberOfTriangles();
-		System.out.println( "number of triangles: " + numberOfTriangles );
+		logger.debug( "number of triangles: " + numberOfTriangles );
 
 		// resize array to fit the new mesh
 		verticesArray = Arrays.copyOf( verticesArray, ( numberOfTriangles * 3 * 3 + vertexCount ) );
-		System.out.println( "size of verticesArray: " + ( numberOfTriangles * 3 * 3 + vertexCount ) );
+		logger.debug( "size of verticesArray: " + ( numberOfTriangles * 3 * 3 + vertexCount ) );
 
 		float[][] vertices = m.getVertices();
 		int[] triangles = m.getTriangles();
@@ -480,7 +480,7 @@ public class MarchingCubesApplication
 		}
 
 		// omp parallel for
-		System.out.println( "vsize: " + verticesArray.length );
+		logger.debug( "vsize: " + verticesArray.length );
 		for ( int i = vertexCount; i < verticesArray.length; ++i )
 		{
 			verticesArray[ i ] /= maxAxisVal;
@@ -507,17 +507,17 @@ public class MarchingCubesApplication
 					neuron.setNeedsUpdate( true );
 //
 //					float diff = cam.getPosition().minus( neuron.getPosition() ).magnitude();
-//					System.out.println(" camera position: " + cam.getPosition().get( 0 ) + ":" + cam.getPosition().get( 1 ) + ":" + cam.getPosition().get( 2 ));
-//					System.out.println(" mesh position: " + neuron.getPosition().get( 0 ) + ":" + neuron.getPosition().get( 1 ) + ":" + neuron.getPosition().get( 2 ));
-//					System.out.println( "distance to camera: " + diff );
-//					System.out.println( "dists - 4: " + dist3 + " 2: " + dist2 + " 1: " + dist1 );
+//					logger.debug(" camera position: " + cam.getPosition().get( 0 ) + ":" + cam.getPosition().get( 1 ) + ":" + cam.getPosition().get( 2 ));
+//					logger.debug(" mesh position: " + neuron.getPosition().get( 0 ) + ":" + neuron.getPosition().get( 1 ) + ":" + neuron.getPosition().get( 2 ));
+//					logger.debug( "distance to camera: " + diff );
+//					logger.debug( "dists - 4: " + dist3 + " 2: " + dist2 + " 1: " + dist1 );
 //					if ( diff < 6 && diff >= 3 && dist3 )
 //					{
 //						voxDim = new float[] { 1.0f, 1.0f, 1.0f };
-//						System.out.println( "updating mesh dist4" );
-//						System.out.println( "position before: " + neuron.getPosition() );
+//						logger.debug( "updating mesh dist4" );
+//						logger.debug( "position before: " + neuron.getPosition() );
 //						marchingCube( neuron, neuron.getMaterial(), scene, cam );
-//						System.out.println( "position after: " + neuron.getPosition() );
+//						logger.debug( "position after: " + neuron.getPosition() );
 //
 //						dist3 = false;
 //						dist2 = true;
@@ -527,7 +527,7 @@ public class MarchingCubesApplication
 //					else if ( diff < 3 && diff >= 2 && dist2 )
 //					{
 //						voxDim = new float[] { 1.0f, 1.0f, 1.0f };
-//						System.out.println( "updating mesh dist2" );
+//						logger.debug( "updating mesh dist2" );
 //						marchingCube( neuron, neuron.getMaterial(), scene, cam );
 //						dist2 = false;
 //						dist3 = true;
@@ -536,7 +536,7 @@ public class MarchingCubesApplication
 //					else if ( diff < 2 && diff >= 1 && dist1 )
 //					{
 //						voxDim = new float[] { 0.5f, 0.5f, 0.5f };
-//						System.out.println( "updating mesh dist1" );
+//						logger.debug( "updating mesh dist1" );
 //						marchingCube( neuron, neuron.getMaterial(), scene, cam );
 //						dist1 = false;
 //						dist2 = false;
