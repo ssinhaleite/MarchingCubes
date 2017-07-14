@@ -28,7 +28,7 @@ import viewer.Mesh;
 public class MarchingCubesRAI
 {
 	/** logger */
-	final Logger logger = LoggerFactory.getLogger(MarchingCubesRAI.class);
+	final Logger logger = LoggerFactory.getLogger( MarchingCubesRAI.class );
 
 	/** List of Point3ds which form the isosurface. */
 	private HashMap< Long, Point3dId > id2Point3dId = new HashMap< Long, Point3dId >();
@@ -256,7 +256,7 @@ public class MarchingCubesRAI
 			for ( final Multiset.Entry< Label > e : it.entrySet() )
 			{
 				volume.add( e.getElement().id() );
-				logger.trace( "  " + e.getElement().id());
+				logger.trace( "  " + e.getElement().id() );
 			}
 		}
 
@@ -265,24 +265,24 @@ public class MarchingCubesRAI
 		// two dimensions more: from 'min minus one' to 'max plus one'
 		xWidth = ( volDim[ 0 ] + 2 );
 		xyWidth = xWidth * ( volDim[ 1 ] + 2 );
-		
-		logger.debug("xWidth: " + xWidth + " xyWidth: " + xyWidth);
+
+		logger.debug( "xWidth: " + xWidth + " xyWidth: " + xyWidth );
 
 		nCellsX = ( long ) Math.ceil( ( volDim[ 0 ] + 2 ) / voxDim[ 0 ] ) - 1;
 		nCellsY = ( long ) Math.ceil( ( volDim[ 1 ] + 2 ) / voxDim[ 1 ] ) - 1;
 		nCellsZ = ( long ) Math.ceil( ( volDim[ 2 ] + 2 ) / voxDim[ 2 ] ) - 1;
 
-		logger.debug("ncells - x, y, z: " + nCellsX + " " + nCellsY + " " + nCellsZ);
+		logger.debug( "ncells - x, y, z: " + nCellsX + " " + nCellsY + " " + nCellsZ );
 
-		logger.debug("max position on array: " + ( ( ( int )( voxDim[2] * nCellsZ ) * xyWidth + ( int )( voxDim[1] * nCellsY ) * xWidth + ( int )( voxDim[0] * nCellsX ) ) ));
+		logger.debug( "max position on array: " + ( ( ( int ) ( voxDim[ 2 ] * nCellsZ ) * xyWidth + ( int ) ( voxDim[ 1 ] * nCellsY ) * xWidth + ( int ) ( voxDim[ 0 ] * nCellsX ) ) ) );
 
 		double[] vertex_values = new double[ 8 ];
 
-		for ( int cursorZ = 0; cursorZ < nCellsZ /* volDim[ 2 ]+ 1*/; cursorZ++ )
+		for ( int cursorZ = 0; cursorZ < nCellsZ /* volDim[ 2 ]+ 1 */; cursorZ++ )
 		{
-			for ( int cursorY = 0; cursorY < nCellsY /*volDim[ 1 ] + 1*/; cursorY++ )
+			for ( int cursorY = 0; cursorY < nCellsY /* volDim[ 1 ] + 1 */; cursorY++ )
 			{
-				for ( int cursorX = 0; cursorX < nCellsX/*volDim[ 0 ] + 1*/; cursorX++ )
+				for ( int cursorX = 0; cursorX < nCellsX/* volDim[ 0 ] + 1 */; cursorX++ )
 				{
 
 					// @formatter:off
@@ -311,14 +311,14 @@ public class MarchingCubesRAI
 					// This way, we need to remap the cube vertices:
 					// @formatter:on
 
-					vertex_values[ 7 ] = volume.get( ( ( int )(voxDim[2] * cursorZ) * xyWidth + ( int )(voxDim[1] * cursorY) * xWidth + ( int )(cursorX * voxDim[0]) ) );
-					vertex_values[ 3 ] = volume.get( ( ( int ) (voxDim[2] * cursorZ) * xyWidth + ( int )(voxDim[1] * cursorY) * xWidth + ( int )( voxDim[0] * (cursorX + 1) ) ) );
-					vertex_values[ 6 ] = volume.get( ( ( int )(voxDim[2] * cursorZ) * xyWidth + ( int )(( voxDim[1] * (cursorY + 1)) ) * xWidth + ( int )(voxDim[0] * cursorX ) ) );
-					vertex_values[ 2 ] = volume.get( ( ( int )(voxDim[2] * cursorZ) * xyWidth + ( int )(( voxDim[1] * (cursorY + 1)) ) * xWidth + ( int )( voxDim[0] * (cursorX + 1) ) ) );
-					vertex_values[ 4 ] = volume.get( ( ( ( int )(voxDim[2] * (cursorZ + 1)) ) * xyWidth + ( int )(voxDim[1] * cursorY) * xWidth + ( int )(voxDim[0] * cursorX )) );
-					vertex_values[ 0 ] = volume.get( ( ( ( int )(voxDim[2] * (cursorZ + 1)) ) * xyWidth + ( int )(voxDim[1] * cursorY) * xWidth + ( int )( voxDim[0] * (cursorX + 1) ) ) );
-					vertex_values[ 5 ] = volume.get( ( ( ( int )(voxDim[2] * (cursorZ + 1)) ) * xyWidth + ( int )( voxDim[1] * (cursorY + 1) ) * xWidth + ( int )(voxDim[0] * cursorX) ) );
-					vertex_values[ 1 ] = volume.get( ( ( ( int )(voxDim[2] * (cursorZ + 1)) ) * xyWidth + ( int )( voxDim[1] * (cursorY + 1) ) * xWidth + ( int )( voxDim[0] * (cursorX + 1) ) ) );
+					vertex_values[ 7 ] = volume.get( ( ( int ) ( voxDim[ 2 ] * cursorZ ) * xyWidth + ( int ) ( voxDim[ 1 ] * cursorY ) * xWidth + ( int ) ( cursorX * voxDim[ 0 ] ) ) );
+					vertex_values[ 3 ] = volume.get( ( ( int ) ( voxDim[ 2 ] * cursorZ ) * xyWidth + ( int ) ( voxDim[ 1 ] * cursorY ) * xWidth + ( int ) ( voxDim[ 0 ] * ( cursorX + 1 ) ) ) );
+					vertex_values[ 6 ] = volume.get( ( ( int ) ( voxDim[ 2 ] * cursorZ ) * xyWidth + ( int ) ( ( voxDim[ 1 ] * ( cursorY + 1 ) ) ) * xWidth + ( int ) ( voxDim[ 0 ] * cursorX ) ) );
+					vertex_values[ 2 ] = volume.get( ( ( int ) ( voxDim[ 2 ] * cursorZ ) * xyWidth + ( int ) ( ( voxDim[ 1 ] * ( cursorY + 1 ) ) ) * xWidth + ( int ) ( voxDim[ 0 ] * ( cursorX + 1 ) ) ) );
+					vertex_values[ 4 ] = volume.get( ( ( ( int ) ( voxDim[ 2 ] * ( cursorZ + 1 ) ) ) * xyWidth + ( int ) ( voxDim[ 1 ] * cursorY ) * xWidth + ( int ) ( voxDim[ 0 ] * cursorX ) ) );
+					vertex_values[ 0 ] = volume.get( ( ( ( int ) ( voxDim[ 2 ] * ( cursorZ + 1 ) ) ) * xyWidth + ( int ) ( voxDim[ 1 ] * cursorY ) * xWidth + ( int ) ( voxDim[ 0 ] * ( cursorX + 1 ) ) ) );
+					vertex_values[ 5 ] = volume.get( ( ( ( int ) ( voxDim[ 2 ] * ( cursorZ + 1 ) ) ) * xyWidth + ( int ) ( voxDim[ 1 ] * ( cursorY + 1 ) ) * xWidth + ( int ) ( voxDim[ 0 ] * cursorX ) ) );
+					vertex_values[ 1 ] = volume.get( ( ( ( int ) ( voxDim[ 2 ] * ( cursorZ + 1 ) ) ) * xyWidth + ( int ) ( voxDim[ 1 ] * ( cursorY + 1 ) ) * xWidth + ( int ) ( voxDim[ 0 ] * ( cursorX + 1 ) ) ) );
 
 					// @formatter:off
 					logger.debug( " " + ( int ) vertex_values[ 4 ] + "------" + ( int ) vertex_values[ 5 ] );
