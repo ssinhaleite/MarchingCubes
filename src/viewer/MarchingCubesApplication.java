@@ -13,6 +13,9 @@ import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import bdv.img.h5.H5LabelMultisetSetupImageLoader;
 import bdv.labels.labelset.LabelMultisetType;
 import ch.systemsx.cisd.hdf5.HDF5Factory;
@@ -28,6 +31,7 @@ import graphics.scenery.Scene;
 import graphics.scenery.SceneryDefaultApplication;
 import graphics.scenery.SceneryElement;
 import graphics.scenery.backends.Renderer;
+import marchingCubes.MarchingCubesRAI;
 import net.imglib2.RandomAccessibleInterval;
 import util.HDF5Reader;
 
@@ -38,6 +42,9 @@ import util.HDF5Reader;
  */
 public class MarchingCubesApplication
 {
+	/** logger */
+	static final Logger logger = LoggerFactory.getLogger(MarchingCubesApplication.class);
+
 	private static RandomAccessibleInterval< LabelMultisetType > volumeLabels = null;
 
 	Timestamp begin = new Timestamp( System.currentTimeMillis() );
@@ -92,7 +99,7 @@ public class MarchingCubesApplication
 	 */
 	public static void loadData()
 	{
-		System.out.println( "Opening labels from " + path );
+		logger.info( "Opening labels from " + path );
 		final IHDF5Reader reader = HDF5Factory.openForReading( path );
 
 		/** loaded segments */
@@ -112,7 +119,7 @@ public class MarchingCubesApplication
 		}
 		else
 		{
-			System.out.println( "no label dataset '" + path_label + "' found" );
+			logger.error( "no label dataset '" + path_label + "' found" );
 		}
 
 		volumeLabels = labels.get( 0 ).getImage( 0 );
@@ -214,22 +221,22 @@ public class MarchingCubesApplication
 		int y = ( int ) ( ( volumeLabels.max( 1 ) - volumeLabels.min( 1 ) ) + 1 ) / 32;
 		int z = ( int ) ( ( volumeLabels.max( 2 ) - volumeLabels.min( 2 ) ) + 1 ) / 32;
 
-		System.out.println( "division: " + x + " " + y + " " + z );
+		logger.trace( "division: " + x + " " + y + " " + z );
 
 		x = ( x >= 7 ) ? 7 * 32 : x * 32;
 		y = ( y >= 7 ) ? 7 * 32 : y * 32;
 		z = ( z >= 7 ) ? 7 * 32 : z * 32;
 
-		System.out.println( "partition size 1: " + x + " " + y + " " + z );
+		logger.trace( "partition size 1: " + x + " " + y + " " + z );
 
 		x = ( x == 0 ) ? 1 : x;
 		y = ( y == 0 ) ? 1 : y;
 		z = ( z == 0 ) ? 1 : z;
 
-		System.out.println( "zero verification: " + x + " " + y + " " + z );
+		logger.trace( "zero verification: " + x + " " + y + " " + z );
 
 		int[] partitionSize = new int[] { x, y, z };
-		System.out.println( " final partition size: " + x + " " + y + " " + z );
+		logger.trace( " final partition size: " + x + " " + y + " " + z );
 
 		List< int[] > offsets = new ArrayList<>();
 		util.VolumePartitioner partitioner = new util.VolumePartitioner( volumeLabels, partitionSize );
@@ -239,20 +246,20 @@ public class MarchingCubesApplication
 //		subvolumes.add( volumeLabels );
 //		offsets.set( 0, new int[] { 0, 0, 0 } );
 
-		System.out.println( "starting executor..." );
+		logger.info( "starting executor..." );
 		CompletionService< viewer.Mesh > executor = new ExecutorCompletionService< viewer.Mesh >(
 				Executors.newWorkStealingPool() );
 
 		List< Future< viewer.Mesh > > resultMeshList = new ArrayList<>();
 
-		float maxX = /*voxDim[ 0 ] **/ ( volDim[ 0 ] - 1 );
-		float maxY = /*voxDim[ 1 ] **/ ( volDim[ 1 ] - 1 );
-		float maxZ = /*voxDim[ 2 ] **/ ( volDim[ 2 ] - 1 );
+		float maxX = volDim[ 0 ] - 1;
+		float maxY = volDim[ 1 ] - 1;
+		float maxZ = volDim[ 2 ] - 1;
 
 		maxAxisVal = Math.max( maxX, Math.max( maxY, maxZ ) );
-		System.out.println( "maxX " + maxX + " maxY: " + maxY + " maxZ: " + maxZ + " maxAxisVal: " + maxAxisVal );
+		logger.trace( "maxX " + maxX + " maxY: " + maxY + " maxZ: " + maxZ + " maxAxisVal: " + maxAxisVal );
 
-		System.out.println( "creating callables for " + subvolumes.size() + " partitions..." );
+		logger.info( "creating callables for " + subvolumes.size() + " partitions..." );
 //		for ( int voxSize = 32; voxSize > 0; voxSize /= 2 )
 //		{
 //			voxDim[0] = voxSize;
@@ -261,14 +268,14 @@ public class MarchingCubesApplication
 
 		for ( int i = 0; i < subvolumes.size(); i++ )
 		{
-			System.out.println( "dimension: " + subvolumes.get( i ).dimension( 0 ) + "x" + subvolumes.get( i ).dimension( 1 )
+			logger.info( "dimension: " + subvolumes.get( i ).dimension( 0 ) + "x" + subvolumes.get( i ).dimension( 1 )
 					+ "x" + subvolumes.get( i ).dimension( 2 ) );
 			volDim = new int[] { ( int ) subvolumes.get( i ).dimension( 0 ), ( int ) subvolumes.get( i ).dimension( 1 ),
 					( int ) subvolumes.get( i ).dimension( 2 ) };
 			MarchingCubesCallable callable = new MarchingCubesCallable( subvolumes.get( i ), volDim, offsets.get( i ), voxDim, true, isoLevel,
 					false );
-			System.out.println( "callable: " + callable );
-			System.out.println( "input " + subvolumes.get( i ) );
+			logger.trace( "callable: " + callable );
+			logger.trace( "input " + subvolumes.get( i ) );
 			Future< viewer.Mesh > result = executor.submit( callable );
 			resultMeshList.add( result );
 		}
@@ -283,12 +290,13 @@ public class MarchingCubesApplication
 			try
 			{
 				completedFuture = executor.take();
-				System.out.println( "task " + completedFuture + " is ready: " + completedFuture.isDone() );
+				logger.trace( "task " + completedFuture + " is ready: " + completedFuture.isDone() );
 			}
-			catch ( InterruptedException e1 )
+			catch ( InterruptedException e )
 			{
 				// TODO Auto-generated catch block
-				e1.printStackTrace();
+				logger.error(" task interrupted: " + e.getCause());
+				e.printStackTrace();
 			}
 
 			resultMeshList.remove( completedFuture );
@@ -297,12 +305,12 @@ public class MarchingCubesApplication
 			try
 			{
 				m = completedFuture.get();
-				System.out.println( "getting mesh" );
+				logger.info( "getting mesh" );
 			}
 			catch ( InterruptedException | ExecutionException e )
 			{
 				Throwable cause = e.getCause();
-				System.out.println( "Mesh creation failed: " + cause );
+				logger.error( "Mesh creation failed: " + cause );
 				e.printStackTrace();
 				break;
 			}
@@ -310,7 +318,7 @@ public class MarchingCubesApplication
 			// a mesh was created, so update the existing mesh
 			if (m.getNumberOfTriangles() > 0)
 			{
-				System.out.println( "updating mesh " );
+				logger.info( "updating mesh..." );
 				updateMesh( m, neuron );
 				neuron.setVertices( FloatBuffer.wrap( verticesArray ) );
 				neuron.recalculateNormals();
@@ -318,8 +326,8 @@ public class MarchingCubesApplication
 			}
 		}
 
-		System.out.println( "size of mesh " + verticesArray.length );
-		System.out.println( "all results generated!");
+		logger.debug( "size of mesh " + verticesArray.length );
+		logger.info( "all results generated!");
 		writer.close();
 	}
 
