@@ -7,6 +7,9 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Vector;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import bdv.labels.labelset.Label;
 import bdv.labels.labelset.LabelMultisetType;
 import bdv.labels.labelset.Multiset;
@@ -24,6 +27,9 @@ import viewer.Mesh;
  */
 public class MarchingCubesRAI
 {
+	/** logger */
+	final Logger logger = LoggerFactory.getLogger(MarchingCubesRAI.class);
+
 	/** List of Point3ds which form the isosurface. */
 	private HashMap< Long, Point3dId > id2Point3dId = new HashMap< Long, Point3dId >();
 
@@ -243,8 +249,6 @@ public class MarchingCubesRAI
 								new long[] { input.max( 0 ) + 1, input.max( 1 ) + 1, input.max( 2 ) + 1 } ) ) )
 				.localizingCursor();
 
-		// List< Long > volume = new ArrayList< Long >();
-
 		while ( c.hasNext() )
 		{
 			LabelMultisetType it = c.next();
@@ -252,28 +256,33 @@ public class MarchingCubesRAI
 			for ( final Multiset.Entry< Label > e : it.entrySet() )
 			{
 				volume.add( e.getElement().id() );
-				//System.out.println("  " + e.getElement().id());
+				logger.trace( "  " + e.getElement().id());
 			}
 		}
 
-		// System.out.println( "volume size: " + volume.size() );
+		logger.debug( "volume size: " + volume.size() );
 
 		// two dimensions more: from 'min minus one' to 'max plus one'
-		/* int */xWidth = ( volDim[ 0 ] + 2 );
-		/* int */xyWidth = xWidth * ( volDim[ 1 ] + 2 );
-
-		nCellsX = ( long ) Math.ceil( (volDim[ 0 ]+ 2) / voxDim[ 0 ] ) - 1;
-		nCellsY = ( long ) Math.ceil( (volDim[ 1 ] +2)/ voxDim[ 1 ] ) - 1;
-		nCellsZ = ( long ) Math.ceil( (volDim[ 2 ]+2) / voxDim[ 2 ] ) - 1;
-
+		xWidth = ( volDim[ 0 ] + 2 );
+		xyWidth = xWidth * ( volDim[ 1 ] + 2 );
 		
+		logger.debug("xWidth: " + xWidth + " xyWidth: " + xyWidth);
+
+		nCellsX = ( long ) Math.ceil( ( volDim[ 0 ] + 2 ) / voxDim[ 0 ] ) - 1;
+		nCellsY = ( long ) Math.ceil( ( volDim[ 1 ] + 2 ) / voxDim[ 1 ] ) - 1;
+		nCellsZ = ( long ) Math.ceil( ( volDim[ 2 ] + 2 ) / voxDim[ 2 ] ) - 1;
+
+		logger.debug("ncells - x, y, z: " + nCellsX + " " + nCellsY + " " + nCellsZ);
+
+		logger.debug("max position on array: " + ( ( ( int )( voxDim[2] * nCellsZ ) * xyWidth + ( int )( voxDim[1] * nCellsY ) * xWidth + ( int )( voxDim[0] * nCellsX ) ) ));
+
 		double[] vertex_values = new double[ 8 ];
 
-		for ( int cursorZ = 0; cursorZ < nCellsZ /*volDim[ 2 ]*/ /*+ 1*/; cursorZ += voxDim[2] )
+		for ( int cursorZ = 0; cursorZ < nCellsZ /* volDim[ 2 ]+ 1*/; cursorZ++ )
 		{
-			for ( int cursorY = 0; cursorY < nCellsY /*volDim[ 1 ]*/ /*+ 1*/; cursorY += voxDim[1] )
+			for ( int cursorY = 0; cursorY < nCellsY /*volDim[ 1 ] + 1*/; cursorY++ )
 			{
-				for ( int cursorX = 0; cursorX < nCellsX/*volDim[ 0 ]*/ /*+ 1*/; cursorX += voxDim[0] )
+				for ( int cursorX = 0; cursorX < nCellsX/*volDim[ 0 ] + 1*/; cursorX++ )
 				{
 
 					// @formatter:off
@@ -302,28 +311,25 @@ public class MarchingCubesRAI
 					// This way, we need to remap the cube vertices:
 					// @formatter:on
 
-					vertex_values[ 7 ] = volume.get( cursorZ * xyWidth + cursorY * xWidth + cursorX );
-					vertex_values[ 3 ] = volume.get( cursorZ * xyWidth + cursorY * xWidth + ( cursorX + 1 ) );
-					vertex_values[ 6 ] = volume.get( cursorZ * xyWidth + ( cursorY + 1 ) * xWidth + cursorX );
-					vertex_values[ 2 ] = volume.get( cursorZ * xyWidth + ( cursorY + 1 ) * xWidth + ( cursorX + 1 ) );
-					vertex_values[ 4 ] = volume.get( ( cursorZ + 1 ) * xyWidth + cursorY * xWidth + cursorX );
-					vertex_values[ 0 ] = volume.get( ( cursorZ + 1 ) * xyWidth + cursorY * xWidth + ( cursorX + 1 ) );
-					vertex_values[ 5 ] = volume.get( ( cursorZ + 1 ) * xyWidth + ( cursorY + 1 ) * xWidth + cursorX );
-					vertex_values[ 1 ] = volume.get( ( cursorZ + 1 ) * xyWidth + ( cursorY + 1 ) * xWidth + ( cursorX + 1 ) );
+					vertex_values[ 7 ] = volume.get( ( ( int )(voxDim[2] * cursorZ) * xyWidth + ( int )(voxDim[1] * cursorY) * xWidth + ( int )(cursorX * voxDim[0]) ) );
+					vertex_values[ 3 ] = volume.get( ( ( int ) (voxDim[2] * cursorZ) * xyWidth + ( int )(voxDim[1] * cursorY) * xWidth + ( int )( voxDim[0] * (cursorX + 1) ) ) );
+					vertex_values[ 6 ] = volume.get( ( ( int )(voxDim[2] * cursorZ) * xyWidth + ( int )(( voxDim[1] * (cursorY + 1)) ) * xWidth + ( int )(voxDim[0] * cursorX ) ) );
+					vertex_values[ 2 ] = volume.get( ( ( int )(voxDim[2] * cursorZ) * xyWidth + ( int )(( voxDim[1] * (cursorY + 1)) ) * xWidth + ( int )( voxDim[0] * (cursorX + 1) ) ) );
+					vertex_values[ 4 ] = volume.get( ( ( ( int )(voxDim[2] * (cursorZ + 1)) ) * xyWidth + ( int )(voxDim[1] * cursorY) * xWidth + ( int )(voxDim[0] * cursorX )) );
+					vertex_values[ 0 ] = volume.get( ( ( ( int )(voxDim[2] * (cursorZ + 1)) ) * xyWidth + ( int )(voxDim[1] * cursorY) * xWidth + ( int )( voxDim[0] * (cursorX + 1) ) ) );
+					vertex_values[ 5 ] = volume.get( ( ( ( int )(voxDim[2] * (cursorZ + 1)) ) * xyWidth + ( int )( voxDim[1] * (cursorY + 1) ) * xWidth + ( int )(voxDim[0] * cursorX) ) );
+					vertex_values[ 1 ] = volume.get( ( ( ( int )(voxDim[2] * (cursorZ + 1)) ) * xyWidth + ( int )( voxDim[1] * (cursorY + 1) ) * xWidth + ( int )( voxDim[0] * (cursorX + 1) ) ) );
 
-//					System.out.println( " " + ( int ) vertex_values[ 4 ] +
-//					"------" + ( int ) vertex_values[ 5 ] );
-//					System.out.println( " /|     /|" );
-//					System.out.println( " " + ( int ) vertex_values[ 7 ] +
-//					"-----" + ( int ) vertex_values[ 6 ] + " |" );
-//					System.out.println( " |" + ( int ) vertex_values[ 0 ] +
-//					"----|-" + ( int ) vertex_values[ 1 ] );
-//					System.out.println( " |/    |/" );
-//					System.out.println( " " + ( int ) vertex_values[ 3 ] +
-//					"-----" + ( int ) vertex_values[ 2 ] );
+					// @formatter:off
+					logger.debug( " " + ( int ) vertex_values[ 4 ] + "------" + ( int ) vertex_values[ 5 ] );
+					logger.debug( " /|     /|" );
+					logger.debug( " " + ( int ) vertex_values[ 7 ] + "-----" + ( int ) vertex_values[ 6 ] + " |" );
+					logger.debug( " |" + ( int ) vertex_values[ 0 ] + "----|-" + ( int ) vertex_values[ 1 ] );
+					logger.debug( " |/    |/" );
+					logger.debug( " " + ( int ) vertex_values[ 3 ] + "-----" + ( int ) vertex_values[ 2 ] );
+					// @formatter:on
 
 					triangulation( vertex_values, cursorX, cursorY, cursorZ );
-
 				}
 			}
 		}
@@ -517,10 +523,9 @@ public class MarchingCubesRAI
 			vertices[i][1] = entry.getValue().y;
 			vertices[i][2] = entry.getValue().z;
 			
-			//System.out.println( "vertex x: " + vertices[i][0]);
-			//System.out.println( "vertex y: " + vertices[i][1]);
-			//System.out.println( "vertex z: " + vertices[i][2]);
-
+			logger.trace( "vertex x: " + vertices[i][0] );
+			logger.trace( "vertex y: " + vertices[i][1]);
+			logger.trace( "vertex z: " + vertices[i][2]);
 		}
 
 		mesh.setVertices(vertices);
@@ -673,20 +678,21 @@ public class MarchingCubesRAI
 			break;
 		}
 
-		p1.setPosition((((v1x/* - 1*/) + offset[0])/* * voxDim[0]*/), 0);
-		p1.setPosition((((v1y/* - 1*/) + offset[1])/* * voxDim[1]*/), 1);
-		p1.setPosition((((v1z/* - 1*/) + offset[2])/* * voxDim[2]*/), 2);
-		p2.setPosition((((v2x/* - 1*/) + offset[0])/* * voxDim[0]*/), 0);
-		p2.setPosition((((v2y/* - 1*/) + offset[1])/* * voxDim[1]*/), 1);
-		p2.setPosition((((v2z/* - 1*/) + offset[2])/* * voxDim[2]*/), 2);
+		p1.setPosition(((v1x + offset[0]) * voxDim[0]), 0);
+		p1.setPosition(((v1y + offset[1]) * voxDim[1]), 1);
+		p1.setPosition(((v1z + offset[2]) * voxDim[2]), 2);
+		p2.setPosition(((v2x + offset[0]) * voxDim[0]), 0);
+		p2.setPosition(((v2y + offset[1]) * voxDim[1]), 1);
+		p2.setPosition(((v2z + offset[2]) * voxDim[2]), 2);
 		
 
-		//System.out.println("p1: " + p1.getDoublePosition( 0 ) + " " + p1.getDoublePosition( 1 ) + " " + p1.getDoublePosition( 2 ));
-		//System.out.println("p2: " + p2.getDoublePosition( 0 ) + " " + p2.getDoublePosition( 1 ) + " " + p2.getDoublePosition( 2 ));
-		//System.out.println("p1 value: " + volume.get( (int)(p1.getDoublePosition( 2 ) * xyWidth + p1.getDoublePosition( 1 ) * xWidth + p1.getDoublePosition( 0 ) ) ));
-		//System.out.println(" should be: " + vertex_values);
-		//System.out.println("p2 value: " + volume.get( (int)(p2.getDoublePosition( 2 ) * xyWidth + p2.getDoublePosition( 1 ) * xWidth + p2.getDoublePosition( 0 ) ) ));
-		//System.out.println(" should be: " + vertex_values2);
+		logger.trace("p1: " + p1.getDoublePosition( 0 ) + " " + p1.getDoublePosition( 1 ) + " " + p1.getDoublePosition( 2 ));
+		logger.trace("p2: " + p2.getDoublePosition( 0 ) + " " + p2.getDoublePosition( 1 ) + " " + p2.getDoublePosition( 2 ));
+		logger.trace("p1 value: " + volume.get( (int)(p1.getDoublePosition( 2 ) * xyWidth + p1.getDoublePosition( 1 ) * xWidth + p1.getDoublePosition( 0 ) ) ));
+		logger.trace(" should be: " + vertex_values);
+		logger.trace("p2 value: " + volume.get( (int)(p2.getDoublePosition( 2 ) * xyWidth + p2.getDoublePosition( 1 ) * xWidth + p2.getDoublePosition( 0 ) ) ));
+		logger.trace(" should be: " + vertex_values2);
+
 		if (interiorTest(vertex_values) && !interiorTest(vertex_values2))
 		{
 			return findSurfaceIntersection(p2, p1, vertex_values2, vertex_values);
@@ -697,44 +703,44 @@ public class MarchingCubesRAI
 
 	private long getEdgeId(long nX, long nY, long nZ, int nEdgeNo)
 	{
-		//System.out.println("x, y, z: " + nX + " " + nY + " " +  nZ);
+		logger.trace("x, y, z: " + nX + " " + nY + " " +  nZ);
 		switch (nEdgeNo)
 		{
 		case 0:
-			//System.out.println("vertex id: " + (getVertexId(nX, nY, nZ) + 1));
+			logger.trace("vertex id: " + (getVertexId(nX, nY, nZ) + 1));
 			return getVertexId(nX, nY, nZ) + 1;
 		case 1:
-			//System.out.println("vertex id: " + getVertexId(nX, nY + 1, nZ));
+			logger.trace("vertex id: " + getVertexId(nX, nY + 1, nZ));
 			return getVertexId(nX, nY + 1, nZ);
 		case 2:
-			//System.out.println("vertex id: " + (getVertexId(nX + 1, nY, nZ) + 1));
+			logger.trace("vertex id: " + (getVertexId(nX + 1, nY, nZ) + 1));
 			return getVertexId(nX + 1, nY, nZ) + 1;
 		case 3:
-			//System.out.println("vertex id: " + getVertexId(nX, nY, nZ));
+			logger.trace("vertex id: " + getVertexId(nX, nY, nZ));
 			return getVertexId(nX, nY, nZ);
 		case 4:
-			//System.out.println("vertex id: " + (getVertexId(nX, nY, nZ + 1) + 1));
+			logger.trace("vertex id: " + (getVertexId(nX, nY, nZ + 1) + 1));
 			return getVertexId(nX, nY, nZ + 1) + 1;
 		case 5:
-			//System.out.println("vertex id: " + getVertexId(nX, nY + 1, nZ + 1));
+			logger.trace("vertex id: " + getVertexId(nX, nY + 1, nZ + 1));
 			return getVertexId(nX, nY + 1, nZ + 1);
 		case 6:
-			//System.out.println("vertex id: " + (getVertexId(nX + 1, nY, nZ + 1) + 1));
+			logger.trace("vertex id: " + (getVertexId(nX + 1, nY, nZ + 1) + 1));
 			return getVertexId(nX + 1, nY, nZ + 1) + 1;
 		case 7:
-			//System.out.println("vertex id: " + getVertexId(nX, nY, nZ + 1));
+			logger.trace("vertex id: " + getVertexId(nX, nY, nZ + 1));
 			return getVertexId(nX, nY, nZ + 1);
 		case 8:
-			//System.out.println("vertex id: " + (getVertexId(nX, nY, nZ) + 2));
+			logger.trace("vertex id: " + (getVertexId(nX, nY, nZ) + 2));
 			return getVertexId(nX, nY, nZ) + 2;
 		case 9:
-			//System.out.println("vertex id: " + (getVertexId(nX, nY + 1, nZ) + 2));
+			logger.trace("vertex id: " + (getVertexId(nX, nY + 1, nZ) + 2));
 			return getVertexId(nX, nY + 1, nZ) + 2;
 		case 10:
-			//System.out.println("vertex id: " + (getVertexId(nX + 1, nY + 1, nZ) + 2));
+			logger.trace("vertex id: " + (getVertexId(nX + 1, nY + 1, nZ) + 2));
 			return getVertexId(nX + 1, nY + 1, nZ) + 2;
 		case 11:
-			//System.out.println("vertex id: " + (getVertexId(nX + 1, nY, nZ) + 2));
+			logger.trace("vertex id: " + (getVertexId(nX + 1, nY, nZ) + 2));
 			return getVertexId(nX + 1, nY, nZ) + 2;
 		default:
 			// Invalid edge no.
