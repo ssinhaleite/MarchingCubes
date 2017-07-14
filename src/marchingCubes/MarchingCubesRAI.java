@@ -686,12 +686,12 @@ public class MarchingCubesRAI
 		p2.setPosition(((v2z + offset[2]) * voxDim[2]), 2);
 		
 
-		logger.trace("p1: " + p1.getDoublePosition( 0 ) + " " + p1.getDoublePosition( 1 ) + " " + p1.getDoublePosition( 2 ));
-		logger.trace("p2: " + p2.getDoublePosition( 0 ) + " " + p2.getDoublePosition( 1 ) + " " + p2.getDoublePosition( 2 ));
-		logger.trace("p1 value: " + volume.get( (int)(p1.getDoublePosition( 2 ) * xyWidth + p1.getDoublePosition( 1 ) * xWidth + p1.getDoublePosition( 0 ) ) ));
-		logger.trace(" should be: " + vertex_values);
-		logger.trace("p2 value: " + volume.get( (int)(p2.getDoublePosition( 2 ) * xyWidth + p2.getDoublePosition( 1 ) * xWidth + p2.getDoublePosition( 0 ) ) ));
-		logger.trace(" should be: " + vertex_values2);
+		logger.trace( "p1: " + p1.getDoublePosition( 0 ) + " " + p1.getDoublePosition( 1 ) + " " + p1.getDoublePosition( 2 ) );
+		logger.trace( "p2: " + p2.getDoublePosition( 0 ) + " " + p2.getDoublePosition( 1 ) + " " + p2.getDoublePosition( 2 ) );
+		logger.trace( "p1 value: " + volume.get( ( int )( voxDim[ 2 ] * v1z ) * xyWidth + ( int )( voxDim[ 1 ] * v1y ) * xWidth + ( int )( voxDim[ 0 ] * v1x ) ) );
+		logger.trace( " should be: " + vertex_values );
+		logger.trace( "p2 value: " + volume.get( ( int )( voxDim[ 2 ] * v2z ) * xyWidth + ( int )( voxDim[ 1 ] * v2y ) * xWidth + ( int )( voxDim[ 0 ] * v2x ) ) );
+		logger.trace( " should be: " + vertex_values2);
 
 		if (interiorTest(vertex_values) && !interiorTest(vertex_values2))
 		{
