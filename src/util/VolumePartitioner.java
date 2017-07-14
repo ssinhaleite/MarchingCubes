@@ -18,7 +18,7 @@ public class VolumePartitioner
 
 	private final int partitionZSize;
 
-	private final long overlap = 0;
+	private final long overlap = 1;
 
 	/**
 	 * Constructor Initialize parameters
