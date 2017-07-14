@@ -1,5 +1,18 @@
 package viewer;
 
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.nio.FloatBuffer;
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.CompletionService;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorCompletionService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+
 import bdv.img.h5.H5LabelMultisetSetupImageLoader;
 import bdv.labels.labelset.LabelMultisetType;
 import ch.systemsx.cisd.hdf5.HDF5Factory;
@@ -15,21 +28,8 @@ import graphics.scenery.Scene;
 import graphics.scenery.SceneryDefaultApplication;
 import graphics.scenery.SceneryElement;
 import graphics.scenery.backends.Renderer;
-import graphics.scenery.*;
 import net.imglib2.RandomAccessibleInterval;
-import net.imglib2.view.Views;
-import org.junit.BeforeClass;
-import org.junit.Test;
 import util.HDF5Reader;
-
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.nio.FloatBuffer;
-import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.concurrent.*;
 
 /**
  * Unit test for marching cubes
@@ -47,17 +47,17 @@ public class MarchingCubesApplication
 	static float[] verticesArray = new float[ 0 ];
 
 	/** big hdf5 for test - whole sample B */
-	static String path = "data/sample_B.augmented.0.hdf";
-	static int isoLevel = 73396;
-//	static int isoLevel = 1854;
-	static int[] volDim = {2340, 1685, 153};
+//	static String path = "data/sample_B.augmented.0.hdf";
+//	static int isoLevel = 73396;
+////	static int isoLevel = 1854;
+//	static int[] volDim = {2340, 1685, 153};
 
 	/** small hdf5 for test - subset from sample B */
-//	static String path = "data/sample_B_20160708_frags_46_50.hdf";
-//
-//	static int isoLevel = 12;
-//
-//	static int[] volDim = { 500, 500, 5 };
+	static String path = "data/sample_B_20160708_frags_46_50.hdf";
+
+	static int isoLevel = 7;
+
+	static int[] volDim = { 500, 500, 5 };
 
 	static String path_label = "/volumes/labels/neuron_ids";
 
@@ -66,8 +66,8 @@ public class MarchingCubesApplication
 //	 int isoLevel = 2;
 //	 int[] volDim = {3, 3, 3};
 
-	static float[] voxDim = { 1f, 1f, 1f };
-//	static float[] voxDim = { 2f, 2f, 2f };
+//	static float[] voxDim = { 0.5f, 0.5f, 0.5f };
+	static float[] voxDim = { 8f, 8f, 1f };
 
 	float smallx = 0.0f;
 
@@ -120,6 +120,8 @@ public class MarchingCubesApplication
 
 	public static void main( String[] args ) throws Exception
 	{
+		// Set the log level
+		System.setProperty(org.slf4j.impl.SimpleLogger.DEFAULT_LOG_LEVEL_KEY, "INFO");
 		MarchingCubeApplication viewer = new MarchingCubeApplication( "Marching cube", 800, 600 );
 		viewer.main();
 	}
@@ -243,9 +245,9 @@ public class MarchingCubesApplication
 
 		List< Future< viewer.Mesh > > resultMeshList = new ArrayList<>();
 
-		float maxX = voxDim[ 0 ] * ( volDim[ 0 ] - 1 );
-		float maxY = voxDim[ 1 ] * ( volDim[ 1 ] - 1 );
-		float maxZ = voxDim[ 2 ] * ( volDim[ 2 ] - 1 );
+		float maxX = /*voxDim[ 0 ] **/ ( volDim[ 0 ] - 1 );
+		float maxY = /*voxDim[ 1 ] **/ ( volDim[ 1 ] - 1 );
+		float maxZ = /*voxDim[ 2 ] **/ ( volDim[ 2 ] - 1 );
 
 		maxAxisVal = Math.max( maxX, Math.max( maxY, maxZ ) );
 		System.out.println( "maxX " + maxX + " maxY: " + maxY + " maxZ: " + maxZ + " maxAxisVal: " + maxAxisVal );
