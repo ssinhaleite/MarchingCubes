@@ -31,7 +31,6 @@ import graphics.scenery.Scene;
 import graphics.scenery.SceneryDefaultApplication;
 import graphics.scenery.SceneryElement;
 import graphics.scenery.backends.Renderer;
-import marchingCubes.MarchingCubesRAI;
 import net.imglib2.RandomAccessibleInterval;
 import util.HDF5Reader;
 
@@ -76,21 +75,7 @@ public class MarchingCubesApplication
 //	static float[] voxDim = { 0.5f, 0.5f, 0.5f };
 	static float[] voxDim = { 8f, 8f, 1f };
 
-	float smallx = 0.0f;
-
-	float smally = 0.0f;
-
-	float smallz = 0.0f;
-
-	float bigx = 0.0f;
-
-	float bigy = 0.0f;
-
-	float bigz = 0.0f;
-
 	static PrintWriter writer = null;
-
-	PrintWriter writer2 = null;
 
 	static float maxAxisVal = 0;
 
@@ -239,7 +224,7 @@ public class MarchingCubesApplication
 		logger.trace( " final partition size: " + x + " " + y + " " + z );
 
 		List< int[] > offsets = new ArrayList<>();
-		util.VolumePartitioner partitioner = new util.VolumePartitioner( volumeLabels, partitionSize );
+		util.VolumePartitioner partitioner = new util.VolumePartitioner( volumeLabels, partitionSize, voxDim );
 		List< RandomAccessibleInterval< LabelMultisetType > > subvolumes = partitioner.dataPartitioning( offsets );
 
 //		subvolumes.clear();
@@ -273,7 +258,7 @@ public class MarchingCubesApplication
 			volDim = new int[] { ( int ) subvolumes.get( i ).dimension( 0 ), ( int ) subvolumes.get( i ).dimension( 1 ),
 					( int ) subvolumes.get( i ).dimension( 2 ) };
 
-			logger.info( "offset: " + offsets.get( i )[ 0 ] + " " + offsets.get( i )[ 1 ] + offsets.get( i )[ 2 ] );
+			logger.info( "offset: " + offsets.get( i )[ 0 ] + " " + offsets.get( i )[ 1 ] + " " + offsets.get( i )[ 2 ] );
 			MarchingCubesCallable callable = new MarchingCubesCallable( subvolumes.get( i ), volDim, offsets.get( i ), voxDim, true, isoLevel,
 					false );
 
