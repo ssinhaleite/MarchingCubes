@@ -36,9 +36,8 @@ public class VolumePartitioner
 		System.out.println( "partition defined as: " + partitionXSize + " " + partitionYSize + " " + partitionZSize );
 	}
 
-	public List< RandomAccessibleInterval< LabelMultisetType > > dataPartitioning( List< int[] > offsets )
+	public void dataPartitioning(List< RandomAccessibleInterval< LabelMultisetType > > subvolumes, List< int[] > offsets )
 	{
-		List< RandomAccessibleInterval< LabelMultisetType > > parts = new ArrayList< RandomAccessibleInterval< LabelMultisetType > >();
 		int offsetIdx = 0;
 
 		for ( long bx = volumeLabels.min( 0 ); ( bx + partitionXSize ) <= volumeLabels.max( 0 ); bx += partitionXSize )
@@ -81,10 +80,9 @@ public class VolumePartitioner
 
 					offsetIdx++;
 
-					parts.add( partition );
+					subvolumes.add( partition );
 				}
 			}
 		}
-		return parts;
 	}
 }
