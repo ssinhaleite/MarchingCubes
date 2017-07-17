@@ -272,10 +272,12 @@ public class MarchingCubesApplication
 					+ "x" + subvolumes.get( i ).dimension( 2 ) );
 			volDim = new int[] { ( int ) subvolumes.get( i ).dimension( 0 ), ( int ) subvolumes.get( i ).dimension( 1 ),
 					( int ) subvolumes.get( i ).dimension( 2 ) };
+
+			logger.info( "offset: " + offsets.get( i )[ 0 ] + " " + offsets.get( i )[ 1 ] + offsets.get( i )[ 2 ] );
 			MarchingCubesCallable callable = new MarchingCubesCallable( subvolumes.get( i ), volDim, offsets.get( i ), voxDim, true, isoLevel,
 					false );
+
 			logger.trace( "callable: " + callable );
-			logger.trace( "input " + subvolumes.get( i ) );
 			Future< viewer.Mesh > result = executor.submit( callable );
 			resultMeshList.add( result );
 		}
