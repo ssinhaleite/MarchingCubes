@@ -16,11 +16,6 @@ public class Mesh
 	float[][] vertices;
 
 	/**
-	 * the normal direction of each vertex as an array of points
-	 */
-	float[][] normals;
-
-	/**
 	 * the number of faces
 	 */
 	public int numberOfTriangles;
@@ -30,11 +25,10 @@ public class Mesh
 	 */
 	int[] triangles;
 
-	Mesh( int vertexCount, float[][] verticesArray, float[][] normalsArray, int trianglesCount, int[] trianglesArray )
+	Mesh( int vertexCount, float[][] verticesArray, int trianglesCount, int[] trianglesArray )
 	{
 		numberOfVertices = vertexCount;
 		vertices = verticesArray;
-		normals = normalsArray;
 		numberOfTriangles = trianglesCount;
 		triangles = trianglesArray;
 	}
@@ -72,17 +66,6 @@ public class Mesh
 		vertices = verticesArray;
 	}
 
-	
-	public float[][] getNormals()
-	{
-		return normals;
-	}
-	
-	public void setNormals(float[][] normalsArray)
-	{
-		normals = normalsArray;
-	}
-
 	public int[] getTriangles()
 	{
 		return triangles;
@@ -92,5 +75,4 @@ public class Mesh
 	{
 		triangles = trianglesArray;
 	}
-
 }
