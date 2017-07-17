@@ -19,16 +19,19 @@ public class VolumePartitioner
 	private final int partitionZSize;
 
 	private final long overlap = 1;
+	
+	private final float[] voxDim;
 
 	/**
 	 * Constructor Initialize parameters
 	 */
-	public VolumePartitioner( RandomAccessibleInterval< LabelMultisetType > volumeLabels, int[] partitionSize )
+	public VolumePartitioner( RandomAccessibleInterval< LabelMultisetType > volumeLabels, int[] partitionSize, float[] voxDim )
 	{
 		VolumePartitioner.volumeLabels = volumeLabels;
 		this.partitionXSize = partitionSize[ 0 ];
 		this.partitionYSize = partitionSize[ 1 ];
 		this.partitionZSize = partitionSize[ 2 ];
+		this.voxDim = voxDim;
 
 		System.out.println( "partition defined as: " + partitionXSize + " " + partitionYSize + " " + partitionZSize );
 	}
@@ -71,7 +74,7 @@ public class VolumePartitioner
 
 					RandomAccessibleInterval< LabelMultisetType > partition = Views.interval( volumeLabels, begin, end );
 
-					offsets.add( new int[] { ( int ) begin[ 0 ], ( int ) begin[ 1 ], ( int ) begin[ 2 ] } );
+					offsets.add( new int[] { ( int )( begin[ 0 ] / voxDim[ 0 ]), ( int )( begin[ 1 ] / voxDim[ 1 ]), ( int )( begin[ 2 ]/voxDim[ 2 ]) } );
 					System.out.println( " partition begins at: " + begin[ 0 ] + " x " + begin[ 1 ] + " x " + begin[ 2 ] );
 					System.out.println( " partition ends at: " + end[ 0 ] + " x " + end[ 1 ] + " x " + end[ 2 ] );
 					System.out.println( "offset: " + offsets.get( offsetIdx )[ 0 ] + " x " + offsets.get( offsetIdx )[ 1 ] + " x " + offsets.get( offsetIdx )[ 2 ] );
