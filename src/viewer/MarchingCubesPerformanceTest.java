@@ -52,7 +52,7 @@ public class MarchingCubesPerformanceTest
 		volumeLabels = labels.get( 0 ).getImage( 0 );
 
 		int isoLevel = 0;
-		for ( int size = 1; size < 64; size *= 2 )
+		for ( int size = 32; size >= 1; size /= 2 )
 		{
 			filename = "mc_arraylist_" + size + ".txt";
 			PrintStream fileStream = null;
@@ -67,16 +67,12 @@ public class MarchingCubesPerformanceTest
 			System.setOut( fileStream );
 
 			float[] voxDim = { size, size, size };
-
 			for ( int i = 0; i < 27; i++ )
 			{
 				isoLevel = i + 1;
 				System.out.println( "MarchingCubes isolevel: " + isoLevel );
 				MarchingCubesRAI mc_rai = new MarchingCubesRAI();
-//				CountingVoxels mc_rai = new CountingVoxels();
-
 				begin = new Timestamp( System.currentTimeMillis() );
-//				viewer.Mesh m = mc_rai.generateSurface( volumeLabels, voxDim, volDim, true, isoLevel );
 				mc_rai.generateSurface( volumeLabels, volDim, offsets, voxDim, true, isoLevel, false );
 				end = new Timestamp( System.currentTimeMillis() );
 				System.out.println( "complete time for generating mesh: " + ( end.getTime() - begin.getTime() ) );
