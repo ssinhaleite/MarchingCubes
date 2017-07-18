@@ -28,7 +28,7 @@ import viewer.Mesh;
 public class MarchingCubesRAI
 {
 	/** logger */
-	final Logger logger = LoggerFactory.getLogger( MarchingCubesRAI.class );
+	private static final Logger LOGGER = LoggerFactory.getLogger( MarchingCubesRAI.class );
 
 	/** List of Point3ds which form the isosurface. */
 	private HashMap< Long, Point3dId > id2Point3dId = new HashMap< Long, Point3dId >();
@@ -256,25 +256,25 @@ public class MarchingCubesRAI
 			for ( final Multiset.Entry< Label > e : it.entrySet() )
 			{
 				volume.add( e.getElement().id() );
-				logger.trace( "  " + e.getElement().id() );
+				LOGGER.trace( "  " + e.getElement().id() );
 			}
 		}
 
-		logger.debug( "volume size: " + volume.size() );
+		LOGGER.debug( "volume size: " + volume.size() );
 
 		// two dimensions more: from 'min minus one' to 'max plus one'
 		xWidth = ( volDim[ 0 ] + 2 );
 		xyWidth = xWidth * ( volDim[ 1 ] + 2 );
 
-		logger.debug( "xWidth: " + xWidth + " xyWidth: " + xyWidth );
+		LOGGER.debug( "xWidth: " + xWidth + " xyWidth: " + xyWidth );
 
 		nCellsX = ( long ) Math.ceil( ( volDim[ 0 ] + 2 ) / voxDim[ 0 ] ) - 1;
 		nCellsY = ( long ) Math.ceil( ( volDim[ 1 ] + 2 ) / voxDim[ 1 ] ) - 1;
 		nCellsZ = ( long ) Math.ceil( ( volDim[ 2 ] + 2 ) / voxDim[ 2 ] ) - 1;
 
-		logger.debug( "ncells - x, y, z: " + nCellsX + " " + nCellsY + " " + nCellsZ );
+		LOGGER.debug( "ncells - x, y, z: " + nCellsX + " " + nCellsY + " " + nCellsZ );
 
-		logger.debug( "max position on array: " + ( ( ( int ) ( voxDim[ 2 ] * nCellsZ ) * xyWidth + ( int ) ( voxDim[ 1 ] * nCellsY ) * xWidth + ( int ) ( voxDim[ 0 ] * nCellsX ) ) ) );
+		LOGGER.debug( "max position on array: " + ( ( ( int ) ( voxDim[ 2 ] * nCellsZ ) * xyWidth + ( int ) ( voxDim[ 1 ] * nCellsY ) * xWidth + ( int ) ( voxDim[ 0 ] * nCellsX ) ) ) );
 
 		double[] vertex_values = new double[ 8 ];
 
@@ -321,12 +321,12 @@ public class MarchingCubesRAI
 					vertex_values[ 1 ] = volume.get( ( ( ( int ) ( voxDim[ 2 ] * ( cursorZ + 1 ) ) ) * xyWidth + ( int ) ( voxDim[ 1 ] * ( cursorY + 1 ) ) * xWidth + ( int ) ( voxDim[ 0 ] * ( cursorX + 1 ) ) ) );
 
 					// @formatter:off
-					logger.debug( " " + ( int ) vertex_values[ 4 ] + "------" + ( int ) vertex_values[ 5 ] );
-					logger.debug( " /|     /|" );
-					logger.debug( " " + ( int ) vertex_values[ 7 ] + "-----" + ( int ) vertex_values[ 6 ] + " |" );
-					logger.debug( " |" + ( int ) vertex_values[ 0 ] + "----|-" + ( int ) vertex_values[ 1 ] );
-					logger.debug( " |/    |/" );
-					logger.debug( " " + ( int ) vertex_values[ 3 ] + "-----" + ( int ) vertex_values[ 2 ] );
+					LOGGER.debug( " " + ( int ) vertex_values[ 4 ] + "------" + ( int ) vertex_values[ 5 ] );
+					LOGGER.debug( " /|     /|" );
+					LOGGER.debug( " " + ( int ) vertex_values[ 7 ] + "-----" + ( int ) vertex_values[ 6 ] + " |" );
+					LOGGER.debug( " |" + ( int ) vertex_values[ 0 ] + "----|-" + ( int ) vertex_values[ 1 ] );
+					LOGGER.debug( " |/    |/" );
+					LOGGER.debug( " " + ( int ) vertex_values[ 3 ] + "-----" + ( int ) vertex_values[ 2 ] );
 					// @formatter:on
 
 					triangulation( vertex_values, cursorX, cursorY, cursorZ );
@@ -523,9 +523,9 @@ public class MarchingCubesRAI
 			vertices[i][1] = entry.getValue().y;
 			vertices[i][2] = entry.getValue().z;
 			
-			logger.trace( "vertex x: " + vertices[i][0] );
-			logger.trace( "vertex y: " + vertices[i][1]);
-			logger.trace( "vertex z: " + vertices[i][2]);
+			LOGGER.trace( "vertex x: " + vertices[i][0] );
+			LOGGER.trace( "vertex y: " + vertices[i][1]);
+			LOGGER.trace( "vertex z: " + vertices[i][2]);
 		}
 
 		mesh.setVertices(vertices);
@@ -684,14 +684,13 @@ public class MarchingCubesRAI
 		p2.setPosition(((v2x + offset[0]) * voxDim[0]), 0);
 		p2.setPosition(((v2y + offset[1]) * voxDim[1]), 1);
 		p2.setPosition(((v2z + offset[2]) * voxDim[2]), 2);
-		
 
-		logger.trace( "p1: " + p1.getDoublePosition( 0 ) + " " + p1.getDoublePosition( 1 ) + " " + p1.getDoublePosition( 2 ) );
-		logger.trace( "p2: " + p2.getDoublePosition( 0 ) + " " + p2.getDoublePosition( 1 ) + " " + p2.getDoublePosition( 2 ) );
-		logger.trace( "p1 value: " + volume.get( ( int )( voxDim[ 2 ] * v1z ) * xyWidth + ( int )( voxDim[ 1 ] * v1y ) * xWidth + ( int )( voxDim[ 0 ] * v1x ) ) );
-		logger.trace( " should be: " + vertex_values );
-		logger.trace( "p2 value: " + volume.get( ( int )( voxDim[ 2 ] * v2z ) * xyWidth + ( int )( voxDim[ 1 ] * v2y ) * xWidth + ( int )( voxDim[ 0 ] * v2x ) ) );
-		logger.trace( " should be: " + vertex_values2);
+		LOGGER.trace( "p1: " + p1.getDoublePosition( 0 ) + " " + p1.getDoublePosition( 1 ) + " " + p1.getDoublePosition( 2 ) );
+		LOGGER.trace( "p2: " + p2.getDoublePosition( 0 ) + " " + p2.getDoublePosition( 1 ) + " " + p2.getDoublePosition( 2 ) );
+		LOGGER.trace( "p1 value: " + volume.get( ( int )( voxDim[ 2 ] * v1z ) * xyWidth + ( int )( voxDim[ 1 ] * v1y ) * xWidth + ( int )( voxDim[ 0 ] * v1x ) ) );
+		LOGGER.trace( " should be: " + vertex_values );
+		LOGGER.trace( "p2 value: " + volume.get( ( int )( voxDim[ 2 ] * v2z ) * xyWidth + ( int )( voxDim[ 1 ] * v2y ) * xWidth + ( int )( voxDim[ 0 ] * v2x ) ) );
+		LOGGER.trace( " should be: " + vertex_values2);
 
 		float diffX = p2.getFloatPosition(0) - p1.getFloatPosition(0);
 		float diffY = p2.getFloatPosition(1) - p1.getFloatPosition(1);
@@ -709,55 +708,48 @@ public class MarchingCubesRAI
 		Point3dId interpolation = new Point3dId(diff);// p1 + 0.5 * (p2-p1);
 		
 		return interpolation;
-		
-//		if (interiorTest(vertex_values) && !interiorTest(vertex_values2))
-//		{
-//			return findSurfaceIntersection(p2, p1, vertex_values2, vertex_values);
-//		} else {
-//			return findSurfaceIntersection(p1, p2, vertex_values, vertex_values2);
-//		}
 	}
 
 	private long getEdgeId(long nX, long nY, long nZ, int nEdgeNo)
 	{
-		logger.trace("x, y, z: " + nX + " " + nY + " " +  nZ);
+		LOGGER.trace("x, y, z: " + nX + " " + nY + " " +  nZ);
 		switch (nEdgeNo)
 		{
 		case 0:
-			logger.trace("vertex id: " + (getVertexId(nX, nY, nZ) + 1));
+			LOGGER.trace("vertex id: " + (getVertexId(nX, nY, nZ) + 1));
 			return getVertexId(nX, nY, nZ) + 1;
 		case 1:
-			logger.trace("vertex id: " + getVertexId(nX, nY + 1, nZ));
+			LOGGER.trace("vertex id: " + getVertexId(nX, nY + 1, nZ));
 			return getVertexId(nX, nY + 1, nZ);
 		case 2:
-			logger.trace("vertex id: " + (getVertexId(nX + 1, nY, nZ) + 1));
+			LOGGER.trace("vertex id: " + (getVertexId(nX + 1, nY, nZ) + 1));
 			return getVertexId(nX + 1, nY, nZ) + 1;
 		case 3:
-			logger.trace("vertex id: " + getVertexId(nX, nY, nZ));
+			LOGGER.trace("vertex id: " + getVertexId(nX, nY, nZ));
 			return getVertexId(nX, nY, nZ);
 		case 4:
-			logger.trace("vertex id: " + (getVertexId(nX, nY, nZ + 1) + 1));
+			LOGGER.trace("vertex id: " + (getVertexId(nX, nY, nZ + 1) + 1));
 			return getVertexId(nX, nY, nZ + 1) + 1;
 		case 5:
-			logger.trace("vertex id: " + getVertexId(nX, nY + 1, nZ + 1));
+			LOGGER.trace("vertex id: " + getVertexId(nX, nY + 1, nZ + 1));
 			return getVertexId(nX, nY + 1, nZ + 1);
 		case 6:
-			logger.trace("vertex id: " + (getVertexId(nX + 1, nY, nZ + 1) + 1));
+			LOGGER.trace("vertex id: " + (getVertexId(nX + 1, nY, nZ + 1) + 1));
 			return getVertexId(nX + 1, nY, nZ + 1) + 1;
 		case 7:
-			logger.trace("vertex id: " + getVertexId(nX, nY, nZ + 1));
+			LOGGER.trace("vertex id: " + getVertexId(nX, nY, nZ + 1));
 			return getVertexId(nX, nY, nZ + 1);
 		case 8:
-			logger.trace("vertex id: " + (getVertexId(nX, nY, nZ) + 2));
+			LOGGER.trace("vertex id: " + (getVertexId(nX, nY, nZ) + 2));
 			return getVertexId(nX, nY, nZ) + 2;
 		case 9:
-			logger.trace("vertex id: " + (getVertexId(nX, nY + 1, nZ) + 2));
+			LOGGER.trace("vertex id: " + (getVertexId(nX, nY + 1, nZ) + 2));
 			return getVertexId(nX, nY + 1, nZ) + 2;
 		case 10:
-			logger.trace("vertex id: " + (getVertexId(nX + 1, nY + 1, nZ) + 2));
+			LOGGER.trace("vertex id: " + (getVertexId(nX + 1, nY + 1, nZ) + 2));
 			return getVertexId(nX + 1, nY + 1, nZ) + 2;
 		case 11:
-			logger.trace("vertex id: " + (getVertexId(nX + 1, nY, nZ) + 2));
+			LOGGER.trace("vertex id: " + (getVertexId(nX + 1, nY, nZ) + 2));
 			return getVertexId(nX + 1, nY, nZ) + 2;
 		default:
 			// Invalid edge no.
