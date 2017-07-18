@@ -3,7 +3,6 @@ package viewer;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.FloatBuffer;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -24,6 +23,7 @@ import cleargl.GLVector;
 import graphics.scenery.Box;
 import graphics.scenery.Camera;
 import graphics.scenery.DetachedHeadCamera;
+import graphics.scenery.GeometryType;
 import graphics.scenery.Material;
 import graphics.scenery.Mesh;
 import graphics.scenery.PointLight;
@@ -42,15 +42,11 @@ import util.HDF5Reader;
 public class MarchingCubesApplication
 {
 	/** logger */
-	static final Logger logger = LoggerFactory.getLogger( MarchingCubesApplication.class );
+	static final Logger LOGGER = LoggerFactory.getLogger( MarchingCubesApplication.class );
 
 	private static RandomAccessibleInterval< LabelMultisetType > volumeLabels = null;
 
-	Timestamp begin = new Timestamp( System.currentTimeMillis() );
-
-	Timestamp end = new Timestamp( System.currentTimeMillis() );
-
-	static float[] verticesArray = new float[ 0 ];
+	private static float[] verticesArray = new float[ 0 ];
 
 	/** big hdf5 for test - whole sample B */
 //	static String path = "data/sample_B.augmented.0.hdf";
@@ -59,13 +55,13 @@ public class MarchingCubesApplication
 //	static int[] volDim = {2340, 1685, 153};
 
 	/** small hdf5 for test - subset from sample B */
-	static String path = "data/sample_B_20160708_frags_46_50.hdf";
+	private static String path = "data/sample_B_20160708_frags_46_50.hdf";
 
-	static int isoLevel = 7;
+	private static int isoLevel = 7;
 
-	static int[] volDim = { 500, 500, 5 };
+	private static int[] volDim = { 500, 500, 5 };
 
-	static String path_label = "/volumes/labels/neuron_ids";
+	private static String path_label = "/volumes/labels/neuron_ids";
 
 	// /** tiny hdf5 for test - dummy values */
 //	 static String path_label = "/volumes/labels/small_neuron_ids";
@@ -73,18 +69,18 @@ public class MarchingCubesApplication
 //	 int[] volDim = {3, 3, 3};
 
 //	static float[] voxDim = { 0.5f, 0.5f, 0.5f };
-	static float[] voxDim = { 8f, 8f, 1f };
+	private static float[] voxDim = { 4f, 4f, 4f };
 
-	static PrintWriter writer = null;
+	private static PrintWriter writer = null;
 
-	static float maxAxisVal = 0;
+	private static float maxAxisVal = 0;
 
 	/**
 	 * This method loads the hdf file
 	 */
 	public static void loadData()
 	{
-		logger.info( "Opening labels from " + path );
+		LOGGER.info( "Opening labels from " + path );
 		final IHDF5Reader reader = HDF5Factory.openForReading( path );
 
 		/** loaded segments */
@@ -99,22 +95,27 @@ public class MarchingCubesApplication
 			}
 			catch ( IOException e )
 			{
-				e.printStackTrace();
+				LOGGER.error( "read labels failed: " + e.getCause() );
 			}
 		}
 		else
 		{
-			logger.error( "no label dataset '" + path_label + "' found" );
+			LOGGER.error( "no label dataset '" + path_label + "' found" );
 		}
 
 		volumeLabels = labels.get( 0 ).getImage( 0 );
 	}
 
+	/**
+	 * Main method - starts the application
+	 * @param args
+	 * @throws Exception
+	 */
 	public static void main( String[] args ) throws Exception
 	{
 		// Set the log level
 		System.setProperty( org.slf4j.impl.SimpleLogger.DEFAULT_LOG_LEVEL_KEY, "INFO" );
-		MarchingCubeApplication viewer = new MarchingCubeApplication( "Marching cube", 800, 600 );
+		final MarchingCubeApplication viewer = new MarchingCubeApplication( "Marching cube", 800, 600 );
 		viewer.main();
 	}
 
@@ -132,11 +133,11 @@ public class MarchingCubesApplication
 
 			try
 			{
-				writer = new PrintWriter( "vertices_.txt", "UTF-8" );
+				writer = new PrintWriter( "vertices_16.txt", "UTF-8" );
 			}
 			catch ( IOException e )
 			{
-				e.printStackTrace();
+				LOGGER.error( "error on printWriter initialization: " + e.getCause() );
 			}
 
 			setRenderer( Renderer.Factory.createRenderer( getHub(), getApplicationName(), getScene(), getWindowWidth(),
@@ -147,11 +148,6 @@ public class MarchingCubesApplication
 			hull.getMaterial().setDiffuse( new GLVector( 0.5f, 0.5f, 0.5f ) );
 			hull.getMaterial().setDoubleSided( true );
 			getScene().addChild( hull );
-
-			final Material material = new Material();
-			material.setAmbient( new GLVector( 0.1f * ( 1 ), 1.0f, 1.0f ) );
-			material.setDiffuse( new GLVector( 0.1f * ( 1 ), 0.0f, 1.0f ) );
-			material.setSpecular( new GLVector( 0.1f * ( 1 ), 0f, 0f ) );
 
 			final Camera cam = new DetachedHeadCamera();
 
@@ -177,145 +173,187 @@ public class MarchingCubesApplication
 			lights[ 3 ].setPosition( new GLVector( 0.0f, -1.0f, 1.0f / ( float ) Math.sqrt( 2.0 ) ) );
 
 			for ( int i = 0; i < lights.length; i++ )
+			{
 				getScene().addChild( lights[ i ] );
+			}
 
-			Mesh neuron = new Mesh();
-			neuron.setMaterial( material );
-			neuron.setName( "neuron" );
-			neuron.setPosition( new GLVector( 0.0f, 0.0f, 0.0f ) );
-			neuron.setScale( new GLVector( 1.0f, 1.0f, 10.0f ) );
-			getScene().addChild( neuron );
+//			final Material material = new Material();
+//			material.setAmbient( new GLVector( 0.1f * ( 1 ), 1.0f, 1.0f ) );
+//			material.setDiffuse( new GLVector( 0.1f * ( 1 ), 0.0f, 1.0f ) );
+//			material.setSpecular( new GLVector( 0.1f * ( 1 ), 0f, 0f ) );
+//
+//			Mesh neuron = new Mesh();
+//			neuron.setMaterial( material );
+//			neuron.setName( "neuron" );
+//			neuron.setPosition( new GLVector( 0.0f, 0.0f, 0.0f ) );
+////			neuron.setScale( new GLVector( 1.0f, 1.0f, 10.0f ) );
+//			neuron.setGeometryType( GeometryType.POINTS );
+//			getScene().addChild( neuron );
 
 			new Thread()
 			{
 				public void run()
 				{
-
-					marchingCube( neuron, material, getScene(), cam );
+					marchingCube( getScene() );
 				}
 			}.start();
 //			levelOfDetails( neuron, getScene(), cam );
 		}
 	}
 
-	private static void marchingCube( Mesh neuron, Material material, Scene scene, Camera cam )
+	private static void marchingCube( Scene scene)
 	{
-		viewer.Mesh m = new viewer.Mesh();
+		int numberOfCellsX = ( int ) ( ( volumeLabels.max( 0 ) - volumeLabels.min( 0 ) ) + 1 ) / 32;
+		int numberOfCellsY = ( int ) ( ( volumeLabels.max( 1 ) - volumeLabels.min( 1 ) ) + 1 ) / 32;
+		int numberOfCellsZ = ( int ) ( ( volumeLabels.max( 2 ) - volumeLabels.min( 2 ) ) + 1 ) / 32;
 
-		int x = ( int ) ( ( volumeLabels.max( 0 ) - volumeLabels.min( 0 ) ) + 1 ) / 32;
-		int y = ( int ) ( ( volumeLabels.max( 1 ) - volumeLabels.min( 1 ) ) + 1 ) / 32;
-		int z = ( int ) ( ( volumeLabels.max( 2 ) - volumeLabels.min( 2 ) ) + 1 ) / 32;
+		LOGGER.trace( "division: " + numberOfCellsX + " " + numberOfCellsY + " " + numberOfCellsZ );
 
-		logger.trace( "division: " + x + " " + y + " " + z );
+		numberOfCellsX = numberOfCellsX >= 7 ? 7 * 32 : numberOfCellsX * 32;
+		numberOfCellsY = numberOfCellsY >= 7 ? 7 * 32 : numberOfCellsY * 32;
+		numberOfCellsZ = numberOfCellsZ >= 7 ? 7 * 32 : numberOfCellsZ * 32;
 
-		x = ( x >= 7 ) ? 7 * 32 : x * 32;
-		y = ( y >= 7 ) ? 7 * 32 : y * 32;
-		z = ( z >= 7 ) ? 7 * 32 : z * 32;
+		LOGGER.trace( "partition size 1: " + numberOfCellsX + " " + numberOfCellsY + " " + numberOfCellsZ );
 
-		logger.trace( "partition size 1: " + x + " " + y + " " + z );
+		numberOfCellsX = ( numberOfCellsX == 0 ) ? 1 : numberOfCellsX;
+		numberOfCellsY = ( numberOfCellsY == 0 ) ? 1 : numberOfCellsY;
+		numberOfCellsZ = ( numberOfCellsZ == 0 ) ? 1 : numberOfCellsZ;
 
-		x = ( x == 0 ) ? 1 : x;
-		y = ( y == 0 ) ? 1 : y;
-		z = ( z == 0 ) ? 1 : z;
+		LOGGER.trace( "zero verification: " + numberOfCellsX + " " + numberOfCellsY + " " + numberOfCellsZ );
 
-		logger.trace( "zero verification: " + x + " " + y + " " + z );
+		int[] partitionSize = new int[] { numberOfCellsX, numberOfCellsY, numberOfCellsZ };
+		LOGGER.trace( "final partition size: " + numberOfCellsX + " " + numberOfCellsY + " " + numberOfCellsZ );
 
-		int[] partitionSize = new int[] { x, y, z };
-		logger.trace( " final partition size: " + x + " " + y + " " + z );
+		final List< int[] > offsets = new ArrayList<>();
+		final List< RandomAccessibleInterval< LabelMultisetType > > subvolumes = new ArrayList< RandomAccessibleInterval< LabelMultisetType > >();
+		
+		CompletionService< viewer.Mesh > executor = null;
+		List< Future< viewer.Mesh > > resultMeshList = null;
+		for ( int voxSize = 32; voxSize > 0; voxSize /= 2 )
+		{
+			// clean the vertices, offsets and subvolumes
+			verticesArray = new float[ 0 ];
+			offsets.clear();
+			subvolumes.clear();
 
-		List< int[] > offsets = new ArrayList<>();
-		util.VolumePartitioner partitioner = new util.VolumePartitioner( volumeLabels, partitionSize, voxDim );
-		List< RandomAccessibleInterval< LabelMultisetType > > subvolumes = partitioner.dataPartitioning( offsets );
+			Mesh neuron = new Mesh();
+			final Material material = new Material();
+			material.setAmbient( new GLVector( 1f , 0.0f , 1f ) );
+			material.setSpecular( new GLVector( 1f , 0.0f , 1f ) );
 
+			if (voxSize == 32)
+				material.setDiffuse( new GLVector( 1, 0 , 0 ) );
+			if (voxSize == 16)
+				material.setDiffuse( new GLVector( 0, 1 , 0 ) );
+			if (voxSize == 8)
+				material.setDiffuse( new GLVector( 0, 0 , 1 ) );
+			if (voxSize == 4)
+				material.setDiffuse( new GLVector( 1, 0 , 1 ) );
+			if (voxSize == 2)
+				material.setDiffuse( new GLVector( 0, 1 , 1 ) );
+			if (voxSize == 1)
+				material.setDiffuse( new GLVector( 1, 1 , 0 ) );
+
+			neuron.setMaterial( material );
+			neuron.setName( String.valueOf(isoLevel + " " + voxSize) );
+			neuron.setBillboard( true );
+			neuron.setPosition( new GLVector( 0.0f, 0.0f, 0.0f ) );
+//			neuron.setScale( new GLVector( 1.0f, 1.0f, 10.0f ) );
+			neuron.setGeometryType( GeometryType.POINTS );
+			scene.addChild( neuron);
+			voxDim[0] = voxSize;
+			voxDim[1] = voxSize;
+			voxDim[2] = 1;
+	
+			util.VolumePartitioner partitioner = new util.VolumePartitioner( volumeLabels, partitionSize, voxDim );
+			partitioner.dataPartitioning( subvolumes, offsets );
+//		}
 //		subvolumes.clear();
 //		subvolumes.add( volumeLabels );
 //		offsets.set( 0, new int[] { 0, 0, 0 } );
 
-		logger.info( "starting executor..." );
-		CompletionService< viewer.Mesh > executor = new ExecutorCompletionService< viewer.Mesh >(
-				Executors.newWorkStealingPool() );
+			LOGGER.info( "starting executor..." );
+			executor = new ExecutorCompletionService< viewer.Mesh >(
+					Executors.newWorkStealingPool() );
 
-		List< Future< viewer.Mesh > > resultMeshList = new ArrayList<>();
+			resultMeshList = new ArrayList<>();
 
-		float maxX = volDim[ 0 ] - 1;
-		float maxY = volDim[ 1 ] - 1;
-		float maxZ = volDim[ 2 ] - 1;
+			final float maxX = volDim[ 0 ] - 1;
+			final float maxY = volDim[ 1 ] - 1;
+			final float maxZ = volDim[ 2 ] - 1;
 
-		maxAxisVal = Math.max( maxX, Math.max( maxY, maxZ ) );
-		logger.trace( "maxX " + maxX + " maxY: " + maxY + " maxZ: " + maxZ + " maxAxisVal: " + maxAxisVal );
+			maxAxisVal = Math.max( maxX, Math.max( maxY, maxZ ) );
+			LOGGER.trace( "maxX " + maxX + " maxY: " + maxY + " maxZ: " + maxZ + " maxAxisVal: " + maxAxisVal );
 
-		logger.info( "creating callables for " + subvolumes.size() + " partitions..." );
-//		for ( int voxSize = 32; voxSize > 0; voxSize /= 2 )
-//		{
-//			voxDim[0] = voxSize;
-//			voxDim[1] = voxSize;
-//			voxDim[2] = voxSize;
+			LOGGER.info( "creating callables for " + subvolumes.size() + " partitions..." );
 
-		for ( int i = 0; i < subvolumes.size(); i++ )
-		{
-			logger.info( "dimension: " + subvolumes.get( i ).dimension( 0 ) + "x" + subvolumes.get( i ).dimension( 1 )
-					+ "x" + subvolumes.get( i ).dimension( 2 ) );
-			volDim = new int[] { ( int ) subvolumes.get( i ).dimension( 0 ), ( int ) subvolumes.get( i ).dimension( 1 ),
-					( int ) subvolumes.get( i ).dimension( 2 ) };
+			for ( int i = 0; i < subvolumes.size(); i++ )
+			{
+				LOGGER.info( "dimension: " + subvolumes.get( i ).dimension( 0 ) + "x" + subvolumes.get( i ).dimension( 1 )
+						+ "x" + subvolumes.get( i ).dimension( 2 ) );
+				int[] subvolDim = new int[] { ( int ) subvolumes.get( i ).dimension( 0 ), ( int ) subvolumes.get( i ).dimension( 1 ),
+						( int ) subvolumes.get( i ).dimension( 2 ) };
+	
+				LOGGER.info( "offset: " + offsets.get( i )[ 0 ] + " " + offsets.get( i )[ 1 ] + " " + offsets.get( i )[ 2 ] );
+				MarchingCubesCallable callable = new MarchingCubesCallable( subvolumes.get( i ), subvolDim, offsets.get( i ), voxDim, true, isoLevel,
+						false );
+	
+				LOGGER.trace( "callable: " + callable );
+				Future< viewer.Mesh > result = executor.submit( callable );
+				resultMeshList.add( result );
+			}
 
-			logger.info( "offset: " + offsets.get( i )[ 0 ] + " " + offsets.get( i )[ 1 ] + " " + offsets.get( i )[ 2 ] );
-			MarchingCubesCallable callable = new MarchingCubesCallable( subvolumes.get( i ), volDim, offsets.get( i ), voxDim, true, isoLevel,
-					false );
+			Future< viewer.Mesh > completedFuture = null;
+			LOGGER.info( "waiting results..." );
 
-			logger.trace( "callable: " + callable );
-			Future< viewer.Mesh > result = executor.submit( callable );
-			resultMeshList.add( result );
+			while ( resultMeshList.size() > 0 )
+			{
+				// block until a task completes
+				try
+				{
+					completedFuture = executor.take();
+					LOGGER.trace( "task " + completedFuture + " is ready: " + completedFuture.isDone() );
+				}
+				catch ( InterruptedException e )
+				{
+					// TODO Auto-generated catch block
+					LOGGER.error( " task interrupted: " + e.getCause() );
+				}
+	
+				resultMeshList.remove( completedFuture );
+				viewer.Mesh m = new viewer.Mesh();
+	
+				// get the mesh, if the task was able to create it
+				try
+				{
+					m = completedFuture.get();
+					LOGGER.info( "getting mesh" );
+				}
+				catch ( InterruptedException | ExecutionException e )
+				{
+					LOGGER.error( "Mesh creation failed: " + e.getCause() );
+					break;
+				}
+	
+				// a mesh was created, so update the existing mesh
+				if ( m.getNumberOfTriangles() > 0 )
+				{
+					LOGGER.info( "updating mesh..." );
+					updateMesh( m, neuron );
+					neuron.setVertices( FloatBuffer.wrap( verticesArray ) );
+					neuron.recalculateNormals();
+					neuron.setDirty( true );
+				}
+			}
+
+			if( LOGGER.isDebugEnabled())
+			{
+				LOGGER.debug( "size of mesh " + verticesArray.length );
+			}
+			
+			LOGGER.info( "all results generated!" );
+			writer.close();
 		}
-//		}
-
-		Future< viewer.Mesh > completedFuture = null;
-		logger.info( "waiting results..." );
-
-		while ( resultMeshList.size() > 0 )
-		{
-			// block until a task completes
-			try
-			{
-				completedFuture = executor.take();
-				logger.trace( "task " + completedFuture + " is ready: " + completedFuture.isDone() );
-			}
-			catch ( InterruptedException e )
-			{
-				// TODO Auto-generated catch block
-				logger.error( " task interrupted: " + e.getCause() );
-				e.printStackTrace();
-			}
-
-			resultMeshList.remove( completedFuture );
-
-			// get the mesh, if the task was able to create it
-			try
-			{
-				m = completedFuture.get();
-				logger.info( "getting mesh" );
-			}
-			catch ( InterruptedException | ExecutionException e )
-			{
-				Throwable cause = e.getCause();
-				logger.error( "Mesh creation failed: " + cause );
-				e.printStackTrace();
-				break;
-			}
-
-			// a mesh was created, so update the existing mesh
-			if ( m.getNumberOfTriangles() > 0 )
-			{
-				logger.info( "updating mesh..." );
-				updateMesh( m, neuron );
-				neuron.setVertices( FloatBuffer.wrap( verticesArray ) );
-				neuron.recalculateNormals();
-				neuron.setDirty( true );
-			}
-		}
-
-		logger.debug( "size of mesh " + verticesArray.length );
-		logger.info( "all results generated!" );
-		writer.close();
 	}
 
 	/**
@@ -330,77 +368,52 @@ public class MarchingCubesApplication
 	 */
 	public void updateMeshComplete( viewer.Mesh m, Mesh neuron )
 	{
-		logger.debug( "previous size of vertices: " + verticesArray.length );
-
 		int numberOfTriangles = m.getNumberOfTriangles();
-		logger.debug( "number of triangles: " + numberOfTriangles );
+
+		if (LOGGER.isDebugEnabled())
+		{
+			LOGGER.debug( "previous size of vertices: " + verticesArray.length );
+			LOGGER.debug( "number of triangles: " + numberOfTriangles );
+			LOGGER.debug( "size of verticesArray: " + numberOfTriangles * 3 * 3 );
+		}
+
 		verticesArray = new float[ numberOfTriangles * 3 * 3 ];
 
-		logger.debug( "size of verticesArray: " + numberOfTriangles * 3 * 3 );
-
-		float[][] vertices = m.getVertices();
-		int[] triangles = m.getTriangles();
+		final float[][] vertices = m.getVertices();
+		final int[] triangles = m.getTriangles();
 
 		float[] point0 = new float[ 3 ];
 		float[] point1 = new float[ 3 ];
 		float[] point2 = new float[ 3 ];
-		float sx = 0, sy = 0, bx = 0, by = 0;
 		int v = 0;
 
 		for ( int i = 0; i < numberOfTriangles; i++ )
 		{
-			long id0 = triangles[ i * 3 ];
-			long id1 = triangles[ i * 3 + 1 ];
-			long id2 = triangles[ i * 3 + 2 ];
+			final long id0 = triangles[ i * 3 ];
+			final long id1 = triangles[ i * 3 + 1 ];
+			final long id2 = triangles[ i * 3 + 2 ];
 
 			point0 = vertices[ ( int ) id0 ];
 			point1 = vertices[ ( int ) id1 ];
 			point2 = vertices[ ( int ) id2 ];
 
 			verticesArray[ v++ ] = point0[ 0 ];
-			if ( verticesArray[ v - 1 ] < sx )
-				sx = verticesArray[ v - 1 ];
-			if ( verticesArray[ v - 1 ] > bx )
-				bx = verticesArray[ v - 1 ];
-
 			verticesArray[ v++ ] = point0[ 1 ];
-			if ( verticesArray[ v - 1 ] < sy )
-				sy = verticesArray[ v - 1 ];
-			if ( verticesArray[ v - 1 ] > by )
-				by = verticesArray[ v - 1 ];
-
 			verticesArray[ v++ ] = point0[ 2 ];
 
 			verticesArray[ v++ ] = point1[ 0 ];
-			if ( verticesArray[ v - 1 ] < sx )
-				sx = verticesArray[ v - 1 ];
-			if ( verticesArray[ v - 1 ] > bx )
-				bx = verticesArray[ v - 1 ];
-
 			verticesArray[ v++ ] = point1[ 1 ];
-			if ( verticesArray[ v - 1 ] < sy )
-				sy = verticesArray[ v - 1 ];
-			if ( verticesArray[ v - 1 ] > by )
-				by = verticesArray[ v - 1 ];
-
 			verticesArray[ v++ ] = point1[ 2 ];
 
 			verticesArray[ v++ ] = point2[ 0 ];
-			if ( verticesArray[ v - 1 ] < sx )
-				sx = verticesArray[ v - 1 ];
-			if ( verticesArray[ v - 1 ] > bx )
-				bx = verticesArray[ v - 1 ];
-
 			verticesArray[ v++ ] = point2[ 1 ];
-			if ( verticesArray[ v - 1 ] < sy )
-				sy = verticesArray[ v - 1 ];
-			if ( verticesArray[ v - 1 ] > by )
-				by = verticesArray[ v - 1 ];
-
 			verticesArray[ v++ ] = point2[ 2 ];
 		}
 
-		logger.debug( "vsize: " + verticesArray.length );
+		if ( LOGGER.isDebugEnabled() )
+		{
+			LOGGER.debug( "vsize: " + verticesArray.length );
+		}
 		for ( int i = 0; i < verticesArray.length; ++i )
 		{
 			verticesArray[ i ] /= maxAxisVal;
@@ -425,15 +438,17 @@ public class MarchingCubesApplication
 	public static void updateMesh( viewer.Mesh m, Mesh neuron )
 	{
 		/** max value int = 2,147,483,647 */
-		logger.debug( "previous size of vertices: " + verticesArray.length );
-		int vertexCount = verticesArray.length;
-
-		int numberOfTriangles = m.getNumberOfTriangles();
-		logger.debug( "number of triangles: " + numberOfTriangles );
+		final int vertexCount = verticesArray.length;
+		final int numberOfTriangles = m.getNumberOfTriangles();
+		if (LOGGER.isDebugEnabled())
+		{
+			LOGGER.debug( "previous size of vertices: " + verticesArray.length );
+			LOGGER.debug( "number of triangles: " + numberOfTriangles );
+			LOGGER.debug( "size of verticesArray: " + ( numberOfTriangles * 3 * 3 + vertexCount ) );
+		}
 
 		// resize array to fit the new mesh
 		verticesArray = Arrays.copyOf( verticesArray, ( numberOfTriangles * 3 * 3 + vertexCount ) );
-		logger.debug( "size of verticesArray: " + ( numberOfTriangles * 3 * 3 + vertexCount ) );
 
 		float[][] vertices = m.getVertices();
 		int[] triangles = m.getTriangles();
@@ -445,9 +460,9 @@ public class MarchingCubesApplication
 
 		for ( int i = 0; i < numberOfTriangles; i++ )
 		{
-			long id0 = triangles[ i * 3 ];
-			long id1 = triangles[ i * 3 + 1 ];
-			long id2 = triangles[ i * 3 + 2 ];
+			final long id0 = triangles[ i * 3 ];
+			final long id1 = triangles[ i * 3 + 1 ];
+			final long id2 = triangles[ i * 3 + 2 ];
 
 			point0 = vertices[ ( int ) id0 ];
 			point1 = vertices[ ( int ) id1 ];
@@ -467,7 +482,11 @@ public class MarchingCubesApplication
 		}
 
 		// omp parallel for
-		logger.debug( "vsize: " + verticesArray.length );
+		if (LOGGER.isDebugEnabled())
+		{
+			LOGGER.debug( "vsize: " + verticesArray.length );
+		}
+		
 		for ( int i = vertexCount; i < verticesArray.length; ++i )
 		{
 			verticesArray[ i ] /= maxAxisVal;
@@ -536,7 +555,7 @@ public class MarchingCubesApplication
 					}
 					catch ( InterruptedException e )
 					{
-						e.printStackTrace();
+						LOGGER.error( " thread sleep interrupted: " + e.getCause() );
 					}
 				}
 			}
