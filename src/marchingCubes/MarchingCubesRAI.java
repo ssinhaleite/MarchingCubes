@@ -693,12 +693,29 @@ public class MarchingCubesRAI
 		logger.trace( "p2 value: " + volume.get( ( int )( voxDim[ 2 ] * v2z ) * xyWidth + ( int )( voxDim[ 1 ] * v2y ) * xWidth + ( int )( voxDim[ 0 ] * v2x ) ) );
 		logger.trace( " should be: " + vertex_values2);
 
-		if (interiorTest(vertex_values) && !interiorTest(vertex_values2))
-		{
-			return findSurfaceIntersection(p2, p1, vertex_values2, vertex_values);
-		} else {
-			return findSurfaceIntersection(p1, p2, vertex_values, vertex_values2);
-		}
+		float diffX = p2.getFloatPosition(0) - p1.getFloatPosition(0);
+		float diffY = p2.getFloatPosition(1) - p1.getFloatPosition(1);
+		float diffZ = p2.getFloatPosition(2) - p1.getFloatPosition(2);
+
+		diffX = diffX * 0.5f;
+		diffY = diffY * 0.5f;
+		diffZ = diffZ * 0.5f;
+
+		diffX = diffX + p1.getFloatPosition(0);
+		diffY = diffY + p1.getFloatPosition(1);
+		diffZ = diffZ + p1.getFloatPosition(2);
+
+		RealPoint diff = new RealPoint(diffX, diffY, diffZ);
+		Point3dId interpolation = new Point3dId(diff);// p1 + 0.5 * (p2-p1);
+		
+		return interpolation;
+		
+//		if (interiorTest(vertex_values) && !interiorTest(vertex_values2))
+//		{
+//			return findSurfaceIntersection(p2, p1, vertex_values2, vertex_values);
+//		} else {
+//			return findSurfaceIntersection(p1, p2, vertex_values, vertex_values2);
+//		}
 	}
 
 	private long getEdgeId(long nX, long nY, long nZ, int nEdgeNo)
