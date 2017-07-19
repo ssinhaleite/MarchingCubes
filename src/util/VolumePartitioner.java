@@ -29,34 +29,26 @@ public class VolumePartitioner
 	/** volume to be partitioned */
 	private final RandomAccessibleInterval< LabelMultisetType > volumeLabels;
 
-	/** Size of the partition on x axis */
-	private final int partitionXSize;
-
-	/** Size of the partition on y axis */
-	private final int partitionYSize;
-
-	/** Size of the partition on z axis */
-	private final int partitionZSize;
+	/** Minimum size of each partition the partition */
+	private final int[] partitionSize;
 
 	/**
 	 * dimension of the cube that will be used on the marching cubes algorithm
 	 */
-	private final float[] voxDim;
+	private final int[] cubeSize;
 
 	/**
 	 * Constructor - initialize parameters
 	 */
-	public VolumePartitioner( RandomAccessibleInterval< LabelMultisetType > volumeLabels, int[] partitionSize, float[] voxDim )
+	public VolumePartitioner( RandomAccessibleInterval< LabelMultisetType > volumeLabels, int[] partitionSize, int[] cubeSize )
 	{
 		this.volumeLabels = volumeLabels;
-		this.partitionXSize = partitionSize[ 0 ];
-		this.partitionYSize = partitionSize[ 1 ];
-		this.partitionZSize = partitionSize[ 2 ];
-		this.voxDim = voxDim;
+		this.partitionSize = partitionSize;
+		this.cubeSize = cubeSize;
 
 		if ( LOGGER.isTraceEnabled() )
 		{
-			LOGGER.trace( "partition defined as: " + partitionXSize + " " + partitionYSize + " " + partitionZSize );
+			LOGGER.trace( "partition defined as: " + partitionSize[ 0 ] + " " + partitionSize[ 1 ] + " " + partitionSize[ 2 ] );
 		}
 	}
 
@@ -70,16 +62,16 @@ public class VolumePartitioner
 	 */
 	public void dataPartitioning( List< RandomAccessibleInterval< LabelMultisetType > > subvolumes, List< int[] > offsets )
 	{
-		for ( long bx = volumeLabels.min( 0 ); ( bx + partitionXSize ) <= volumeLabels.max( 0 ); bx += partitionXSize )
+		for ( long bx = volumeLabels.min( 0 ); ( bx + partitionSize[ 0 ] ) <= volumeLabels.max( 0 ); bx += partitionSize[ 0 ] )
 		{
-			for ( long by = volumeLabels.min( 1 ); ( by + partitionYSize ) <= volumeLabels.max( 1 ); by += partitionYSize )
+			for ( long by = volumeLabels.min( 1 ); ( by + partitionSize[ 1 ] ) <= volumeLabels.max( 1 ); by += partitionSize[1 ] )
 			{
-				for ( long bz = volumeLabels.min( 2 ); ( bz + partitionZSize ) <= volumeLabels.max( 2 ); bz += partitionZSize )
+				for ( long bz = volumeLabels.min( 2 ); ( bz + partitionSize[ 2 ] ) <= volumeLabels.max( 2 ); bz += partitionSize[ 2 ] )
 				{
 					long[] begin = new long[] { bx, by, bz };
-					long[] end = new long[] { begin[ 0 ] + partitionXSize,
-							begin[ 1 ] + partitionYSize,
-							begin[ 2 ] + partitionZSize };
+					long[] end = new long[] { begin[ 0 ] + partitionSize[ 0 ],
+							begin[ 1 ] + partitionSize[ 1 ],
+							begin[ 2 ] + partitionSize[ 2 ] };
 
 					if (LOGGER.isTraceEnabled())
 					{
@@ -102,24 +94,24 @@ public class VolumePartitioner
 						begin[ 2 ] -= OVERLAP;
 					}
 
-					if ( volumeLabels.max( 0 ) - end[ 0 ] < partitionXSize )
+					if ( volumeLabels.max( 0 ) - end[ 0 ] < partitionSize[ 0 ] )
 					{
 						end[ 0 ] = volumeLabels.max( 0 );
 					}
 
-					if ( volumeLabels.max( 1 ) - end[ 1 ] < partitionYSize )
+					if ( volumeLabels.max( 1 ) - end[ 1 ] < partitionSize[ 1 ] )
 					{
 						end[ 1 ] = volumeLabels.max( 1 );
 					}
 
-					if ( volumeLabels.max( 2 ) - end[ 2 ] < partitionZSize )
+					if ( volumeLabels.max( 2 ) - end[ 2 ] < partitionSize[ 2 ] )
 					{
 						end[ 2 ] = volumeLabels.max( 2 );
 					}
 
 					final RandomAccessibleInterval< LabelMultisetType > partition = Views.interval( volumeLabels, begin, end );
 
-					offsets.add( new int[] { ( int ) ( begin[ 0 ] / voxDim[ 0 ] ), ( int ) ( begin[ 1 ] / voxDim[ 1 ] ), ( int ) ( begin[ 2 ] / voxDim[ 2 ] ) } );
+					offsets.add( new int[] { ( int ) ( begin[ 0 ] / cubeSize[ 0 ] ), ( int ) ( begin[ 1 ] / cubeSize[ 1 ] ), ( int ) ( begin[ 2 ] / cubeSize[ 2 ] ) } );
 					if ( LOGGER.isDebugEnabled() )
 					{
 						LOGGER.debug( "partition begins at: " + begin[ 0 ] + " " + begin[ 1 ] + " " + begin[ 2 ] );

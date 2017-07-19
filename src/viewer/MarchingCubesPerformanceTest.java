@@ -4,7 +4,7 @@ import bdv.img.h5.H5LabelMultisetSetupImageLoader;
 import bdv.labels.labelset.LabelMultisetType;
 import ch.systemsx.cisd.hdf5.HDF5Factory;
 import ch.systemsx.cisd.hdf5.IHDF5Reader;
-import marchingCubes.MarchingCubesRAI;
+import marchingCubes.MarchingCubes;
 import net.imglib2.RandomAccessibleInterval;
 import util.HDF5Reader;
 
@@ -37,6 +37,8 @@ public class MarchingCubesPerformanceTest
 	static int[] offsets = {0, 0, 0};
 
 	static String filename = "";
+	
+	static marchingCubes.MarchingCubes.ForegroundCriterion criterion = marchingCubes.MarchingCubes.ForegroundCriterion.EQUAL;
 
 	public static void main( String[] args ) throws IOException
 	{
@@ -51,7 +53,7 @@ public class MarchingCubesPerformanceTest
 
 		volumeLabels = labels.get( 0 ).getImage( 0 );
 
-		int isoLevel = 0;
+		int foregroundValue = 0;
 		for ( int size = 32; size >= 1; size /= 2 )
 		{
 			filename = "mc_arraylist_" + size + ".txt";
@@ -66,14 +68,14 @@ public class MarchingCubesPerformanceTest
 			}
 			System.setOut( fileStream );
 
-			float[] voxDim = { size, size, size };
+			int[] cubeSize = { size, size, size };
 			for ( int i = 0; i < 27; i++ )
 			{
-				isoLevel = i + 1;
-				System.out.println( "MarchingCubes isolevel: " + isoLevel );
-				MarchingCubesRAI mc_rai = new MarchingCubesRAI();
+				foregroundValue = i + 1;
+				System.out.println( "MarchingCubes isolevel: " + foregroundValue );
+				MarchingCubes mc_rai = new MarchingCubes();
 				begin = new Timestamp( System.currentTimeMillis() );
-				mc_rai.generateSurface( volumeLabels, volDim, offsets, voxDim, true, isoLevel, false );
+				mc_rai.generateMesh( volumeLabels, volDim, offsets, cubeSize, criterion, foregroundValue, true );
 				end = new Timestamp( System.currentTimeMillis() );
 				System.out.println( "complete time for generating mesh: " + ( end.getTime() - begin.getTime() ) );
 			}

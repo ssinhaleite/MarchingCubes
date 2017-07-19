@@ -22,13 +22,15 @@ import net.imglib2.view.Views;
 import viewer.Mesh;
 
 /**
- * MarchingCubes from
- * https://github.com/funkey/sg_gui/blob/master/MarchingCubes.h
+ * Implements the marching cubes algorithm.
+ * Based on http://paulbourke.net/geometry/polygonise/
+ * 
+ * @author vleite
  */
-public class MarchingCubesRAI
+public class MarchingCubes
 {
 	/** logger */
-	private static final Logger LOGGER = LoggerFactory.getLogger( MarchingCubesRAI.class );
+	private static final Logger LOGGER = LoggerFactory.getLogger( MarchingCubes.class );
 
 	/** List of Point3ds which form the isosurface. */
 	private HashMap< Long, Point3dId > id2Point3dId = new HashMap< Long, Point3dId >();
@@ -39,28 +41,35 @@ public class MarchingCubesRAI
 	/** List of Triangles which form the triangulation of the isosurface. */
 	private Vector< Triangle > triangleVector = new Vector< Triangle >();
 
-	/** No. of cells in x and y directions. */
+	/** No. of cells in x, y and z directions. */
 	private long nCellsX, nCellsY, nCellsZ;
 
-	/** The isosurface value. */
-	private int isoLevel;
+	/** The value (id) that we will use to create the mesh. */
+	private int foregroundValue;
 
 	/** Indicates whether a valid surface is present. */
 	private boolean hasValidSurface;
 
-	/**
-	 * Indicates if the threshold will be applied for the exact value or above
-	 * it
-	 */
-	private boolean acceptExactly = false;
+	/**Indicates which criterion is going to be applied */
+	private ForegroundCriterion criterion = ForegroundCriterion.EQUAL;
 
-	List< Long > volume = new ArrayList< Long >();
+	/** array where the data will be copied if {@link #copyToArray} is true */
+	List< Long > volumeArray = new ArrayList< Long >();
 
-	int xWidth = 0;
+	/** dimension on x direction, used to access the volume as an array */
+	private int xWidth = 0;
 
-	int xyWidth = 0;
+	/** dimension on xy direction, used to access the volume as an array */
+	private int xyWidth = 0;
 
-	float[] voxDim;
+	/** size of the cube */
+	int[] cubeSize;
+	
+	public enum ForegroundCriterion
+	{
+		EQUAL,
+		GREATER_EQUAL
+	}
 
 	/**
 	 * A point in 3D with an id
@@ -92,12 +101,12 @@ public class MarchingCubesRAI
 	/**
 	 * Creates the mesh given a volume
 	 */
-	public MarchingCubesRAI()
+	public MarchingCubes()
 	{
 		nCellsX = 0;
 		nCellsY = 0;
 		hasValidSurface = false;
-		acceptExactly = false;
+		criterion = ForegroundCriterion.EQUAL;;
 	}
 
 	int[] offset;
@@ -106,19 +115,19 @@ public class MarchingCubesRAI
 	 * 
 	 * @param input
 	 * @param volDim
-	 * @param voxDim
-	 * @param isExact
+	 * @param cubeSize
+	 * @param foregroundCriteria
 	 * @param level
-	 * @param usingRAI
+	 * @param copyToArray
 	 * @return
 	 */
-	public Mesh generateSurface( RandomAccessibleInterval< LabelMultisetType > input, int[] volDim, int[] offset, float[] voxDim,
-			boolean isExact, int level, boolean usingRAI )
+	public Mesh generateMesh( RandomAccessibleInterval< LabelMultisetType > input, int[] volDim, int[] offset, int[] cubeSize,
+			ForegroundCriterion foregroundCriteria, int level, boolean copyToArray )
 	{
-		if ( usingRAI )
-			return generateSurfaceRAI( input, volDim, offset, voxDim, isExact, level );
+		if ( copyToArray )
+			return generateMeshFromArray( input, volDim, offset, cubeSize, foregroundCriteria, level );
 
-		return generateSurfaceArray( input, volDim, offset, voxDim, isExact, level );
+		return generateMeshFromRAI( input, volDim, offset, cubeSize, foregroundCriteria, level );
 	}
 
 	/**
@@ -126,13 +135,13 @@ public class MarchingCubesRAI
 	 * @param input
 	 * @param volDim
 	 * @param offset
-	 * @param voxDim
+	 * @param cubeSize
 	 * @param isExact
 	 * @param level
 	 * @return
 	 */
-	public Mesh generateSurfaceRAI( RandomAccessibleInterval< LabelMultisetType > input, int[] volDim, int[] offset, float[] voxDim,
-			boolean isExact, int level )
+	private Mesh generateMeshFromRAI( RandomAccessibleInterval< LabelMultisetType > input, int[] volDim, int[] offset, int[] cubeSize,
+			ForegroundCriterion criterion, int level )
 	{
 
 		if ( hasValidSurface )
@@ -142,11 +151,11 @@ public class MarchingCubesRAI
 
 		mesh = new Mesh();
 
-		isoLevel = level;
+		foregroundValue = level;
 
-		nCellsX = ( long ) Math.ceil( volDim[ 0 ] / voxDim[ 0 ] ) - 1;
-		nCellsY = ( long ) Math.ceil( volDim[ 1 ] / voxDim[ 1 ] ) - 1;
-		acceptExactly = isExact;
+		nCellsX = ( long ) Math.ceil( volDim[ 0 ] / cubeSize[ 0 ] ) - 1;
+		nCellsY = ( long ) Math.ceil( volDim[ 1 ] / cubeSize[ 1 ] ) - 1;
+		this.criterion = criterion;
 
 		ExtendedRandomAccessibleInterval< LabelMultisetType, RandomAccessibleInterval< LabelMultisetType > > extended = Views
 				.extendValue( input, new LabelMultisetType() );
@@ -222,13 +231,13 @@ public class MarchingCubesRAI
 	 * @param input
 	 * @param volDim
 	 * @param offset
-	 * @param voxDim
+	 * @param cubeSize
 	 * @param isExact
 	 * @param level
 	 * @return
 	 */
-	public Mesh generateSurfaceArray( RandomAccessibleInterval< LabelMultisetType > input, int[] volDim, int[] offset, float[] voxDim,
-			boolean isExact, int level )
+	private Mesh generateMeshFromArray( RandomAccessibleInterval< LabelMultisetType > input, int[] volDim, int[] offset, int[] cubeSize,
+			ForegroundCriterion criterion, int level )
 	{
 		if ( hasValidSurface )
 		{
@@ -237,10 +246,10 @@ public class MarchingCubesRAI
 
 		mesh = new Mesh();
 		this.offset = offset;
-		isoLevel = level;
+		foregroundValue = level;
 
-		this.voxDim = voxDim;
-		acceptExactly = isExact;
+		this.cubeSize = cubeSize;
+		this.criterion = criterion;
 
 		final ExtendedRandomAccessibleInterval< LabelMultisetType, RandomAccessibleInterval< LabelMultisetType > > extended = Views
 				.extendValue( input, new LabelMultisetType() );
@@ -257,7 +266,7 @@ public class MarchingCubesRAI
 
 			for ( final Multiset.Entry< Label > e : iterator.entrySet() )
 			{
-				volume.add( e.getElement().id() );
+				volumeArray.add( e.getElement().id() );
 				LOGGER.trace( " {}" , e.getElement().id() );
 			}
 		}
@@ -267,16 +276,16 @@ public class MarchingCubesRAI
 		xWidth = ( volDim[ 0 ] + 2 );
 		xyWidth = xWidth * ( volDim[ 1 ] + 2 );
 
-		nCellsX = ( long ) Math.ceil( ( volDim[ 0 ] + 2 ) / voxDim[ 0 ] ) - 1;
-		nCellsY = ( long ) Math.ceil( ( volDim[ 1 ] + 2 ) / voxDim[ 1 ] ) - 1;
-		nCellsZ = ( long ) Math.ceil( ( volDim[ 2 ] + 2 ) / voxDim[ 2 ] ) - 1;
+		nCellsX = ( long ) Math.ceil( ( volDim[ 0 ] + 2 ) / cubeSize[ 0 ] ) - 1;
+		nCellsY = ( long ) Math.ceil( ( volDim[ 1 ] + 2 ) / cubeSize[ 1 ] ) - 1;
+		nCellsZ = ( long ) Math.ceil( ( volDim[ 2 ] + 2 ) / cubeSize[ 2 ] ) - 1;
 
 		if ( LOGGER.isDebugEnabled() )
 		{
-			LOGGER.debug( "volume size: " + volume.size() );
+			LOGGER.debug( "volume size: " + volumeArray.size() );
 			LOGGER.debug( "xWidth: " + xWidth + " xyWidth: " + xyWidth );
 			LOGGER.debug( "ncells - x, y, z: " + nCellsX + " " + nCellsY + " " + nCellsZ );
-			LOGGER.debug( "max position on array: " + ( ( ( int ) ( voxDim[ 2 ] * nCellsZ ) * xyWidth + ( int ) ( voxDim[ 1 ] * nCellsY ) * xWidth + ( int ) ( voxDim[ 0 ] * nCellsX ) ) ) );
+			LOGGER.debug( "max position on array: " + ( ( ( int ) ( cubeSize[ 2 ] * nCellsZ ) * xyWidth + ( int ) ( cubeSize[ 1 ] * nCellsY ) * xWidth + ( int ) ( cubeSize[ 0 ] * nCellsX ) ) ) );
 		}
 
 		double[] vertexValues = new double[ 8 ];
@@ -314,14 +323,14 @@ public class MarchingCubesRAI
 					// This way, we need to remap the cube vertices:
 					// @formatter:on
 
-					vertexValues[ 7 ] = volume.get( ( ( int ) ( voxDim[ 2 ] * cursorZ ) * xyWidth + ( int ) ( voxDim[ 1 ] * cursorY ) * xWidth + ( int ) ( cursorX * voxDim[ 0 ] ) ) );
-					vertexValues[ 3 ] = volume.get( ( ( int ) ( voxDim[ 2 ] * cursorZ ) * xyWidth + ( int ) ( voxDim[ 1 ] * cursorY ) * xWidth + ( int ) ( voxDim[ 0 ] * ( cursorX + 1 ) ) ) );
-					vertexValues[ 6 ] = volume.get( ( ( int ) ( voxDim[ 2 ] * cursorZ ) * xyWidth + ( int ) ( ( voxDim[ 1 ] * ( cursorY + 1 ) ) ) * xWidth + ( int ) ( voxDim[ 0 ] * cursorX ) ) );
-					vertexValues[ 2 ] = volume.get( ( ( int ) ( voxDim[ 2 ] * cursorZ ) * xyWidth + ( int ) ( ( voxDim[ 1 ] * ( cursorY + 1 ) ) ) * xWidth + ( int ) ( voxDim[ 0 ] * ( cursorX + 1 ) ) ) );
-					vertexValues[ 4 ] = volume.get( ( ( ( int ) ( voxDim[ 2 ] * ( cursorZ + 1 ) ) ) * xyWidth + ( int ) ( voxDim[ 1 ] * cursorY ) * xWidth + ( int ) ( voxDim[ 0 ] * cursorX ) ) );
-					vertexValues[ 0 ] = volume.get( ( ( ( int ) ( voxDim[ 2 ] * ( cursorZ + 1 ) ) ) * xyWidth + ( int ) ( voxDim[ 1 ] * cursorY ) * xWidth + ( int ) ( voxDim[ 0 ] * ( cursorX + 1 ) ) ) );
-					vertexValues[ 5 ] = volume.get( ( ( ( int ) ( voxDim[ 2 ] * ( cursorZ + 1 ) ) ) * xyWidth + ( int ) ( voxDim[ 1 ] * ( cursorY + 1 ) ) * xWidth + ( int ) ( voxDim[ 0 ] * cursorX ) ) );
-					vertexValues[ 1 ] = volume.get( ( ( ( int ) ( voxDim[ 2 ] * ( cursorZ + 1 ) ) ) * xyWidth + ( int ) ( voxDim[ 1 ] * ( cursorY + 1 ) ) * xWidth + ( int ) ( voxDim[ 0 ] * ( cursorX + 1 ) ) ) );
+					vertexValues[ 7 ] = volumeArray.get( ( ( int ) ( cubeSize[ 2 ] * cursorZ ) * xyWidth + ( int ) ( cubeSize[ 1 ] * cursorY ) * xWidth + ( int ) ( cursorX * cubeSize[ 0 ] ) ) );
+					vertexValues[ 3 ] = volumeArray.get( ( ( int ) ( cubeSize[ 2 ] * cursorZ ) * xyWidth + ( int ) ( cubeSize[ 1 ] * cursorY ) * xWidth + ( int ) ( cubeSize[ 0 ] * ( cursorX + 1 ) ) ) );
+					vertexValues[ 6 ] = volumeArray.get( ( ( int ) ( cubeSize[ 2 ] * cursorZ ) * xyWidth + ( int ) ( ( cubeSize[ 1 ] * ( cursorY + 1 ) ) ) * xWidth + ( int ) ( cubeSize[ 0 ] * cursorX ) ) );
+					vertexValues[ 2 ] = volumeArray.get( ( ( int ) ( cubeSize[ 2 ] * cursorZ ) * xyWidth + ( int ) ( ( cubeSize[ 1 ] * ( cursorY + 1 ) ) ) * xWidth + ( int ) ( cubeSize[ 0 ] * ( cursorX + 1 ) ) ) );
+					vertexValues[ 4 ] = volumeArray.get( ( ( ( int ) ( cubeSize[ 2 ] * ( cursorZ + 1 ) ) ) * xyWidth + ( int ) ( cubeSize[ 1 ] * cursorY ) * xWidth + ( int ) ( cubeSize[ 0 ] * cursorX ) ) );
+					vertexValues[ 0 ] = volumeArray.get( ( ( ( int ) ( cubeSize[ 2 ] * ( cursorZ + 1 ) ) ) * xyWidth + ( int ) ( cubeSize[ 1 ] * cursorY ) * xWidth + ( int ) ( cubeSize[ 0 ] * ( cursorX + 1 ) ) ) );
+					vertexValues[ 5 ] = volumeArray.get( ( ( ( int ) ( cubeSize[ 2 ] * ( cursorZ + 1 ) ) ) * xyWidth + ( int ) ( cubeSize[ 1 ] * ( cursorY + 1 ) ) * xWidth + ( int ) ( cubeSize[ 0 ] * cursorX ) ) );
+					vertexValues[ 1 ] = volumeArray.get( ( ( ( int ) ( cubeSize[ 2 ] * ( cursorZ + 1 ) ) ) * xyWidth + ( int ) ( cubeSize[ 1 ] * ( cursorY + 1 ) ) * xWidth + ( int ) ( cubeSize[ 0 ] * ( cursorX + 1 ) ) ) );
 
 					if (LOGGER.isDebugEnabled())
 					{
@@ -687,19 +696,19 @@ public class MarchingCubesRAI
 			break;
 		}
 
-		p1.setPosition(((v1x + offset[0]) * voxDim[0]), 0);
-		p1.setPosition(((v1y + offset[1]) * voxDim[1]), 1);
-		p1.setPosition(((v1z + offset[2]) * voxDim[2]), 2);
-		p2.setPosition(((v2x + offset[0]) * voxDim[0]), 0);
-		p2.setPosition(((v2y + offset[1]) * voxDim[1]), 1);
-		p2.setPosition(((v2z + offset[2]) * voxDim[2]), 2);
+		p1.setPosition(((v1x + offset[0]) * cubeSize[0]), 0);
+		p1.setPosition(((v1y + offset[1]) * cubeSize[1]), 1);
+		p1.setPosition(((v1z + offset[2]) * cubeSize[2]), 2);
+		p2.setPosition(((v2x + offset[0]) * cubeSize[0]), 0);
+		p2.setPosition(((v2y + offset[1]) * cubeSize[1]), 1);
+		p2.setPosition(((v2z + offset[2]) * cubeSize[2]), 2);
 
 		if (LOGGER.isTraceEnabled())
 		{
 			LOGGER.trace( "p1: " + p1.getDoublePosition( 0 ) + " " + p1.getDoublePosition( 1 ) + " " + p1.getDoublePosition( 2 ) );
 			LOGGER.trace( "p2: " + p2.getDoublePosition( 0 ) + " " + p2.getDoublePosition( 1 ) + " " + p2.getDoublePosition( 2 ) );
-			LOGGER.trace( "p1 value: " + volume.get( ( int )( voxDim[ 2 ] * v1z ) * xyWidth + ( int )( voxDim[ 1 ] * v1y ) * xWidth + ( int )( voxDim[ 0 ] * v1x ) ) );
-			LOGGER.trace( "p2 value: " + volume.get( ( int )( voxDim[ 2 ] * v2z ) * xyWidth + ( int )( voxDim[ 1 ] * v2y ) * xWidth + ( int )( voxDim[ 0 ] * v2x ) ) );
+			LOGGER.trace( "p1 value: " + volumeArray.get( ( int )( cubeSize[ 2 ] * v1z ) * xyWidth + ( int )( cubeSize[ 1 ] * v1y ) * xWidth + ( int )( cubeSize[ 0 ] * v1x ) ) );
+			LOGGER.trace( "p2 value: " + volumeArray.get( ( int )( cubeSize[ 2 ] * v2z ) * xyWidth + ( int )( cubeSize[ 1 ] * v2y ) * xWidth + ( int )( cubeSize[ 0 ] * v2x ) ) );
 		}
 
 		float diffX = p2.getFloatPosition(0) - p1.getFloatPosition(0);
@@ -813,23 +822,25 @@ public class MarchingCubesRAI
 	}
 
 	/**
-	 * Checks if the given value is equal or above a certain threshold. This
-	 * comparison is dependent on the variable {@link #acceptExactly}
+	 * Checks if the given value match the threshold accordingly with the 
+	 * foreground criterion. This comparison is dependent on the variable 
+	 * {@link #criterion}
 	 * 
 	 * @param vertexValue
 	 *            value that will be compared with the isolevel
+	 * 
 	 * @return true if it comply with the comparison, false otherwise.
 	 */
 	private boolean interiorTest(final double vertexValue)
 	{
 
-		if (acceptExactly)
+		if (criterion.equals( ForegroundCriterion.EQUAL ))
 		{
-			return (vertexValue == isoLevel);
+			return (vertexValue == foregroundValue);
 		} 
 		else
 		{
-			return (vertexValue < isoLevel);
+			return (vertexValue < foregroundValue);
 		}
 	}
 

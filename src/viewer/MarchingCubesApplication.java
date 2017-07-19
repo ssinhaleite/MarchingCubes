@@ -57,7 +57,7 @@ public class MarchingCubesApplication
 	/** small hdf5 for test - subset from sample B */
 	private static String path = "data/sample_B_20160708_frags_46_50.hdf";
 
-	private static int isoLevel = 7;
+	private static int foregroundValue = 7;
 
 	private static int[] volDim = { 500, 500, 5 };
 
@@ -68,12 +68,13 @@ public class MarchingCubesApplication
 //	 int isoLevel = 2;
 //	 int[] volDim = {3, 3, 3};
 
-//	static float[] voxDim = { 0.5f, 0.5f, 0.5f };
-	private static float[] voxDim = { 4f, 4f, 4f };
+	private static int[] cubeSize = { 4, 4, 4 };
 
 	private static PrintWriter writer = null;
 
 	private static float maxAxisVal = 0;
+	
+	private static marchingCubes.MarchingCubes.ForegroundCriterion criterion = marchingCubes.MarchingCubes.ForegroundCriterion.EQUAL;
 
 	/**
 	 * This method loads the hdf file
@@ -119,6 +120,11 @@ public class MarchingCubesApplication
 		viewer.main();
 	}
 
+	/**
+	 * Application - viewer
+	 * @author vleite
+	 *
+	 */
 	private static class MarchingCubeApplication extends SceneryDefaultApplication
 	{
 		public MarchingCubeApplication( String applicationName, int windowWidth, int windowHeight )
@@ -133,7 +139,7 @@ public class MarchingCubesApplication
 
 			try
 			{
-				writer = new PrintWriter( "vertices_16.txt", "UTF-8" );
+				writer = new PrintWriter( "vertices_.txt", "UTF-8" );
 			}
 			catch ( IOException e )
 			{
@@ -255,16 +261,16 @@ public class MarchingCubesApplication
 				material.setDiffuse( new GLVector( 1, 1 , 0 ) );
 
 			neuron.setMaterial( material );
-			neuron.setName( String.valueOf(isoLevel + " " + voxSize) );
+			neuron.setName( String.valueOf(foregroundValue + " " + voxSize) );
 			neuron.setPosition( new GLVector( 0.0f, 0.0f, 0.0f ) );
 //			neuron.setScale( new GLVector( 1.0f, 1.0f, 10.0f ) );
 			neuron.setGeometryType( GeometryType.POINTS );
 			scene.addChild( neuron);
-			voxDim[0] = voxSize;
-			voxDim[1] = voxSize;
-			voxDim[2] = 1;
+			cubeSize[0] = voxSize;
+			cubeSize[1] = voxSize;
+			cubeSize[2] = 1;
 	
-			util.VolumePartitioner partitioner = new util.VolumePartitioner( volumeLabels, partitionSize, voxDim );
+			util.VolumePartitioner partitioner = new util.VolumePartitioner( volumeLabels, partitionSize, cubeSize );
 			partitioner.dataPartitioning( subvolumes, offsets );
 //		}
 //		subvolumes.clear();
@@ -294,8 +300,8 @@ public class MarchingCubesApplication
 						( int ) subvolumes.get( i ).dimension( 2 ) };
 	
 				LOGGER.info( "offset: " + offsets.get( i )[ 0 ] + " " + offsets.get( i )[ 1 ] + " " + offsets.get( i )[ 2 ] );
-				MarchingCubesCallable callable = new MarchingCubesCallable( subvolumes.get( i ), subvolDim, offsets.get( i ), voxDim, true, isoLevel,
-						false );
+				MarchingCubesCallable callable = new MarchingCubesCallable( subvolumes.get( i ), subvolDim, offsets.get( i ), cubeSize, criterion, foregroundValue,
+						true );
 	
 				LOGGER.trace( "callable: " + callable );
 				Future< viewer.Mesh > result = executor.submit( callable );
@@ -518,7 +524,7 @@ public class MarchingCubesApplication
 //					logger.debug( "dists - 4: " + dist3 + " 2: " + dist2 + " 1: " + dist1 );
 //					if ( diff < 6 && diff >= 3 && dist3 )
 //					{
-//						voxDim = new float[] { 1.0f, 1.0f, 1.0f };
+//						cubeSize = new float[] { 1 , 1 , 1 };
 //						logger.debug( "updating mesh dist4" );
 //						logger.debug( "position before: " + neuron.getPosition() );
 //						marchingCube( neuron, neuron.getMaterial(), scene, cam );
@@ -531,7 +537,7 @@ public class MarchingCubesApplication
 
 //					else if ( diff < 3 && diff >= 2 && dist2 )
 //					{
-//						voxDim = new float[] { 1.0f, 1.0f, 1.0f };
+//						cubeSize = new int[] { 1, 1, 1 };
 //						logger.debug( "updating mesh dist2" );
 //						marchingCube( neuron, neuron.getMaterial(), scene, cam );
 //						dist2 = false;
@@ -540,7 +546,7 @@ public class MarchingCubesApplication
 //					}
 //					else if ( diff < 2 && diff >= 1 && dist1 )
 //					{
-//						voxDim = new float[] { 0.5f, 0.5f, 0.5f };
+//						cubeSize = new float[] { 1, 1, 1 };
 //						logger.debug( "updating mesh dist1" );
 //						marchingCube( neuron, neuron.getMaterial(), scene, cam );
 //						dist1 = false;

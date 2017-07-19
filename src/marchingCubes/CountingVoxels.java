@@ -27,16 +27,7 @@ public class CountingVoxels
 		numberOfActiveVoxels = 0;
 	}
 
-	/**
-	 * Creates the mesh given a volume
-	 * 
-	 * @param voxDim
-	 *            dimensions x, y, z of the cube
-	 * @param volDim
-	 *            dimensions x, y, z of the volume
-	 * @return a triangle mesh
-	 */
-	public void countingVoxels( RandomAccessibleInterval< LabelMultisetType > input, float[] voxDim, int[] volDim, boolean isExact, int level )
+	public void countingVoxels( RandomAccessibleInterval< LabelMultisetType > input, int[] cubeSize, int[] volDim, boolean isExact, int level )
 	{
 //		Timestamp begin = new Timestamp( System.currentTimeMillis() );
 
@@ -58,7 +49,7 @@ public class CountingVoxels
 		}
 	}
 	
-	public void countingActiveVoxels( RandomAccessibleInterval< LabelMultisetType > input, float[] voxDim, int[] volDim, boolean isExact, int level )
+	public void countingActiveVoxels( RandomAccessibleInterval< LabelMultisetType > input, int[] voxDim, int[] volDim, boolean isExact, int level )
 	{
 //		Timestamp begin = new Timestamp( System.currentTimeMillis() );
 
