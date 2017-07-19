@@ -256,7 +256,6 @@ public class MarchingCubesApplication
 
 			neuron.setMaterial( material );
 			neuron.setName( String.valueOf(isoLevel + " " + voxSize) );
-			neuron.setBillboard( true );
 			neuron.setPosition( new GLVector( 0.0f, 0.0f, 0.0f ) );
 //			neuron.setScale( new GLVector( 1.0f, 1.0f, 10.0f ) );
 			neuron.setGeometryType( GeometryType.POINTS );
