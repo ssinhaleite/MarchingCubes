@@ -1,11 +1,7 @@
 package marchingCubes;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map.Entry;
-import java.util.Vector;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,14 +28,8 @@ public class MarchingCubes
 	/** logger */
 	private static final Logger LOGGER = LoggerFactory.getLogger( MarchingCubes.class );
 
-	/** List of Point3ds which form the isosurface. */
-	private HashMap< Long, Point3dId > id2Point3dId = new HashMap< Long, Point3dId >();
-
 	/** the mesh that represents the surface. */
 	private Mesh mesh;
-
-	/** List of Triangles which form the triangulation of the isosurface. */
-	private Vector< Triangle > triangleVector = new Vector< Triangle >();
 
 	/** No. of cells in x, y and z directions. */
 	private long nCellsX, nCellsY, nCellsZ;
@@ -65,37 +55,12 @@ public class MarchingCubes
 	/** size of the cube */
 	int[] cubeSize;
 	
+	private ArrayList< float[] > vertices = new ArrayList<>();
+	
 	public enum ForegroundCriterion
 	{
 		EQUAL,
 		GREATER_EQUAL
-	}
-
-	/**
-	 * A point in 3D with an id
-	 */
-	private class Point3dId
-	{
-		private long id;
-
-		private float x, y, z;
-
-		/** constructor from RealPoint 3d - x, y, z */
-		private Point3dId( RealPoint point )
-		{
-			id = 0;
-			x = point.getFloatPosition( 0 );
-			y = point.getFloatPosition( 1 );
-			z = point.getFloatPosition( 2 );
-		}
-	}
-
-	/**
-	 * Triples of points that form a triangle.
-	 */
-	private class Triangle
-	{
-		private long[] point = new long[ 3 ];
 	}
 
 	/**
@@ -106,7 +71,7 @@ public class MarchingCubes
 		nCellsX = 0;
 		nCellsY = 0;
 		hasValidSurface = false;
-		criterion = ForegroundCriterion.EQUAL;;
+		criterion = ForegroundCriterion.EQUAL;
 	}
 
 	int[] offset;
@@ -220,7 +185,8 @@ public class MarchingCubes
 			triangulation( vertex_values, cursorX, cursorY, cursorZ );
 		}
 
-		renameVerticesAndTriangles();
+		System.out.println("going to updateVertices");
+		updateVertices();
 		hasValidSurface = true;
 
 		return mesh;
@@ -348,8 +314,10 @@ public class MarchingCubes
 				}
 			}
 		}
+		
+		System.out.println("number of vertices: " + vertices.size());
 
-		renameVerticesAndTriangles();
+		updateVertices();
 		hasValidSurface = true;
 
 		return mesh;
@@ -404,92 +372,85 @@ public class MarchingCubes
 		// @formatter: on
 
 		// Now create a triangulation of the isosurface in this cell.
+		float[][] interpolationPoints = new float[ 12 ][];
 		if (MarchingCubesTables.MC_EDGE_TABLE[tableIndex] != 0)
 		{
-			Point3dId point;
-			long edgeId;
 			if ((MarchingCubesTables.MC_EDGE_TABLE[tableIndex] & 1) != 0)
 			{
-				point = calculateIntersection(cursorX, cursorY, cursorZ, 0);
-				edgeId = getEdgeId(cursorX, cursorY, cursorZ, 0);
-				id2Point3dId.put(edgeId, point);
+				interpolationPoints[ 0 ] = calculateIntersection(cursorX, cursorY, cursorZ, 0);
 			}
+
 			if ((MarchingCubesTables.MC_EDGE_TABLE[tableIndex] & 2) != 0)
 			{
-				point = calculateIntersection(cursorX, cursorY, cursorZ, 1);
-				edgeId = getEdgeId(cursorX, cursorY, cursorZ, 1);
-				id2Point3dId.put(edgeId, point);
+				interpolationPoints[ 1 ] = calculateIntersection(cursorX, cursorY, cursorZ, 1);
 			}
+
 			if ((MarchingCubesTables.MC_EDGE_TABLE[tableIndex] & 4) != 0)
 			{
-				point = calculateIntersection(cursorX, cursorY, cursorZ, 2);
-				edgeId = getEdgeId(cursorX, cursorY, cursorZ, 2);
-				id2Point3dId.put(edgeId, point);
+				interpolationPoints[ 2 ] = calculateIntersection(cursorX, cursorY, cursorZ, 2);
 			}
+
 			if ((MarchingCubesTables.MC_EDGE_TABLE[tableIndex] & 8) != 0)
 			{
-				point = calculateIntersection(cursorX, cursorY, cursorZ, 3);
-				edgeId = getEdgeId(cursorX, cursorY, cursorZ, 3);
-				id2Point3dId.put(edgeId, point);
+				interpolationPoints[ 3 ] = calculateIntersection(cursorX, cursorY, cursorZ, 3);
 			}
+
 			if ((MarchingCubesTables.MC_EDGE_TABLE[tableIndex] & 16) != 0)
 			{
-				point = calculateIntersection(cursorX, cursorY, cursorZ, 4);
-				edgeId = getEdgeId(cursorX, cursorY, cursorZ, 4);
-				id2Point3dId.put(edgeId, point);
+				interpolationPoints[ 4 ] = calculateIntersection(cursorX, cursorY, cursorZ, 4);
 			}
-			if ((MarchingCubesTables.MC_EDGE_TABLE[tableIndex] & 32) != 0) {
-				point = calculateIntersection(cursorX, cursorY, cursorZ, 5);
-				edgeId = getEdgeId(cursorX, cursorY, cursorZ, 5);
-				id2Point3dId.put(edgeId, point);
+
+			if ((MarchingCubesTables.MC_EDGE_TABLE[tableIndex] & 32) != 0)
+			{
+				interpolationPoints[ 5 ] = calculateIntersection(cursorX, cursorY, cursorZ, 5);
 			}
+
 			if ((MarchingCubesTables.MC_EDGE_TABLE[tableIndex] & 64) != 0)
 			{
-				point = calculateIntersection(cursorX, cursorY, cursorZ, 6);
-				edgeId = getEdgeId(cursorX, cursorY, cursorZ, 6);
-				id2Point3dId.put(edgeId, point);
+				interpolationPoints[ 6 ] = calculateIntersection(cursorX, cursorY, cursorZ, 6);
 			}
+
 			if ((MarchingCubesTables.MC_EDGE_TABLE[tableIndex] & 128) != 0)
 			{
-				point = calculateIntersection(cursorX, cursorY, cursorZ, 7);
-				edgeId = getEdgeId(cursorX, cursorY, cursorZ, 7);
-				id2Point3dId.put(edgeId, point);
+				interpolationPoints[ 7 ] = calculateIntersection(cursorX, cursorY, cursorZ, 7);
 			}
+
 			if ((MarchingCubesTables.MC_EDGE_TABLE[tableIndex] & 256) != 0)
 			{
-				point = calculateIntersection(cursorX, cursorY, cursorZ, 8);
-				edgeId = getEdgeId(cursorX, cursorY, cursorZ, 8);
-				id2Point3dId.put(edgeId, point);
+				interpolationPoints[ 8 ] = calculateIntersection(cursorX, cursorY, cursorZ, 8);
 			}
+
 			if ((MarchingCubesTables.MC_EDGE_TABLE[tableIndex] & 512) != 0)
 			{
-				point = calculateIntersection(cursorX, cursorY, cursorZ, 9);
-				edgeId = getEdgeId(cursorX, cursorY, cursorZ, 9);
-				id2Point3dId.put(edgeId, point);
+				interpolationPoints[ 9 ] = calculateIntersection(cursorX, cursorY, cursorZ, 9);
 			}
+
 			if ((MarchingCubesTables.MC_EDGE_TABLE[tableIndex] & 1024) != 0)
 			{
-				point = calculateIntersection(cursorX, cursorY, cursorZ, 10);
-				edgeId = getEdgeId(cursorX, cursorY, cursorZ, 10);
-				id2Point3dId.put(edgeId, point);
+				interpolationPoints[ 10 ] = calculateIntersection(cursorX, cursorY, cursorZ, 10);
 			}
+
 			if ((MarchingCubesTables.MC_EDGE_TABLE[tableIndex] & 2048) != 0)
 			{
-				point = calculateIntersection(cursorX, cursorY, cursorZ, 11);
-				edgeId = getEdgeId(cursorX, cursorY, cursorZ, 11);
-				id2Point3dId.put(edgeId, point);
+				interpolationPoints[ 11 ] = calculateIntersection(cursorX, cursorY, cursorZ, 11);
 			}
 
 			for (int i = 0; MarchingCubesTables.MC_TRI_TABLE[tableIndex][i] != MarchingCubesTables.Invalid; i += 3)
 			{
-				final Triangle triangle = new Triangle();
-				final long pointId0 = getEdgeId(cursorX, cursorY, cursorZ, MarchingCubesTables.MC_TRI_TABLE[tableIndex][i]);
-				final long pointId1 = getEdgeId(cursorX, cursorY, cursorZ, MarchingCubesTables.MC_TRI_TABLE[tableIndex][i + 1]);
-				final long pointId2 = getEdgeId(cursorX, cursorY, cursorZ, MarchingCubesTables.MC_TRI_TABLE[tableIndex][i + 2]);
-				triangle.point[0] = pointId0;
-				triangle.point[1] = pointId1;
-				triangle.point[2] = pointId2;
-				triangleVector.add(triangle);
+				vertices.add( new float[] {
+						interpolationPoints[ MarchingCubesTables.MC_TRI_TABLE[ tableIndex ][ i ] ][ 0 ],
+						interpolationPoints[ MarchingCubesTables.MC_TRI_TABLE[ tableIndex ][ i ] ][ 1 ],
+						interpolationPoints[ MarchingCubesTables.MC_TRI_TABLE[ tableIndex ][ i ] ][ 2 ]} );
+
+				vertices.add( new float[] {
+						interpolationPoints[ MarchingCubesTables.MC_TRI_TABLE[ tableIndex ][ i + 1 ] ][ 0 ],
+						interpolationPoints[ MarchingCubesTables.MC_TRI_TABLE[ tableIndex ][ i + 1 ] ][ 1 ],
+						interpolationPoints[ MarchingCubesTables.MC_TRI_TABLE[ tableIndex ][ i + 1 ] ][ 2 ]} );
+
+				vertices.add( new float[] {
+						interpolationPoints[ MarchingCubesTables.MC_TRI_TABLE[ tableIndex ][ i + 2] ][ 0 ],
+						interpolationPoints[ MarchingCubesTables.MC_TRI_TABLE[ tableIndex ][ i  + 2] ][ 1 ],
+						interpolationPoints[ MarchingCubesTables.MC_TRI_TABLE[ tableIndex ][ i  + 2] ][ 2 ]} );
 			}
 		}
 	}
@@ -501,74 +462,34 @@ public class MarchingCubes
 		hasValidSurface = false;
 	}
 
-	private void renameVerticesAndTriangles()
+	private void updateVertices()
 	{
-		long nextId = 0;
-		Iterator<Entry<Long, Point3dId>> mapIterator = id2Point3dId.entrySet().iterator();
-		Iterator<Triangle> vecIterator = triangleVector.iterator();
-		while (mapIterator.hasNext()) {
-			HashMap.Entry<Long, Point3dId> entry = mapIterator.next();
-			entry.getValue().id = nextId;
-			nextId++;
-		}
-
-		// Now rename triangles.
-		while (vecIterator.hasNext())
-		{
-			final Triangle next = vecIterator.next();
-			for (int i = 0; i < 3; i++)
-			{
-				long newId = id2Point3dId.get(next.point[i]).id;
-				next.point[i] = newId;
-			}
-		}
-
-		// Copy all the vertices and triangles into two arrays so that they
-		// can be efficiently accessed.
-		// Copy vertices.
-		final int numberOfVertices = id2Point3dId.size();
+		System.out.println("vertices size: " + vertices.size());
+		final int numberOfVertices = vertices.size();
 		mesh.setNumberOfVertices(numberOfVertices);
 
-		mapIterator = id2Point3dId.entrySet().iterator();
-		float[][] vertices = new float[numberOfVertices][3];
+		float[][] verticesArray = new float[numberOfVertices][3];
 
 		for (int i = 0; i < numberOfVertices; i++)
 		{
-			HashMap.Entry<Long, Point3dId> entry = mapIterator.next();
-			vertices[i][0] = entry.getValue().x;
-			vertices[i][1] = entry.getValue().y;
-			vertices[i][2] = entry.getValue().z;
+			verticesArray[i][0] = vertices.get( i )[ 0 ];
+			verticesArray[i][1] = vertices.get( i )[ 1 ];
+			verticesArray[i][2] = vertices.get( i )[ 2 ];
 			
 			if (LOGGER.isTraceEnabled())
 			{
-				LOGGER.trace( "vertex x: " + vertices[i][0] );
-				LOGGER.trace( "vertex y: " + vertices[i][1]);
-				LOGGER.trace( "vertex z: " + vertices[i][2]);
+				LOGGER.trace( "vertex x: " + verticesArray[i][0] );
+				LOGGER.trace( "vertex y: " + verticesArray[i][1] );
+				LOGGER.trace( "vertex z: " + verticesArray[i][2] );
 			}
 		}
 
-		mesh.setVertices(vertices);
-
-		// Copy vertex indices which make triangles.
-		vecIterator = triangleVector.iterator();
-		final int numberOfTriangles = triangleVector.size();
-		mesh.numberOfTriangles = numberOfTriangles;
-		int[] faces = new int[numberOfTriangles * 3];
-		for (int i = 0; i < numberOfTriangles; i++)
-		{
-			Triangle next = vecIterator.next();
-			faces[i * 3] = (int) next.point[0];
-			faces[i * 3 + 1] = (int) next.point[1];
-			faces[i * 3 + 2] = (int) next.point[2];
-		}
-
-		mesh.setTriangles(faces);
-		id2Point3dId.clear();
-		triangleVector.clear();
+		mesh.setVertices(verticesArray);
 	}
 
-	private Point3dId calculateIntersection( final int nX, final int nY, final int nZ, final int nEdgeNo )
+	private float[] calculateIntersection( final int nX, final int nY, final int nZ, final int nEdgeNo )
 	{
+		float[] interpolation = new float[3];
 		RealPoint p1 = new RealPoint(3), p2 = new RealPoint(3);
 		int v1x = nX, v1y = nY, v1z = nZ;
 		int v2x = nX, v2y = nY, v2z = nZ;
@@ -722,101 +643,10 @@ public class MarchingCubes
 		diffX += p1.getFloatPosition(0);
 		diffY += p1.getFloatPosition(1);
 		diffZ += p1.getFloatPosition(2);
-
-		return new Point3dId(new RealPoint(diffX, diffY, diffZ));// p1 + 0.5 * (p2-p1);;
-	}
-
-	private long getEdgeId(final long cursorX, final long cursorY, final long cursorZ, final int nEdgeNo)
-	{
-		switch (nEdgeNo)
-		{
-		case 0:
-			return getVertexId(cursorX, cursorY, cursorZ) + 1;
-		case 1:
-			return getVertexId(cursorX, cursorY + 1, cursorZ);
-		case 2:
-			return getVertexId(cursorX + 1, cursorY, cursorZ) + 1;
-		case 3:
-			return getVertexId(cursorX, cursorY, cursorZ);
-		case 4:
-			return getVertexId(cursorX, cursorY, cursorZ + 1) + 1;
-		case 5:
-			return getVertexId(cursorX, cursorY + 1, cursorZ + 1);
-		case 6:
-			return getVertexId(cursorX + 1, cursorY, cursorZ + 1) + 1;
-		case 7:
-			return getVertexId(cursorX, cursorY, cursorZ + 1);
-		case 8:
-			return getVertexId(cursorX, cursorY, cursorZ) + 2;
-		case 9:
-			return getVertexId(cursorX, cursorY + 1, cursorZ) + 2;
-		case 10:
-			return getVertexId(cursorX + 1, cursorY + 1, cursorZ) + 2;
-		case 11:
-			return getVertexId(cursorX + 1, cursorY, cursorZ) + 2;
-		default:
-			// Invalid edge no.
-			return MarchingCubesTables.Invalid;
-		}
-	}
-
-	private long getVertexId(final long cursorX, final long cursorY, final long cursorZ)
-	{
-		return 3 * (cursorZ * (nCellsY + 1) * (nCellsX + 1) + cursorY * (nCellsX + 1) + cursorX);
-	}
-
-	/**
-	 * Binary search for intersection. Given two points and its values,
-	 * interpolates the position of the intersection.
-	 * 
-	 * @param p1
-	 *            starting point
-	 * @param p2
-	 *            final point
-	 * @param val1
-	 *            value of starting point
-	 * @param val2
-	 *            value of final point.
-	 * @return
-	 */
-	private Point3dId findSurfaceIntersection(RealPoint p1, RealPoint p2, double val1, double val2)
-	{
-
-		Point3dId interpolation = null;
-
-		float mu = (float) 0.5;
-		float delta = (float) 0.25;
-
-		// assume that p1 is outside, p2 is inside
-		//
-		// mu == 0 -> p1, mu == 1 -> p2
-		//
-		// incrase mu -> go to inside
-		// decrease mu -> go to outside
-
-		for (long i = 0; i < 10; i++, delta /= 2.0)
-		{
-
-			float diffX = p2.getFloatPosition(0) - p1.getFloatPosition(0);
-			float diffY = p2.getFloatPosition(1) - p1.getFloatPosition(1);
-			float diffZ = p2.getFloatPosition(2) - p1.getFloatPosition(2);
-
-			diffX = diffX * mu;
-			diffY = diffY * mu;
-			diffZ = diffZ * mu;
-
-			diffX = diffX + p1.getFloatPosition(0);
-			diffY = diffY + p1.getFloatPosition(1);
-			diffZ = diffZ + p1.getFloatPosition(2);
-
-			RealPoint diff = new RealPoint(diffX, diffY, diffZ);
-			interpolation = new Point3dId(diff);// p1 + mu*(p2-p1);
-
-			if (interiorTest(val1 + mu * (val2 - val1)))
-				mu -= delta; // go to outside
-			else
-				mu += delta; // go to inside
-		}
+		
+		interpolation[ 0 ] = diffX;
+		interpolation[ 1 ] = diffY;
+		interpolation[ 2 ] = diffZ;
 
 		return interpolation;
 	}
