@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import bdv.labels.labelset.Label;
 import bdv.labels.labelset.LabelMultisetType;
 import bdv.labels.labelset.Multiset;
+import mpicbg.spim.data.sequence.VoxelDimensions;
 import net.imglib2.Cursor;
 import net.imglib2.FinalInterval;
 import net.imglib2.RandomAccessibleInterval;
@@ -112,46 +113,88 @@ public class MarchingCubes
 		if ( hasValidSurface )
 			deleteSurface();
 
-		this.offset = offset;
+		// when using RAI the offset is not necessary, because the data is not repositioned
+		this.offset = new int[] {0, 0, 0};
 
 		mesh = new Mesh();
 
 		foregroundValue = level;
 
-		nCellsX = ( long ) Math.ceil( volDim[ 0 ] / cubeSize[ 0 ] ) - 1;
-		nCellsY = ( long ) Math.ceil( volDim[ 1 ] / cubeSize[ 1 ] ) - 1;
-		this.criterion = criterion;
+		nCellsX = ( long ) Math.ceil( ( volDim[ 0 ] + 2 ) / cubeSize[ 0 ] );
+		nCellsY = ( long ) Math.ceil( ( volDim[ 1 ] + 2 ) / cubeSize[ 1 ] );
+		nCellsZ = ( long ) Math.ceil( ( volDim[ 2 ] + 2 ) / cubeSize[ 2 ] );
 
-		ExtendedRandomAccessibleInterval< LabelMultisetType, RandomAccessibleInterval< LabelMultisetType > > extended = Views
+		this.criterion = criterion;
+		this.cubeSize = cubeSize;
+
+		final ExtendedRandomAccessibleInterval< LabelMultisetType, RandomAccessibleInterval< LabelMultisetType > > extended = Views
 				.extendValue( input, new LabelMultisetType() );
-		Cursor< LabelMultisetType > c = Views
-				.interval( extended,
+
+		final Cursor< LabelMultisetType > cursor = Views
+				.flatIterable( Views.interval( extended,
 						new FinalInterval( new long[] { input.min( 0 ) - 1, input.min( 1 ) - 1, input.min( 2 ) - 1 },
-								new long[] { input.max( 0 ) + 1, input.max( 1 ) + 1, input.max( 2 ) + 1 } ) )
+								new long[] { input.max( 0 ) + 1, input.max( 1 ) + 1, input.max( 2 ) + 1 } ) ) )
 				.localizingCursor();
 
-		while ( c.hasNext() )
+		cursor.next();
+		int beginX = cursor.getIntPosition( 0 );
+
+		int xDirection = 0;
+		int yDirection = 0;
+		int zDirection = 0;
+		while ( cursor.hasNext() )
 		{
-			c.next();
+			int cursorX = cursor.getIntPosition( 0 );
+			int cursorY = cursor.getIntPosition( 1 );
+			int cursorZ = cursor.getIntPosition( 2 );
+			
+			if (beginX != cursorX)
+			{
+				xDirection++;
+			}
 
-			int cursorX = c.getIntPosition( 0 );
-			int cursorY = c.getIntPosition( 1 );
-			int cursorZ = c.getIntPosition( 2 );
+//			System.out.println("x y z: " + cursorX + " " + cursorY + " " + cursorZ);
+			
+//			cursor.next();
+//			cursor.next();
 
-			Cursor< LabelMultisetType > cu = getCube( extended, cursorX, cursorY, cursorZ );
+			List< Cursor< LabelMultisetType > > verticesCursor = new ArrayList< Cursor< LabelMultisetType > >();
+			verticesCursor.add( getCube( extended, cursorX, cursorY, cursorZ ) );
+			verticesCursor.add( getCube( extended, cursorX + cubeSize[ 0 ], cursorY, cursorZ ) );
+			verticesCursor.add( getCube( extended, cursorX, cursorY + cubeSize[ 1 ], cursorZ ) );
+			verticesCursor.add( getCube( extended, cursorX + cubeSize[ 0 ], cursorY + cubeSize[ 1 ], cursorZ ) );
+			verticesCursor.add( getCube( extended, cursorX, cursorY, cursorZ + cubeSize[ 2 ] ) );
+			verticesCursor.add( getCube( extended, cursorX + cubeSize[ 0 ], cursorY, cursorZ + cubeSize [ 2 ]) );
+			verticesCursor.add( getCube( extended, cursorX, cursorY + cubeSize[ 1 ], cursorZ + cubeSize[ 2 ] ) );
+			verticesCursor.add( getCube( extended, cursorX + cubeSize[ 0 ], cursorY + cubeSize[ 1 ], cursorZ + cubeSize[ 2 ] ) );
 
 			int i = 0;
-			double[] vertex_values = new double[ 8 ];
-			while ( cu.hasNext() )
-			{
-				LabelMultisetType it = cu.next();
+			double[] vertexValues = new double[ 8 ];
 
-				for ( final Multiset.Entry< Label > e : it.entrySet() )
+			for (int vert = 0; vert < verticesCursor.size(); vert++)
+			{
+				Cursor< LabelMultisetType > cursor2 = verticesCursor.get( vert );
+				while ( cursor2.hasNext() )
 				{
-					vertex_values[ i ] = e.getElement().id();
+					LabelMultisetType it = cursor2.next();
+
+					for ( final Multiset.Entry< Label > e : it.entrySet() )
+					{
+						vertexValues[ i ] = e.getElement().id();
+//						volumeArray.add( e.getElement().id() );
+					}
+					i++;
 				}
-				i++;
 			}
+			
+			// @formatter:off
+//			LOGGER.info( " " + ( int ) vertexValues[ 4 ] + "------" + ( int ) vertexValues[ 5 ] );
+//			LOGGER.info( " /|     /|" );
+//			LOGGER.info( " " + ( int ) vertexValues[ 7 ] + "-----" + ( int ) vertexValues[ 6 ] + " |" );
+//			LOGGER.info( " |" + ( int ) vertexValues[ 0 ] + "----|-" + ( int ) vertexValues[ 1 ] );
+//			LOGGER.info( " |/    |/" );
+//			LOGGER.info( " " + ( int ) vertexValues[ 3 ] + "-----" + ( int ) vertexValues[ 2 ] );
+			// @formatter:on
 
 			// @formatter:off
 			// the values from the cube are given first in z, then y, then x
@@ -180,12 +223,69 @@ public class MarchingCubes
 			// This way, we need to remap the cube vertices:
 			// @formatter:on
 
-			vertex_values = remapCube( vertex_values );
+			vertexValues = remapCube( vertexValues );
 
-			triangulation( vertex_values, cursorX, cursorY, cursorZ );
+			// @formatter:off
+//			LOGGER.info( " " + ( int ) vertexValues[ 4 ] + "------" + ( int ) vertexValues[ 5 ] );
+//			LOGGER.info( " /|     /|" );
+//			LOGGER.info( " " + ( int ) vertexValues[ 7 ] + "-----" + ( int ) vertexValues[ 6 ] + " |" );
+//			LOGGER.info( " |" + ( int ) vertexValues[ 0 ] + "----|-" + ( int ) vertexValues[ 1 ] );
+//			LOGGER.info( " |/    |/" );
+//			LOGGER.info( " " + ( int ) vertexValues[ 3 ] + "-----" + ( int ) vertexValues[ 2 ] );
+			// @formatter:on
+
+			triangulation( vertexValues, cursorX, cursorY, cursorZ );
+			
+			for (int j = 0; j < cubeSize[0];j++)
+				cursor.next();
+
+			if (xDirection == nCellsX - 1)
+			{
+				int newY = cursorY + cubeSize[ 1 ];
+				while(cursor.hasNext())
+				{
+					cursor.next();
+					cursorX = cursor.getIntPosition( 0 );
+					cursorY = cursor.getIntPosition( 1 );
+					if (cursorX == input.min( 0 ) - 1 && cursorY == newY )
+						break;
+				}
+				
+				xDirection = 0;
+				yDirection++;
+			}
+			
+			if (yDirection == nCellsY)
+			{
+				int newZ = cursorZ + cubeSize[ 2 ];
+				while(cursor.hasNext())
+				{
+					cursor.next();
+					cursorY = cursor.getIntPosition( 1 );
+					cursorZ = cursor.getIntPosition( 2 );
+					if (cursorY == input.min( 1 ) - 1 && cursorZ == newZ)
+						break;
+				}
+				
+				yDirection = 0;
+				zDirection++;
+			}
+
+			if (zDirection == nCellsZ)
+			{
+				while(cursor.hasNext())
+				{
+					cursor.next();
+					cursorZ = cursor.getIntPosition( 2 );
+					if (cursorZ == input.min( 2 ) - 1)
+						break;
+				}
+				
+				zDirection = 0;
+			}
+
 		}
 
-		System.out.println("going to updateVertices");
 		updateVertices();
 		hasValidSurface = true;
 
@@ -714,7 +814,12 @@ public class MarchingCubes
 			final ExtendedRandomAccessibleInterval<LabelMultisetType, RandomAccessibleInterval<LabelMultisetType>> extended,
 			final int cursorX, final int cursorY, final int cursorZ)
 	{
-		return Views.flatIterable(Views.interval(extended, new FinalInterval(new long[] { cursorX, cursorY, cursorZ },
-				new long[] { cursorX + 1, cursorY + 1, cursorZ + 1 }))).cursor();
+		long[] begin = new long[] { cursorX, cursorY, cursorZ };
+		long[] end = new long[] { cursorX, cursorY, cursorZ};
+
+//		System.out.println("inicio: " + begin[0] + " " + begin[1] + " " + begin[2]);
+//		System.out.println("final: " + end[0] + " " + end[1] + " " + end[2]);
+
+		return Views.flatIterable(Views.interval(extended, new FinalInterval( begin, end ))).cursor();
 	}
 }
