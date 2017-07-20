@@ -1,5 +1,6 @@
 package util;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -60,8 +61,10 @@ public class VolumePartitioner
 	 * @param offsets
 	 *            the offset of each subvolume
 	 */
-	public void dataPartitioning( List< RandomAccessibleInterval< LabelMultisetType > > subvolumes, List< int[] > offsets )
+	public List< Chunk > dataPartitioning( )
 	{
+		List< Chunk > chunks = new ArrayList< Chunk >();
+
 		for ( long bx = volumeLabels.min( 0 ); ( bx + partitionSize[ 0 ] ) <= volumeLabels.max( 0 ); bx += partitionSize[ 0 ] )
 		{
 			for ( long by = volumeLabels.min( 1 ); ( by + partitionSize[ 1 ] ) <= volumeLabels.max( 1 ); by += partitionSize[1 ] )
@@ -109,18 +112,20 @@ public class VolumePartitioner
 						end[ 2 ] = volumeLabels.max( 2 );
 					}
 
-					final RandomAccessibleInterval< LabelMultisetType > partition = Views.interval( volumeLabels, begin, end );
+					final Chunk chunk = new Chunk();
+					chunk.setVolume( Views.interval( volumeLabels, begin, end ) );
+					chunk.setOffset( new int[] { ( int ) ( begin[ 0 ] / cubeSize[ 0 ] ), ( int ) ( begin[ 1 ] / cubeSize[ 1 ] ), ( int ) ( begin[ 2 ] / cubeSize[ 2 ] ) } );
+					chunks.add( chunk );
 
-					offsets.add( new int[] { ( int ) ( begin[ 0 ] / cubeSize[ 0 ] ), ( int ) ( begin[ 1 ] / cubeSize[ 1 ] ), ( int ) ( begin[ 2 ] / cubeSize[ 2 ] ) } );
 					if ( LOGGER.isDebugEnabled() )
 					{
 						LOGGER.debug( "partition begins at: " + begin[ 0 ] + " " + begin[ 1 ] + " " + begin[ 2 ] );
 						LOGGER.debug( "partition ends at: " + end[ 0 ] + " " + end[ 1 ] + " " + end[ 2 ] );
 					}
-
-					subvolumes.add( partition );
 				}
 			}
 		}
+
+		return chunks;
 	}
 }
