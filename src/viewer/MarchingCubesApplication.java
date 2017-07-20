@@ -261,9 +261,11 @@ public class MarchingCubesApplication
 			util.VolumePartitioner partitioner = new util.VolumePartitioner( volumeLabels, partitionSize, cubeSize );
 			chunks = partitioner.dataPartitioning( );
 
-//			subvolumes.clear();
-//			subvolumes.add( volumeLabels );
-//			offsets.set( 0, new int[] { 0, 0, 0 } );
+//			chunks.clear();
+//			Chunk chunk = new Chunk();
+//			chunk.setVolume( volumeLabels );
+//			chunk.setOffset( new int[] { 0, 0, 0 } );
+//			chunks.add( chunk );
 
 			LOGGER.info( "starting executor..." );
 			executor = new ExecutorCompletionService< viewer.Mesh >(
@@ -293,7 +295,7 @@ public class MarchingCubesApplication
 						( int ) chunks.get( i ).getVolume().dimension( 2 ) };
 
 				MarchingCubesCallable callable = new MarchingCubesCallable( chunks.get( i ).getVolume(), subvolDim, chunks.get( i ).getOffset(), cubeSize, criterion, foregroundValue,
-						true );
+						false );
 				
 				if (LOGGER.isDebugEnabled())
 				{
