@@ -32,6 +32,7 @@ import graphics.scenery.SceneryDefaultApplication;
 import graphics.scenery.SceneryElement;
 import graphics.scenery.backends.Renderer;
 import net.imglib2.RandomAccessibleInterval;
+import util.Chunk;
 import util.HDF5Reader;
 
 /**
@@ -219,8 +220,7 @@ public class MarchingCubesApplication
 		int[] partitionSize = new int[] { numberOfCellsX, numberOfCellsY, numberOfCellsZ };
 		LOGGER.trace( "final partition size: " + numberOfCellsX + " " + numberOfCellsY + " " + numberOfCellsZ );
 
-		final List< int[] > offsets = new ArrayList<>();
-		final List< RandomAccessibleInterval< LabelMultisetType > > subvolumes = new ArrayList< RandomAccessibleInterval< LabelMultisetType > >();
+		List< Chunk > chunks = new ArrayList< Chunk >();
 
 		CompletionService< viewer.Mesh > executor = null;
 		List< Future< viewer.Mesh > > resultMeshList = null;
@@ -228,8 +228,7 @@ public class MarchingCubesApplication
 		{
 			// clean the vertices, offsets and subvolumes
 			verticesArray = new float[ 0 ];
-			offsets.clear();
-			subvolumes.clear();
+			chunks.clear();
 
 			Mesh neuron = new Mesh();
 			final Material material = new Material();
@@ -253,14 +252,14 @@ public class MarchingCubesApplication
 			neuron.setName( String.valueOf( foregroundValue + " " + voxSize ) );
 			neuron.setPosition( new GLVector( 0.0f, 0.0f, 0.0f ) );
 			neuron.setScale( new GLVector( 4.0f, 4.0f, 40.0f ) );
-			neuron.setGeometryType( GeometryType.POINTS );
+//			neuron.setGeometryType( GeometryType.POINTS );
 			scene.addChild( neuron );
 			cubeSize[ 0 ] = voxSize;
 			cubeSize[ 1 ] = voxSize;
 			cubeSize[ 2 ] = 1;
 
 			util.VolumePartitioner partitioner = new util.VolumePartitioner( volumeLabels, partitionSize, cubeSize );
-			partitioner.dataPartitioning( subvolumes, offsets );
+			chunks = partitioner.dataPartitioning( );
 
 //			subvolumes.clear();
 //			subvolumes.add( volumeLabels );
@@ -285,22 +284,22 @@ public class MarchingCubesApplication
 
 			if (LOGGER.isDebugEnabled())
 			{
-				LOGGER.debug( "creating callables for " + subvolumes.size() + " partitions..." );
+				LOGGER.debug( "creating callables for " + chunks.size() + " partitions..." );
 			}
 
-			for ( int i = 0; i < subvolumes.size(); i++ )
+			for ( int i = 0; i < chunks.size(); i++ )
 			{
-				int[] subvolDim = new int[] { ( int ) subvolumes.get( i ).dimension( 0 ), ( int ) subvolumes.get( i ).dimension( 1 ),
-						( int ) subvolumes.get( i ).dimension( 2 ) };
+				int[] subvolDim = new int[] { ( int ) chunks.get( i ).getVolume().dimension( 0 ), ( int ) chunks.get( i ).getVolume().dimension( 1 ),
+						( int ) chunks.get( i ).getVolume().dimension( 2 ) };
 
-				MarchingCubesCallable callable = new MarchingCubesCallable( subvolumes.get( i ), subvolDim, offsets.get( i ), cubeSize, criterion, foregroundValue,
+				MarchingCubesCallable callable = new MarchingCubesCallable( chunks.get( i ).getVolume(), subvolDim, chunks.get( i ).getOffset(), cubeSize, criterion, foregroundValue,
 						true );
 				
 				if (LOGGER.isDebugEnabled())
 				{
-					LOGGER.debug( "dimension: " + subvolumes.get( i ).dimension( 0 ) + "x" + subvolumes.get( i ).dimension( 1 )
-							+ "x" + subvolumes.get( i ).dimension( 2 ) );
-					LOGGER.debug( "offset: " + offsets.get( i )[ 0 ] + " " + offsets.get( i )[ 1 ] + " " + offsets.get( i )[ 2 ] );
+					LOGGER.debug( "dimension: " + chunks.get( i ).getVolume().dimension( 0 ) + "x" + chunks.get( i ).getVolume().dimension( 1 )
+							+ "x" + chunks.get( i ).getVolume().dimension( 2 ) );
+					LOGGER.debug( "offset: " + chunks.get( i ).getOffset()[ 0 ] + " " + chunks.get( i ).getOffset()[ 1 ] + " " + chunks.get( i ).getOffset()[ 2 ] );
 					LOGGER.debug( "callable: " + callable );
 				}
 
