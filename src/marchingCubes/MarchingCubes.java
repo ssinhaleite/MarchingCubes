@@ -349,7 +349,7 @@ public class MarchingCubes
 		int tableIndex = 0;
 		for ( int i = 0; i < 8; i++ )
 		{
-			if ( interiorTest( vertexValues[ i ] ) )
+			if ( foregroundCriterionTest( vertexValues[ i ] ) )
 			{
 				tableIndex |= ( int ) Math.pow( 2, i );
 			}
@@ -652,16 +652,16 @@ public class MarchingCubes
 	}
 
 	/**
-	 * Checks if the given value match the threshold accordingly with the 
+	 * Checks if the given value matches the foreground accordingly with the 
 	 * foreground criterion. This comparison is dependent on the variable 
 	 * {@link #criterion}
 	 * 
 	 * @param vertexValue
-	 *            value that will be compared with the isolevel
+	 *            value that will be compared with the foregroundValue
 	 * 
 	 * @return true if it comply with the comparison, false otherwise.
 	 */
-	private boolean interiorTest(final double vertexValue)
+	private boolean foregroundCriterionTest(final double vertexValue)
 	{
 
 		if (criterion.equals( ForegroundCriterion.EQUAL ))
@@ -670,7 +670,7 @@ public class MarchingCubes
 		} 
 		else
 		{
-			return (vertexValue < foregroundValue);
+			return (vertexValue >= foregroundValue);
 		}
 	}
 
