@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <class-diagram version="1.2.0" icons="true" always-add-relationships="false" generalizations="true" realizations="true" 
   associations="true" dependencies="true" nesting-relationships="true" router="FAN">  
-  <class id="1" language="java" name="viewer.MarchingCubesApplication" project="MarchingCubes-Scenery" 
-    file="/MarchingCubes-Scenery/src/viewer/MarchingCubesApplication.java" binary="false" corner="BOTTOM_RIGHT">    
+  <class id="1" language="java" name="viewer.MarchingCubesApplication" project="MarchingCubes" 
+    file="/MarchingCubes/src/viewer/MarchingCubesApplication.java" binary="false" corner="BOTTOM_RIGHT">    
     <position height="-1" width="-1" x="594" y="-184"/>    
     <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
       sort-features="false" accessors="true" visibility="true">      
@@ -10,9 +10,8 @@
       <operations public="true" package="true" protected="true" private="true" static="true"/>    
     </display>  
   </class>  
-  <class id="2" language="java" name="viewer.MarchingCubesApplication.MarchingCubesViewer" 
-    project="MarchingCubes-Scenery" file="/MarchingCubes-Scenery/src/viewer/MarchingCubesApplication.java" 
-    binary="false" corner="BOTTOM_RIGHT">    
+  <class id="2" language="java" name="viewer.MarchingCubesApplication.MarchingCubesViewer" project="MarchingCubes" 
+    file="/MarchingCubes/src/viewer/MarchingCubesApplication.java" binary="false" corner="BOTTOM_RIGHT">    
     <position height="-1" width="-1" x="267" y="-332"/>    
     <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
       sort-features="false" accessors="true" visibility="true">      
@@ -20,8 +19,8 @@
       <operations public="true" package="true" protected="true" private="true" static="true"/>    
     </display>  
   </class>  
-  <class id="3" language="java" name="viewer.MarchingCubesCallable" project="MarchingCubes-Scenery" 
-    file="/MarchingCubes-Scenery/src/viewer/MarchingCubesCallable.java" binary="false" corner="BOTTOM_RIGHT">    
+  <class id="3" language="java" name="viewer.MarchingCubesCallable" project="MarchingCubes" 
+    file="/MarchingCubes/src/viewer/MarchingCubesCallable.java" binary="false" corner="BOTTOM_RIGHT">    
     <position height="-1" width="-1" x="602" y="161"/>    
     <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
       sort-features="false" accessors="true" visibility="true">      
@@ -29,8 +28,8 @@
       <operations public="true" package="true" protected="true" private="true" static="true"/>    
     </display>  
   </class>  
-  <class id="4" language="java" name="viewer.Mesh" project="MarchingCubes-Scenery" 
-    file="/MarchingCubes-Scenery/src/viewer/Mesh.java" binary="false" corner="BOTTOM_RIGHT">    
+  <class id="4" language="java" name="viewer.Mesh" project="MarchingCubes" file="/MarchingCubes/src/viewer/Mesh.java" 
+    binary="false" corner="BOTTOM_RIGHT">    
     <position height="-1" width="-1" x="1014" y="-175"/>    
     <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
       sort-features="false" accessors="true" visibility="true">      
@@ -38,8 +37,8 @@
       <operations public="true" package="true" protected="true" private="true" static="true"/>    
     </display>  
   </class>  
-  <class id="5" language="java" name="util.HDF5Reader" project="MarchingCubes-Scenery" 
-    file="/MarchingCubes-Scenery/src/util/HDF5Reader.java" binary="false" corner="BOTTOM_RIGHT">    
+  <class id="5" language="java" name="util.HDF5Reader" project="MarchingCubes" 
+    file="/MarchingCubes/src/util/HDF5Reader.java" binary="false" corner="BOTTOM_RIGHT">    
     <position height="-1" width="-1" x="-178" y="-275"/>    
     <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
       sort-features="false" accessors="true" visibility="true">      
@@ -47,8 +46,8 @@
       <operations public="true" package="true" protected="true" private="true" static="true"/>    
     </display>  
   </class>  
-  <class id="6" language="java" name="util.VolumePartitioner" project="MarchingCubes-Scenery" 
-    file="/MarchingCubes-Scenery/src/util/VolumePartitioner.java" binary="false" corner="BOTTOM_RIGHT">    
+  <class id="6" language="java" name="util.VolumePartitioner" project="MarchingCubes" 
+    file="/MarchingCubes/src/util/VolumePartitioner.java" binary="false" corner="BOTTOM_RIGHT">    
     <position height="-1" width="-1" x="-159" y="-37"/>    
     <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
       sort-features="false" accessors="true" visibility="true">      
@@ -56,8 +55,8 @@
       <operations public="true" package="true" protected="true" private="true" static="true"/>    
     </display>  
   </class>  
-  <class id="7" language="java" name="marchingCubes.MarchingCubesTables" project="MarchingCubes-Scenery" 
-    file="/MarchingCubes-Scenery/src/marchingCubes/MarchingCubesTables.java" binary="false" corner="BOTTOM_RIGHT">    
+  <class id="7" language="java" name="marchingCubes.MarchingCubesTables" project="MarchingCubes" 
+    file="/MarchingCubes/src/marchingCubes/MarchingCubesTables.java" binary="false" corner="BOTTOM_RIGHT">    
     <position height="-1" width="-1" x="1595" y="266"/>    
     <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
       sort-features="false" accessors="true" visibility="true">      
@@ -65,8 +64,8 @@
       <operations public="true" package="true" protected="true" private="true" static="true"/>    
     </display>  
   </class>  
-  <class id="8" language="java" name="marchingCubes.MarchingCubes" project="MarchingCubes-Scenery" 
-    file="/MarchingCubes-Scenery/src/marchingCubes/MarchingCubes.java" binary="false" corner="BOTTOM_RIGHT">    
+  <class id="8" language="java" name="marchingCubes.MarchingCubes" project="MarchingCubes" 
+    file="/MarchingCubes/src/marchingCubes/MarchingCubes.java" binary="false" corner="BOTTOM_RIGHT">    
     <position height="-1" width="-1" x="1590" y="-119"/>    
     <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
       sort-features="false" accessors="true" visibility="true">      
@@ -74,8 +73,8 @@
       <operations public="true" package="true" protected="true" private="true" static="true"/>    
     </display>  
   </class>  
-  <class id="9" language="java" name="util.Chunk" project="MarchingCubes-Scenery" 
-    file="/MarchingCubes-Scenery/src/util/Chunk.java" binary="false" corner="BOTTOM_RIGHT">    
+  <class id="9" language="java" name="util.Chunk" project="MarchingCubes" file="/MarchingCubes/src/util/Chunk.java" 
+    binary="false" corner="BOTTOM_RIGHT">    
     <position height="-1" width="-1" x="-155" y="236"/>    
     <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
       sort-features="false" accessors="true" visibility="true">      
