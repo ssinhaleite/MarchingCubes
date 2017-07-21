@@ -118,7 +118,7 @@ public class MarchingCubesApplication
 	{
 		// Set the log level
 		System.setProperty( org.slf4j.impl.SimpleLogger.DEFAULT_LOG_LEVEL_KEY, "INFO" );
-		final MarchingCubeApplication viewer = new MarchingCubeApplication( "Marching cube", 800, 600 );
+		final MarchingCubesViewer viewer = new MarchingCubesViewer( "Marching cube", 800, 600 );
 		viewer.main();
 	}
 
@@ -128,9 +128,9 @@ public class MarchingCubesApplication
 	 * @author vleite
 	 *
 	 */
-	private static class MarchingCubeApplication extends SceneryDefaultApplication
+	private static class MarchingCubesViewer extends SceneryDefaultApplication
 	{
-		public MarchingCubeApplication( String applicationName, int windowWidth, int windowHeight )
+		public MarchingCubesViewer( String applicationName, int windowWidth, int windowHeight )
 		{
 			super( applicationName, windowWidth, windowHeight, false );
 		}
@@ -295,7 +295,7 @@ public class MarchingCubesApplication
 						( int ) chunks.get( i ).getVolume().dimension( 2 ) };
 
 				MarchingCubesCallable callable = new MarchingCubesCallable( chunks.get( i ).getVolume(), subvolDim, chunks.get( i ).getOffset(), cubeSize, criterion, foregroundValue,
-						false );
+						true );
 				
 				if (LOGGER.isDebugEnabled())
 				{
@@ -363,10 +363,10 @@ public class MarchingCubesApplication
 			LOGGER.info( "all results generated!" );
 			writer.close();
 
-			// Pause for 4 seconds
+			// Pause for 2 seconds
 			try
 			{
-				Thread.sleep( 4000 );
+				Thread.sleep( 2000 );
 			}
 			catch ( InterruptedException e )
 			{
