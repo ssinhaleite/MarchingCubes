@@ -56,7 +56,7 @@ public class MarchingCubesApplication
 //	static int[] volDim = {2340, 1685, 153};
 
 	/** small hdf5 for test - subset from sample B */
-	private static String path = "data/sample_B_20160708_frags_46_50.hdf";
+	private static String path = "resources/sample_B_20160708_frags_46_50.hdf";
 
 	private static int foregroundValue = 7;
 
