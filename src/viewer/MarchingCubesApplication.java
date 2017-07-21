@@ -5,12 +5,6 @@ import java.io.PrintWriter;
 import java.nio.FloatBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
-import java.util.concurrent.CompletionService;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorCompletionService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,7 +25,6 @@ import graphics.scenery.SceneryDefaultApplication;
 import graphics.scenery.SceneryElement;
 import graphics.scenery.backends.Renderer;
 import net.imglib2.RandomAccessibleInterval;
-import util.Chunk;
 import util.HDF5Reader;
 
 /**
@@ -200,36 +193,10 @@ public class MarchingCubesApplication
 
 	private static void marchingCube( Scene scene )
 	{
-		int numberOfCellsX = ( int ) ( ( volumeLabels.max( 0 ) - volumeLabels.min( 0 ) ) + 1 ) / 32;
-		int numberOfCellsY = ( int ) ( ( volumeLabels.max( 1 ) - volumeLabels.min( 1 ) ) + 1 ) / 32;
-		int numberOfCellsZ = ( int ) ( ( volumeLabels.max( 2 ) - volumeLabels.min( 2 ) ) + 1 ) / 32;
-
-		LOGGER.trace( "division: " + numberOfCellsX + " " + numberOfCellsY + " " + numberOfCellsZ );
-
-		numberOfCellsX = numberOfCellsX >= 7 ? 7 * 32 : numberOfCellsX * 32;
-		numberOfCellsY = numberOfCellsY >= 7 ? 7 * 32 : numberOfCellsY * 32;
-		numberOfCellsZ = numberOfCellsZ >= 7 ? 7 * 32 : numberOfCellsZ * 32;
-
-		LOGGER.trace( "partition size 1: " + numberOfCellsX + " " + numberOfCellsY + " " + numberOfCellsZ );
-
-		numberOfCellsX = ( numberOfCellsX == 0 ) ? 1 : numberOfCellsX;
-		numberOfCellsY = ( numberOfCellsY == 0 ) ? 1 : numberOfCellsY;
-		numberOfCellsZ = ( numberOfCellsZ == 0 ) ? 1 : numberOfCellsZ;
-
-		LOGGER.trace( "zero verification: " + numberOfCellsX + " " + numberOfCellsY + " " + numberOfCellsZ );
-
-		int[] partitionSize = new int[] { numberOfCellsX, numberOfCellsY, numberOfCellsZ };
-		LOGGER.trace( "final partition size: " + numberOfCellsX + " " + numberOfCellsY + " " + numberOfCellsZ );
-
-		List< Chunk > chunks = new ArrayList< Chunk >();
-
-		CompletionService< viewer.Mesh > executor = null;
-		List< Future< viewer.Mesh > > resultMeshList = null;
 		for ( int voxSize = 32; voxSize > 0; voxSize /= 2 )
 		{
 			// clean the vertices, offsets and subvolumes
 			verticesArray = new float[ 0 ];
-			chunks.clear();
 
 			Mesh neuron = new Mesh();
 			final Material material = new Material();
@@ -259,20 +226,8 @@ public class MarchingCubesApplication
 			cubeSize[ 1 ] = voxSize;
 			cubeSize[ 2 ] = 1;
 
-			util.VolumePartitioner partitioner = new util.VolumePartitioner( volumeLabels, partitionSize, cubeSize );
-			chunks = partitioner.dataPartitioning();
-
-//			chunks.clear();
-//			Chunk chunk = new Chunk();
-//			chunk.setVolume( volumeLabels );
-//			chunk.setOffset( new int[] { 0, 0, 0 } );
-//			chunks.add( chunk );
-
-			LOGGER.info( "starting executor..." );
-			executor = new ExecutorCompletionService< viewer.Mesh >(
-					Executors.newWorkStealingPool() );
-
-			resultMeshList = new ArrayList<>();
+			MeshExtractor extractor = new MeshExtractor( cubeSize, foregroundValue, criterion );
+			extractor.extract();
 
 			final float maxX = volDim[ 0 ] - 1;
 			final float maxY = volDim[ 1 ] - 1;
@@ -283,82 +238,6 @@ public class MarchingCubesApplication
 			if ( LOGGER.isTraceEnabled() )
 			{
 				LOGGER.trace( "maxX " + maxX + " maxY: " + maxY + " maxZ: " + maxZ + " maxAxisVal: " + maxAxisVal );
-			}
-
-			if ( LOGGER.isDebugEnabled() )
-			{
-				LOGGER.debug( "creating callables for " + chunks.size() + " partitions..." );
-			}
-
-			for ( int i = 0; i < chunks.size(); i++ )
-			{
-				int[] subvolDim = new int[] { ( int ) chunks.get( i ).getVolume().dimension( 0 ), ( int ) chunks.get( i ).getVolume().dimension( 1 ),
-						( int ) chunks.get( i ).getVolume().dimension( 2 ) };
-
-				MarchingCubesCallable callable = new MarchingCubesCallable( chunks.get( i ).getVolume(), subvolDim, chunks.get( i ).getOffset(), cubeSize, criterion, foregroundValue,
-						true );
-
-				if ( LOGGER.isDebugEnabled() )
-				{
-					LOGGER.debug( "dimension: " + chunks.get( i ).getVolume().dimension( 0 ) + "x" + chunks.get( i ).getVolume().dimension( 1 )
-							+ "x" + chunks.get( i ).getVolume().dimension( 2 ) );
-					LOGGER.debug( "offset: " + chunks.get( i ).getOffset()[ 0 ] + " " + chunks.get( i ).getOffset()[ 1 ] + " " + chunks.get( i ).getOffset()[ 2 ] );
-					LOGGER.debug( "callable: " + callable );
-				}
-
-				Future< viewer.Mesh > result = executor.submit( callable );
-				resultMeshList.add( result );
-			}
-
-			Future< viewer.Mesh > completedFuture = null;
-			LOGGER.info( "waiting results..." );
-
-			while ( resultMeshList.size() > 0 )
-			{
-				// block until a task completes
-				try
-				{
-					completedFuture = executor.take();
-					if ( LOGGER.isTraceEnabled() )
-					{
-						LOGGER.trace( "task " + completedFuture + " is ready: " + completedFuture.isDone() );
-					}
-				}
-				catch ( InterruptedException e )
-				{
-					// TODO Auto-generated catch block
-					LOGGER.error( " task interrupted: " + e.getCause() );
-				}
-
-				resultMeshList.remove( completedFuture );
-				viewer.Mesh m = new viewer.Mesh();
-
-				// get the mesh, if the task was able to create it
-				try
-				{
-					m = completedFuture.get();
-					LOGGER.info( "getting mesh" );
-				}
-				catch ( InterruptedException | ExecutionException e )
-				{
-					LOGGER.error( "Mesh creation failed: " + e.getCause() );
-					break;
-				}
-
-				// a mesh was created, so update the existing mesh
-				if ( m.getNumberOfVertices() > 0 )
-				{
-					LOGGER.info( "updating mesh..." );
-					updateMesh( m, neuron, false );
-					neuron.setVertices( FloatBuffer.wrap( verticesArray ) );
-					neuron.recalculateNormals();
-					neuron.setDirty( true );
-				}
-			}
-
-			if ( LOGGER.isDebugEnabled() )
-			{
-				LOGGER.debug( "size of mesh " + verticesArray.length );
 			}
 
 			LOGGER.info( "all results generated!" );
