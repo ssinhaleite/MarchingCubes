@@ -1,4 +1,4 @@
-package viewer;
+package tests;
 
 import bdv.img.h5.H5LabelMultisetSetupImageLoader;
 import bdv.labels.labelset.LabelMultisetType;
@@ -19,7 +19,7 @@ import java.util.ArrayList;
  * 
  * @author vleite
  */
-public class MarchingCubesPerformanceTest
+public class CubeSizeTest
 {
 	private static RandomAccessibleInterval< LabelMultisetType > volumeLabels = null;
 
@@ -54,9 +54,9 @@ public class MarchingCubesPerformanceTest
 		volumeLabels = labels.get( 0 ).getImage( 0 );
 
 		int foregroundValue = 0;
-		for ( int size = 32; size >= 1; size /= 2 )
+		for ( int size = 128; size >= 1; size /= 2 )
 		{
-			filename = "mc_arraylist_" + size + ".txt";
+			filename = "mc_cubeSize_" + size + ".txt";
 			PrintStream fileStream = null;
 			try
 			{
@@ -73,9 +73,9 @@ public class MarchingCubesPerformanceTest
 			{
 				foregroundValue = i + 1;
 				System.out.println( "MarchingCubes isolevel: " + foregroundValue );
-				MarchingCubes mc_rai = new MarchingCubes();
+				MarchingCubes mc = new MarchingCubes();
 				begin = new Timestamp( System.currentTimeMillis() );
-				mc_rai.generateMesh( volumeLabels, volDim, offsets, cubeSize, criterion, foregroundValue, true );
+				mc.generateMesh( volumeLabels, volDim, offsets, cubeSize, criterion, foregroundValue, true );
 				end = new Timestamp( System.currentTimeMillis() );
 				System.out.println( "complete time for generating mesh: " + ( end.getTime() - begin.getTime() ) );
 			}
