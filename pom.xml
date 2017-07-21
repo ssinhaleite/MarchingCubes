@@ -1,7 +1,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <groupId>MarchingCubes-Scenery</groupId>
-  <artifactId>MarchingCubes-Scenery</artifactId>
+  <groupId>MarchingCubes</groupId>
+  <artifactId>MarchingCubes</artifactId>
   <version>0.0.1-SNAPSHOT</version>
   <build>
     <sourceDirectory>src</sourceDirectory>
@@ -14,15 +14,38 @@
           <target>1.8</target>
         </configuration>
       </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <version>3.0.0</version>
+        <configuration>
+          <archive>
+            <manifest>
+              <addClasspath>true</addClasspath>
+              <mainClass>viewer.MarchingCubesApplication</mainClass>
+            </manifest>
+          </archive>
+          <descriptorRefs>
+            <descriptorRef>jar-with-dependencies</descriptorRef>
+          </descriptorRefs>
+        </configuration>
+        <executions>
+          <execution>
+            <id>assemble-all</id>
+            <phase>package</phase>
+            <goals>
+              <goal>single</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
     </plugins>
   </build>
   <dependencies>
     <dependency>
-      <groupId>bigcat</groupId>
+      <groupId>sc.fiji</groupId>
       <artifactId>bigcat</artifactId>
       <version>0.0.1-SNAPSHOT</version>
-      <scope>system</scope>
-      <systemPath>${project.basedir}/resources/bigcat-0.0.1-SNAPSHOT.jar</systemPath>
     </dependency>
     <!-- https://mvnrepository.com/artifact/sc.fiji/bigdataviewer-core -->
     <dependency>
