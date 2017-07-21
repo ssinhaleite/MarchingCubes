@@ -23,7 +23,6 @@ import cleargl.GLVector;
 import graphics.scenery.Box;
 import graphics.scenery.Camera;
 import graphics.scenery.DetachedHeadCamera;
-import graphics.scenery.GeometryType;
 import graphics.scenery.Material;
 import graphics.scenery.Mesh;
 import graphics.scenery.PointLight;
@@ -51,9 +50,11 @@ public class MarchingCubesApplication
 
 	/** big hdf5 for test - whole sample B */
 //	static String path = "data/sample_B.augmented.0.hdf";
-//	static int isoLevel = 73396;
-////	static int isoLevel = 1854;
-//	static int[] volDim = {2340, 1685, 153};
+//
+////	static int foregroundValue = 73396;
+//	static int foregroundValue = 1854;
+//
+//	static int[] volDim = { 2340, 1685, 153 };
 
 	/** small hdf5 for test - subset from sample B */
 	private static String path = "resources/sample_B_20160708_frags_46_50.hdf";
@@ -259,7 +260,7 @@ public class MarchingCubesApplication
 			cubeSize[ 2 ] = 1;
 
 			util.VolumePartitioner partitioner = new util.VolumePartitioner( volumeLabels, partitionSize, cubeSize );
-			chunks = partitioner.dataPartitioning( );
+			chunks = partitioner.dataPartitioning();
 
 //			chunks.clear();
 //			Chunk chunk = new Chunk();
@@ -279,12 +280,12 @@ public class MarchingCubesApplication
 
 			maxAxisVal = Math.max( maxX, Math.max( maxY, maxZ ) );
 
-			if (LOGGER.isTraceEnabled())
+			if ( LOGGER.isTraceEnabled() )
 			{
 				LOGGER.trace( "maxX " + maxX + " maxY: " + maxY + " maxZ: " + maxZ + " maxAxisVal: " + maxAxisVal );
 			}
 
-			if (LOGGER.isDebugEnabled())
+			if ( LOGGER.isDebugEnabled() )
 			{
 				LOGGER.debug( "creating callables for " + chunks.size() + " partitions..." );
 			}
@@ -296,8 +297,8 @@ public class MarchingCubesApplication
 
 				MarchingCubesCallable callable = new MarchingCubesCallable( chunks.get( i ).getVolume(), subvolDim, chunks.get( i ).getOffset(), cubeSize, criterion, foregroundValue,
 						true );
-				
-				if (LOGGER.isDebugEnabled())
+
+				if ( LOGGER.isDebugEnabled() )
 				{
 					LOGGER.debug( "dimension: " + chunks.get( i ).getVolume().dimension( 0 ) + "x" + chunks.get( i ).getVolume().dimension( 1 )
 							+ "x" + chunks.get( i ).getVolume().dimension( 2 ) );
@@ -318,7 +319,7 @@ public class MarchingCubesApplication
 				try
 				{
 					completedFuture = executor.take();
-					if (LOGGER.isTraceEnabled())
+					if ( LOGGER.isTraceEnabled() )
 					{
 						LOGGER.trace( "task " + completedFuture + " is ready: " + completedFuture.isDone() );
 					}
@@ -373,7 +374,7 @@ public class MarchingCubesApplication
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-			if (voxSize != 1)
+			if ( voxSize != 1 )
 				scene.removeChild( neuron );
 		}
 	}
@@ -395,14 +396,14 @@ public class MarchingCubesApplication
 	public static void updateMesh( viewer.Mesh m, Mesh neuron, boolean overwriteArray )
 	{
 		/** max value int = 2,147,483,647 */
-		if (LOGGER.isDebugEnabled())
+		if ( LOGGER.isDebugEnabled() )
 		{
 			LOGGER.debug( "previous size of vertices: " + verticesArray.length );
 		}
 
 		final int vertexCount;
 		// resize array to fit the new mesh
-		if (overwriteArray)
+		if ( overwriteArray )
 		{
 			vertexCount = 0;
 			verticesArray = new float[ m.getNumberOfVertices() * 3 ];
