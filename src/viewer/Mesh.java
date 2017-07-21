@@ -8,12 +8,12 @@ public class Mesh
 	/**
 	 * the number of vertices and normals
 	 */
-	int numberOfVertices;
+	private int numberOfVertices;
 
 	/**
 	 * the vertices positions as an array of points
 	 */
-	float[][] vertices;
+	private float[][] vertices;
 
 	Mesh( int vertexCount, float[][] verticesArray, int trianglesCount, int[] trianglesArray )
 	{
