@@ -34,10 +34,10 @@ public class CubeSizeTest
 
 	static int[] volDim = { 500, 500, 5 };
 
-	static int[] offsets = {0, 0, 0};
+	static int[] offsets = { 0, 0, 0 };
 
 	static String filename = "";
-	
+
 	static marchingCubes.MarchingCubes.ForegroundCriterion criterion = marchingCubes.MarchingCubes.ForegroundCriterion.EQUAL;
 
 	public static void main( String[] args ) throws IOException

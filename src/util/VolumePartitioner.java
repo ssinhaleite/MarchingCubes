@@ -61,13 +61,13 @@ public class VolumePartitioner
 	 * @param offsets
 	 *            the offset of each subvolume
 	 */
-	public List< Chunk > dataPartitioning( )
+	public List< Chunk > dataPartitioning()
 	{
 		List< Chunk > chunks = new ArrayList< Chunk >();
 
 		for ( long bx = volumeLabels.min( 0 ); ( bx + partitionSize[ 0 ] ) <= volumeLabels.max( 0 ); bx += partitionSize[ 0 ] )
 		{
-			for ( long by = volumeLabels.min( 1 ); ( by + partitionSize[ 1 ] ) <= volumeLabels.max( 1 ); by += partitionSize[1 ] )
+			for ( long by = volumeLabels.min( 1 ); ( by + partitionSize[ 1 ] ) <= volumeLabels.max( 1 ); by += partitionSize[ 1 ] )
 			{
 				for ( long bz = volumeLabels.min( 2 ); ( bz + partitionSize[ 2 ] ) <= volumeLabels.max( 2 ); bz += partitionSize[ 2 ] )
 				{
@@ -76,7 +76,7 @@ public class VolumePartitioner
 							begin[ 1 ] + partitionSize[ 1 ],
 							begin[ 2 ] + partitionSize[ 2 ] };
 
-					if (LOGGER.isTraceEnabled())
+					if ( LOGGER.isTraceEnabled() )
 					{
 						LOGGER.trace( "begin: " + bx + " " + by + " " + bz );
 						LOGGER.trace( "end: " + end[ 0 ] + " " + end[ 1 ] + " " + end[ 2 ] );
