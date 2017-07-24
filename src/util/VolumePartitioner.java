@@ -128,4 +128,9 @@ public class VolumePartitioner
 
 		return chunks;
 	}
+
+	public Chunk getChunk( int[] initialPosition )
+	{
+		return new Chunk();
+	}
 }

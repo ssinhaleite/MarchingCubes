@@ -1,7 +1,9 @@
 package viewer;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletionService;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorCompletionService;
@@ -17,7 +19,7 @@ import util.Chunk;
 
 /**
  * This class is responsible for generate region of interests (map of
- * boundaries) will call the VolumePartitioner must have a callNext method (use
+ * boundaries). Will call the VolumePartitioner must have a callNext method (use
  * chunk index based on x, y and z)
  * 
  * @author vleite
@@ -30,7 +32,13 @@ public class MeshExtractor
 
 	private RandomAccessibleInterval< LabelMultisetType > volumeLabels;
 
+	Map< Integer, Chunk > chunkMap = new HashMap< Integer, Chunk >();
+
+	int[] initialPosition;
+
 	int[] partitionSize;
+
+	int numberOfPartitions = 0;
 
 	private int[] cubeSize;;
 
@@ -38,19 +46,26 @@ public class MeshExtractor
 
 	private marchingCubes.MarchingCubes.ForegroundCriterion criterion;
 
-	public MeshExtractor( final int[] cubeSize, final int foregroundValue, final marchingCubes.MarchingCubes.ForegroundCriterion criterion )
+	public MeshExtractor( RandomAccessibleInterval< LabelMultisetType > volumeLabels, final int[] cubeSize, final int foregroundValue, final marchingCubes.MarchingCubes.ForegroundCriterion criterion )
 	{
-		this.volumeLabels = null;
+		this.volumeLabels = volumeLabels;
 		this.partitionSize = new int[] { 1, 1, 1 };
 		this.cubeSize = cubeSize;
 		this.foregroundValue = foregroundValue;
 		this.criterion = criterion;
-	}
 
-	public void extract()
-	{
+		for ( int i = 0; i < volumeLabels.numDimensions(); i++ )
+		{
+			this.initialPosition[ i ] = ( int ) volumeLabels.min( i );
+		}
+
 		generatePartitionSize();
 
+		createChunks();
+	}
+
+	private void createChunks()
+	{
 		List< Chunk > chunks = new ArrayList< Chunk >();
 
 		CompletionService< viewer.Mesh > executor = null;
@@ -143,9 +158,40 @@ public class MeshExtractor
 		}
 	}
 
-	private void next()
+	public boolean hasNext()
 	{
+		if ( numberOfPartitions == 0 )
+		{
+			return false;
+		}
 
+		return true;
+	}
+
+	public viewer.Mesh next()
+	{
+		numberOfPartitions--;
+
+		Chunk chunk = new Chunk();
+
+		for ( int i = 0; i < volumeLabels.numDimensions(); i++ )
+		{
+			initialPosition[ i ] += partitionSize[ i ];
+		}
+
+		CompletionService< viewer.Mesh > executor = null;
+		List< Future< viewer.Mesh > > resultMeshList = null;
+
+		util.VolumePartitioner partitioner = new util.VolumePartitioner( volumeLabels, partitionSize, cubeSize );
+		chunk = partitioner.getChunk( initialPosition );
+		
+		chunkMap.put( numberOfPartitions, chunk );
+
+		LOGGER.info( "starting executor..." );
+		executor = new ExecutorCompletionService< viewer.Mesh >(
+				Executors.newWorkStealingPool() );
+
+		return new viewer.Mesh();
 	}
 
 	private void generatePartitionSize()
@@ -170,5 +216,9 @@ public class MeshExtractor
 
 		partitionSize = new int[] { numberOfCellsX, numberOfCellsY, numberOfCellsZ };
 		LOGGER.trace( "final partition size: " + numberOfCellsX + " " + numberOfCellsY + " " + numberOfCellsZ );
+
+		numberOfPartitions = ( int ) ( ( ( volumeLabels.max( 0 ) - volumeLabels.min( 0 ) ) + 1 ) / numberOfCellsX ) *
+				( int ) ( ( ( ( volumeLabels.max( 1 ) - volumeLabels.min( 1 ) ) + 1 ) / numberOfCellsY ) ) *
+				( int ) ( ( ( ( volumeLabels.max( 2 ) - volumeLabels.min( 2 ) ) + 1 ) / numberOfCellsZ ) - 1 );
 	}
 }

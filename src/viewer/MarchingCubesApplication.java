@@ -226,8 +226,17 @@ public class MarchingCubesApplication
 			cubeSize[ 1 ] = voxSize;
 			cubeSize[ 2 ] = 1;
 
-			MeshExtractor extractor = new MeshExtractor( cubeSize, foregroundValue, criterion );
-			extractor.extract();
+			MeshExtractor extractor = new MeshExtractor( volumeLabels, cubeSize, foregroundValue, criterion );
+
+			while ( extractor.hasNext() )
+			{
+				viewer.Mesh m = extractor.next();
+
+				updateMesh( m, neuron, false );
+				neuron.setVertices( FloatBuffer.wrap( verticesArray ) );
+				neuron.recalculateNormals();
+				neuron.setDirty( true );
+			}
 
 			final float maxX = volDim[ 0 ] - 1;
 			final float maxY = volDim[ 1 ] - 1;
