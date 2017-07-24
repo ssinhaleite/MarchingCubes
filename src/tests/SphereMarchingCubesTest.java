@@ -144,7 +144,6 @@ public class SphereMarchingCubesTest
 			{
 				public void run()
 				{
-
 					marchingCube( getScene() );
 				}
 			}.start();
