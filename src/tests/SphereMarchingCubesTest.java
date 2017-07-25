@@ -44,7 +44,7 @@ import viewer.MarchingCubesCallable;
 public class SphereMarchingCubesTest
 {
 	/** logger */
-	static final Logger LOGGER = LoggerFactory.getLogger( SphereMarchingCubesTest.class );
+	static Logger LOGGER;
 
 	private static RandomAccessibleInterval< LabelMultisetType > volumeLabels = null;
 
@@ -52,7 +52,7 @@ public class SphereMarchingCubesTest
 
 	static int foregroundValue = 1;
 
-	static int[] volDim = { 100, 100, 100 };
+	static int[] volDim = { 500, 500, 500 };
 
 	static int[] cubeSize = { 1, 1, 1 };
 
@@ -62,8 +62,11 @@ public class SphereMarchingCubesTest
 
 	public static void main( String[] args )
 	{
-		loadSphere();
+		System.setProperty( org.slf4j.impl.SimpleLogger.DEFAULT_LOG_LEVEL_KEY, "info" );
 
+		LOGGER = LoggerFactory.getLogger( SphereMarchingCubesTest.class );
+
+		loadSphere();
 		final MarchingCubesViewer viewer = new MarchingCubesViewer( "Marching cubes", 800, 600 );
 		viewer.main();
 
@@ -71,7 +74,7 @@ public class SphereMarchingCubesTest
 
 	private static void loadSphere()
 	{
-		final IHDF5Reader reader = HDF5Factory.openForReading( "resources/sphere.hdf" );
+		final IHDF5Reader reader = HDF5Factory.openForReading( "resources/sphere500.hdf" );
 		final String pathLabel = "/volumes/labels/sphere";
 		/** loaded segments */
 		ArrayList< H5LabelMultisetSetupImageLoader > labels = null;
@@ -202,7 +205,7 @@ public class SphereMarchingCubesTest
 			scene.addChild( neuron );
 			cubeSize[ 0 ] = voxSize;
 			cubeSize[ 1 ] = voxSize;
-			cubeSize[ 2 ] = 1;
+			cubeSize[ 2 ] = voxSize;
 
 			util.VolumePartitioner partitioner = new util.VolumePartitioner( volumeLabels, partitionSize, cubeSize );
 			chunks = partitioner.dataPartitioning();
