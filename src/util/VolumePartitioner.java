@@ -25,7 +25,7 @@ public class VolumePartitioner
 	private static final Logger LOGGER = LoggerFactory.getLogger( VolumePartitioner.class );
 
 	/** number of voxels that must overlap between partitions */
-	private static final long OVERLAP = 1;
+	private int[] OVERLAP = { 1, 1, 1 };
 
 	/** volume to be partitioned */
 	private final RandomAccessibleInterval< LabelMultisetType > volumeLabels;
@@ -46,6 +46,7 @@ public class VolumePartitioner
 		this.volumeLabels = volumeLabels;
 		this.partitionSize = partitionSize;
 		this.cubeSize = cubeSize;
+		this.OVERLAP = cubeSize;
 
 		if ( LOGGER.isTraceEnabled() )
 		{
@@ -82,19 +83,19 @@ public class VolumePartitioner
 						LOGGER.trace( "end: " + end[ 0 ] + " " + end[ 1 ] + " " + end[ 2 ] );
 					}
 
-					if ( begin[ 0 ] - OVERLAP >= 0 )
+					if ( begin[ 0 ] - OVERLAP[ 0 ] >= 0 )
 					{
-						begin[ 0 ] -= OVERLAP;
+						begin[ 0 ] -= OVERLAP[ 0 ];
 					}
 
-					if ( begin[ 1 ] - OVERLAP >= 0 )
+					if ( begin[ 1 ] - OVERLAP[ 1 ] >= 0 )
 					{
-						begin[ 1 ] -= OVERLAP;
+						begin[ 1 ] -= OVERLAP[ 1 ];
 					}
 
-					if ( begin[ 2 ] - OVERLAP >= 0 )
+					if ( begin[ 2 ] - OVERLAP[ 2 ] >= 0 )
 					{
-						begin[ 2 ] -= OVERLAP;
+						begin[ 2 ] -= OVERLAP[ 2 ];
 					}
 
 					if ( volumeLabels.max( 0 ) - end[ 0 ] < partitionSize[ 0 ] )
