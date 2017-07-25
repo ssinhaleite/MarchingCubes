@@ -297,7 +297,6 @@ public class MarchingCubes
 	private Mesh generateMeshFromArray( final RandomAccessibleInterval< LabelMultisetType > input, final int[] volDim, final int[] offset,
 			final int[] cubeSize, final ForegroundCriterion criterion, final int foregroundValue )
 	{
-
 		this.offset = offset;
 		this.cubeSize = cubeSize;
 		this.criterion = criterion;
@@ -335,9 +334,16 @@ public class MarchingCubes
 		xWidth = ( volDim[ 0 ] + 2 );
 		xyWidth = xWidth * ( volDim[ 1 ] + 2 );
 
-		nCellsX = ( long ) Math.ceil( ( volDim[ 0 ] + 2 ) / cubeSize[ 0 ] ) - 1;
-		nCellsY = ( long ) Math.ceil( ( volDim[ 1 ] + 2 ) / cubeSize[ 1 ] ) - 1;
-		nCellsZ = ( long ) Math.ceil( ( volDim[ 2 ] + 2 ) / cubeSize[ 2 ] ) - 1;
+		nCellsX = ( long ) Math.ceil( ( volDim[ 0 ] + 2 ) / cubeSize[ 0 ] );
+		nCellsY = ( long ) Math.ceil( ( volDim[ 1 ] + 2 ) / cubeSize[ 1 ] );
+		nCellsZ = ( long ) Math.ceil( ( volDim[ 2 ] + 2 ) / cubeSize[ 2 ] );
+
+		if ( ( volDim[ 0 ] + 2 ) % cubeSize[ 0 ] == 0 )
+			nCellsX--;
+		if ( ( volDim[ 1 ] + 2 ) % cubeSize[ 1 ] == 0 )
+			nCellsY--;
+		if ( ( volDim[ 2 ] + 2 ) % cubeSize[ 2 ] == 0 )
+			nCellsZ--;
 
 		if ( LOGGER.isDebugEnabled() )
 		{
@@ -358,7 +364,6 @@ public class MarchingCubes
 			{
 				for ( int cursorX = 0; cursorX < nCellsX; cursorX++ )
 				{
-
 					// @formatter:off
 					// the values from the cube are given first in y, then x, then z
 					// this way, the vertex_values (from getCube) are positioned in this
@@ -385,29 +390,41 @@ public class MarchingCubes
 					// This way, we need to remap the cube vertices:
 					// @formatter:on
 
-					vertexValues[ 7 ] = volumeArray.get( ( ( int ) ( cubeSize[ 2 ] * cursorZ ) * xyWidth
-							+ ( int ) ( cubeSize[ 1 ] * cursorY ) * xWidth
+					if ( LOGGER.isDebugEnabled() )
+					{
+						LOGGER.debug( "position 7: " + ( ( int ) ( cubeSize[ 2 ] * cursorZ ) * xyWidth + ( int ) ( cubeSize[ 1 ] * cursorY ) * xWidth
+								+ ( int ) ( cursorX * cubeSize[ 0 ] ) ) );
+						LOGGER.debug( "position 6: " + ( ( int ) ( cubeSize[ 2 ] * cursorZ ) * xyWidth + ( int ) ( cubeSize[ 1 ] * cursorY ) * xWidth
+								+ ( int ) ( cubeSize[ 0 ] * ( cursorX + 1 ) ) ) );
+						LOGGER.debug( "position 3: " + ( ( int ) ( cubeSize[ 2 ] * cursorZ ) * xyWidth + ( int ) ( ( cubeSize[ 1 ] * ( cursorY + 1 ) ) ) * xWidth
+								+ ( int ) ( cubeSize[ 0 ] * cursorX ) ) );
+						LOGGER.debug( "position 2: " + ( ( int ) ( cubeSize[ 2 ] * cursorZ ) * xyWidth + ( int ) ( ( cubeSize[ 1 ] * ( cursorY + 1 ) ) ) * xWidth
+								+ ( int ) ( cubeSize[ 0 ] * ( cursorX + 1 ) ) ) );
+						LOGGER.debug( "position 4: " + ( ( ( int ) ( cubeSize[ 2 ] * ( cursorZ + 1 ) ) ) * xyWidth + ( int ) ( cubeSize[ 1 ] * cursorY ) * xWidth
+								+ ( int ) ( cubeSize[ 0 ] * cursorX ) ) );
+						LOGGER.debug( "position 0: " + ( ( ( int ) ( cubeSize[ 2 ] * ( cursorZ + 1 ) ) ) * xyWidth + ( int ) ( cubeSize[ 1 ] * cursorY ) * xWidth
+								+ ( int ) ( cubeSize[ 0 ] * ( cursorX + 1 ) ) ) );
+						LOGGER.debug( "position 5: " + ( ( ( int ) ( cubeSize[ 2 ] * ( cursorZ + 1 ) ) ) * xyWidth + ( int ) ( cubeSize[ 1 ] * ( cursorY + 1 ) ) * xWidth
+								+ ( int ) ( cubeSize[ 0 ] * cursorX ) ) );
+						LOGGER.debug( "position 1: " + ( ( ( int ) ( cubeSize[ 2 ] * ( cursorZ + 1 ) ) ) * xyWidth + ( int ) ( cubeSize[ 1 ] * ( cursorY + 1 ) ) * xWidth
+								+ ( int ) ( cubeSize[ 0 ] * ( cursorX + 1 ) ) ) );
+					}
+
+					vertexValues[ 7 ] = volumeArray.get( ( ( int ) ( cubeSize[ 2 ] * cursorZ ) * xyWidth + ( int ) ( cubeSize[ 1 ] * cursorY ) * xWidth
 							+ ( int ) ( cursorX * cubeSize[ 0 ] ) ) );
-					vertexValues[ 3 ] = volumeArray.get( ( ( int ) ( cubeSize[ 2 ] * cursorZ ) * xyWidth
-							+ ( int ) ( cubeSize[ 1 ] * cursorY ) * xWidth
+					vertexValues[ 3 ] = volumeArray.get( ( ( int ) ( cubeSize[ 2 ] * cursorZ ) * xyWidth + ( int ) ( cubeSize[ 1 ] * cursorY ) * xWidth
 							+ ( int ) ( cubeSize[ 0 ] * ( cursorX + 1 ) ) ) );
-					vertexValues[ 6 ] = volumeArray.get( ( ( int ) ( cubeSize[ 2 ] * cursorZ ) * xyWidth
-							+ ( int ) ( ( cubeSize[ 1 ] * ( cursorY + 1 ) ) ) * xWidth
+					vertexValues[ 6 ] = volumeArray.get( ( ( int ) ( cubeSize[ 2 ] * cursorZ ) * xyWidth + ( int ) ( ( cubeSize[ 1 ] * ( cursorY + 1 ) ) ) * xWidth
 							+ ( int ) ( cubeSize[ 0 ] * cursorX ) ) );
-					vertexValues[ 2 ] = volumeArray.get( ( ( int ) ( cubeSize[ 2 ] * cursorZ ) * xyWidth
-							+ ( int ) ( ( cubeSize[ 1 ] * ( cursorY + 1 ) ) ) * xWidth
+					vertexValues[ 2 ] = volumeArray.get( ( ( int ) ( cubeSize[ 2 ] * cursorZ ) * xyWidth + ( int ) ( ( cubeSize[ 1 ] * ( cursorY + 1 ) ) ) * xWidth
 							+ ( int ) ( cubeSize[ 0 ] * ( cursorX + 1 ) ) ) );
-					vertexValues[ 4 ] = volumeArray.get( ( ( ( int ) ( cubeSize[ 2 ] * ( cursorZ + 1 ) ) ) * xyWidth
-							+ ( int ) ( cubeSize[ 1 ] * cursorY ) * xWidth
+					vertexValues[ 4 ] = volumeArray.get( ( ( ( int ) ( cubeSize[ 2 ] * ( cursorZ + 1 ) ) ) * xyWidth + ( int ) ( cubeSize[ 1 ] * cursorY ) * xWidth
 							+ ( int ) ( cubeSize[ 0 ] * cursorX ) ) );
-					vertexValues[ 0 ] = volumeArray.get( ( ( ( int ) ( cubeSize[ 2 ] * ( cursorZ + 1 ) ) ) * xyWidth
-							+ ( int ) ( cubeSize[ 1 ] * cursorY ) * xWidth
+					vertexValues[ 0 ] = volumeArray.get( ( ( ( int ) ( cubeSize[ 2 ] * ( cursorZ + 1 ) ) ) * xyWidth + ( int ) ( cubeSize[ 1 ] * cursorY ) * xWidth
 							+ ( int ) ( cubeSize[ 0 ] * ( cursorX + 1 ) ) ) );
-					vertexValues[ 5 ] = volumeArray.get( ( ( ( int ) ( cubeSize[ 2 ] * ( cursorZ + 1 ) ) ) * xyWidth
-							+ ( int ) ( cubeSize[ 1 ] * ( cursorY + 1 ) ) * xWidth
+					vertexValues[ 5 ] = volumeArray.get( ( ( ( int ) ( cubeSize[ 2 ] * ( cursorZ + 1 ) ) ) * xyWidth + ( int ) ( cubeSize[ 1 ] * ( cursorY + 1 ) ) * xWidth
 							+ ( int ) ( cubeSize[ 0 ] * cursorX ) ) );
-					vertexValues[ 1 ] = volumeArray.get( ( ( ( int ) ( cubeSize[ 2 ] * ( cursorZ + 1 ) ) ) * xyWidth
-							+ ( int ) ( cubeSize[ 1 ] * ( cursorY + 1 ) ) * xWidth
+					vertexValues[ 1 ] = volumeArray.get( ( ( ( int ) ( cubeSize[ 2 ] * ( cursorZ + 1 ) ) ) * xyWidth + ( int ) ( cubeSize[ 1 ] * ( cursorY + 1 ) ) * xWidth
 							+ ( int ) ( cubeSize[ 0 ] * ( cursorX + 1 ) ) ) );
 
 					if ( LOGGER.isDebugEnabled() )
