@@ -1,15 +1,15 @@
 package util;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.beust.jcommander.Parameter;
 
+/**
+ * Parameters used to select the file, dataset and neuron id.
+ * 
+ * @author vleite
+ *
+ */
 public class Parameters
 {
-	@Parameter
-	private List< String > parameters = new ArrayList<>();
-
 	@Parameter( names = { "--file", "-f" }, description = "input file path (hdf5)" )
 	public String filePath = "";
 
@@ -18,4 +18,7 @@ public class Parameters
 
 	@Parameter( names = { "--neuronId", "-id" }, description = "foreground value" )
 	public Integer foregroundValue = 1;
+
+	@Parameter( names = "--help", help = true )
+	private boolean help;
 }
