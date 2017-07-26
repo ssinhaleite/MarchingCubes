@@ -15,6 +15,8 @@ import java.util.concurrent.Future;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.beust.jcommander.JCommander;
+
 import bdv.img.h5.H5LabelMultisetSetupImageLoader;
 import bdv.labels.labelset.LabelMultisetType;
 import ch.systemsx.cisd.hdf5.HDF5Factory;
@@ -30,9 +32,11 @@ import graphics.scenery.Scene;
 import graphics.scenery.SceneryDefaultApplication;
 import graphics.scenery.SceneryElement;
 import graphics.scenery.backends.Renderer;
+import ncsa.hdf.hdf5lib.exceptions.HDF5FileNotFoundException;
 import net.imglib2.RandomAccessibleInterval;
 import util.Chunk;
 import util.HDF5Reader;
+import util.Parameters;
 
 /**
  * Unit test for marching cubes
@@ -48,28 +52,6 @@ public class MarchingCubesApplication
 
 	private static float[] verticesArray = new float[ 0 ];
 
-	/** big hdf5 for test - whole sample B */
-//	static String path = "data/sample_B.augmented.0.hdf";
-//
-////	static int foregroundValue = 73396;
-//	static int foregroundValue = 1854;
-//
-//	static int[] volDim = { 2340, 1685, 153 };
-
-	/** small hdf5 for test - subset from sample B */
-	private static String path = "resources/sample_B_20160708_frags_46_50.hdf";
-
-	private static int foregroundValue = 7;
-
-	private static int[] volDim = { 500, 500, 5 };
-
-	private static String path_label = "/volumes/labels/neuron_ids";
-
-//	 /** tiny hdf5 for test - dummy values */
-//	 static String path_label = "/volumes/labels/small_neuron_ids";
-//	 int isoLevel = 2;
-//	 int[] volDim = {3, 3, 3};
-
 	private static int[] cubeSize = { 4, 4, 4 };
 
 	private static PrintWriter writer = null;
@@ -81,32 +63,45 @@ public class MarchingCubesApplication
 	/**
 	 * This method loads the hdf file
 	 */
-	public static void loadData()
+	public static boolean loadData( Parameters params )
 	{
-		LOGGER.info( "Opening labels from " + path );
-		final IHDF5Reader reader = HDF5Factory.openForReading( path );
+		final IHDF5Reader reader;
+		try
+		{
+			reader = HDF5Factory.openForReading( params.filePath );
+		}
+		catch ( HDF5FileNotFoundException e )
+		{
+			LOGGER.error( "input file not found" );
+			return false;
+		}
 
+		LOGGER.info( "Opening labels from " + params.filePath );
 		/** loaded segments */
 		ArrayList< H5LabelMultisetSetupImageLoader > labels = null;
 
-		/* labels */
-		if ( reader.exists( path_label ) )
+		/* label dataset */
+		if ( reader.exists( params.labelDatasetPath ) )
 		{
 			try
 			{
-				labels = HDF5Reader.readLabels( reader, path_label );
+				labels = HDF5Reader.readLabels( reader, params.labelDatasetPath );
 			}
 			catch ( IOException e )
 			{
 				LOGGER.error( "read labels failed: " + e.getCause() );
+				return false;
 			}
 		}
 		else
 		{
-			LOGGER.error( "no label dataset '" + path_label + "' found" );
+			LOGGER.error( "no label dataset '" + params.labelDatasetPath + "' found" );
+			return false;
 		}
 
 		volumeLabels = labels.get( 0 ).getImage( 0 );
+
+		return true;
 	}
 
 	/**
@@ -118,10 +113,51 @@ public class MarchingCubesApplication
 	public static void main( String[] args ) throws Exception
 	{
 		// Set the log level
-		System.setProperty( org.slf4j.impl.SimpleLogger.DEFAULT_LOG_LEVEL_KEY, "info" );
+		System.setProperty( org.slf4j.impl.SimpleLogger.DEFAULT_LOG_LEVEL_KEY, "error" );
 		LOGGER = LoggerFactory.getLogger( MarchingCubesApplication.class );
+
+		// get the parameters
+		final Parameters params = new Parameters();
+		JCommander.newBuilder()
+				.addObject( params )
+				.build()
+				.parse( args );
+
+		boolean success = validateParameters( params );
+		if ( !success )
+		{
+			LOGGER.error( "Failed: one of the parameters was not informed" );
+			return;
+		}
+
 		final MarchingCubesViewer viewer = new MarchingCubesViewer( "Marching cube", 800, 600 );
+		viewer.setParameters( params );
 		viewer.main();
+	}
+
+	private static boolean validateParameters( Parameters params )
+	{
+		String errorMessage = "";
+		if ( params.filePath == "" )
+		{
+			errorMessage += "the input file path was not informed";
+		}
+
+		if ( params.foregroundValue == -1 )
+		{
+			if ( errorMessage != "" )
+				errorMessage += " and ";
+
+			errorMessage += "the foreground value was not informed";
+		}
+
+		if ( errorMessage != "" )
+		{
+			LOGGER.error( errorMessage );
+			return false;
+		}
+
+		return true;
 	}
 
 	/**
@@ -132,16 +168,27 @@ public class MarchingCubesApplication
 	 */
 	private static class MarchingCubesViewer extends SceneryDefaultApplication
 	{
+		private Parameters params;
+
 		public MarchingCubesViewer( String applicationName, int windowWidth, int windowHeight )
 		{
 			super( applicationName, windowWidth, windowHeight, false );
 		}
 
+		public void setParameters( Parameters params )
+		{
+			this.params = params;
+		}
+
 		@Override
 		public void init()
 		{
-			loadData();
-
+			boolean success = loadData( params );
+			if ( !success )
+			{
+				LOGGER.error( "Failed to load the data" );
+				return;
+			}
 			try
 			{
 				writer = new PrintWriter( "vertices_.txt", "UTF-8" );
@@ -192,14 +239,14 @@ public class MarchingCubesApplication
 			{
 				public void run()
 				{
-					marchingCube( getScene() );
+					marchingCube( params.foregroundValue, getScene() );
 				}
 			}.start();
 //			levelOfDetails( neuron, getScene(), cam );
 		}
 	}
 
-	private static void marchingCube( Scene scene )
+	private static void marchingCube( int foregroundValue, Scene scene )
 	{
 		int numberOfCellsX = ( int ) ( ( volumeLabels.max( 0 ) - volumeLabels.min( 0 ) ) + 1 ) / 32;
 		int numberOfCellsY = ( int ) ( ( volumeLabels.max( 1 ) - volumeLabels.min( 1 ) ) + 1 ) / 32;
@@ -275,6 +322,8 @@ public class MarchingCubesApplication
 
 			resultMeshList = new ArrayList<>();
 
+			int[] volDim = new int[] { ( int ) volumeLabels.dimension( 0 ), ( int ) volumeLabels.dimension( 1 ), ( int ) volumeLabels.dimension( 2 ) };
+			LOGGER.info( "volume dimensions: " + volDim[ 0 ] + " " + volDim[ 1 ] + " " + volDim[ 2 ] );
 			final float maxX = volDim[ 0 ] - 1;
 			final float maxY = volDim[ 1 ] - 1;
 			final float maxZ = volDim[ 2 ] - 1;
