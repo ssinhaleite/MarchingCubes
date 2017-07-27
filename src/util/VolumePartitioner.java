@@ -57,10 +57,7 @@ public class VolumePartitioner
 	/**
 	 * Method to partitioning the data in small chunks.
 	 * 
-	 * @param subvolumes
-	 *            list of each subvolume created
-	 * @param offsets
-	 *            the offset of each subvolume
+	 * @return list of chunks with its subvolume and offset created
 	 */
 	public List< Chunk > dataPartitioning()
 	{
