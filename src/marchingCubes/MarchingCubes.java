@@ -17,7 +17,7 @@ import net.imglib2.view.Views;
 import viewer.Mesh;
 
 /**
- * Implements the marching cubes algorithm. Based on
+ * This class implements the marching cubes algorithm. Based on
  * http://paulbourke.net/geometry/polygonise/
  * 
  * @author vleite
@@ -37,7 +37,7 @@ public class MarchingCubes
 	private int foregroundValue;
 
 	/** Indicates which criterion is going to be applied */
-	private ForegroundCriterion criterion;
+	private ForegroundCriterion criteria;
 
 	/** size of the cube */
 	private int[] cubeSize;
@@ -65,7 +65,7 @@ public class MarchingCubes
 		this.nCellsY = 0;
 		this.nCellsZ = 0;
 		this.foregroundValue = 0;
-		this.criterion = ForegroundCriterion.EQUAL;
+		this.criteria = ForegroundCriterion.EQUAL;
 		this.cubeSize = new int[] { 1, 1, 1 };
 		this.vertices = new ArrayList<>();
 	}
@@ -87,35 +87,39 @@ public class MarchingCubes
 			final int[] cubeSize, final ForegroundCriterion foregroundCriteria, final int foregroundValue,
 			final boolean copyToArray )
 	{
-		if ( copyToArray ) { return generateMeshFromArray( input, volDim, offset, cubeSize, foregroundCriteria, foregroundValue ); }
+		initializeVariables( volDim, offset, cubeSize, foregroundCriteria, foregroundValue );
+		if ( copyToArray ) { return generateMeshFromArray( input, volDim, cubeSize ); }
 
-		return generateMeshFromRAI( input, volDim, offset, cubeSize, foregroundCriteria, foregroundValue );
+		return generateMeshFromRAI( input, cubeSize );
 	}
 
-	/**
-	 * 
-	 * @param input
-	 * @param volDim
-	 * @param offset
-	 * @param cubeSize
-	 * @param isExact
-	 * @param foregroundValue
-	 * @return
-	 */
-	private Mesh generateMeshFromRAI( final RandomAccessibleInterval< LabelMultisetType > input, final int[] volDim, final int[] offset, final int[] cubeSize,
-			final ForegroundCriterion criterion, final int foregroundValue )
+	private void initializeVariables( final int[] volDim, final int[] offset, final int[] cubeSize, final ForegroundCriterion foregroundCriteria, final int foregroundValue )
 	{
-		// when using RAI the offset is not necessary, because the data is not
-		// repositioned
-		this.offset = new int[] { 0, 0, 0 };
+		this.offset = offset;
 		this.cubeSize = cubeSize;
-		this.criterion = criterion;
+		this.criteria = foregroundCriteria;
 		this.foregroundValue = foregroundValue;
 
 		nCellsX = ( long ) Math.ceil( ( volDim[ 0 ] + 2 ) / cubeSize[ 0 ] );
 		nCellsY = ( long ) Math.ceil( ( volDim[ 1 ] + 2 ) / cubeSize[ 1 ] );
 		nCellsZ = ( long ) Math.ceil( ( volDim[ 2 ] + 2 ) / cubeSize[ 2 ] );
 
+		if ( ( volDim[ 0 ] + 2 ) % cubeSize[ 0 ] == 0 )
+			nCellsX--;
+		if ( ( volDim[ 1 ] + 2 ) % cubeSize[ 1 ] == 0 )
+			nCellsY--;
+		if ( ( volDim[ 2 ] + 2 ) % cubeSize[ 2 ] == 0 )
+			nCellsZ--;
+	}
+
+	/**
+	 * 
+	 * @param input
+	 * @param cubeSize
+	 * @return
+	 */
+	private Mesh generateMeshFromRAI( final RandomAccessibleInterval< LabelMultisetType > input, final int[] cubeSize )
+	{
 		final ExtendedRandomAccessibleInterval< LabelMultisetType, RandomAccessibleInterval< LabelMultisetType > > extended =
 				Views.extendValue( input, new LabelMultisetType() );
 
@@ -223,7 +227,7 @@ public class MarchingCubes
 				// @formatter:on
 			}
 
-			triangulation( vertexValues, cursorX, cursorY, cursorZ );
+			triangulation( vertexValues, xCells, yCells, zCells );
 
 			for ( int j = 0; j < cubeSize[ 0 ]; j++ )
 			{
@@ -288,20 +292,11 @@ public class MarchingCubes
 	 * 
 	 * @param input
 	 * @param volDim
-	 * @param offset
 	 * @param cubeSize
-	 * @param criterion
-	 * @param foregroundValue
 	 * @return
 	 */
-	private Mesh generateMeshFromArray( final RandomAccessibleInterval< LabelMultisetType > input, final int[] volDim, final int[] offset,
-			final int[] cubeSize, final ForegroundCriterion criterion, final int foregroundValue )
+	private Mesh generateMeshFromArray( final RandomAccessibleInterval< LabelMultisetType > input, final int[] volDim, final int[] cubeSize )
 	{
-		this.offset = offset;
-		this.cubeSize = cubeSize;
-		this.criterion = criterion;
-		this.foregroundValue = foregroundValue;
-
 		// array where the data will be copied
 		final List< Long > volumeArray = new ArrayList< Long >();
 
@@ -333,17 +328,6 @@ public class MarchingCubes
 		// two dimensions more: from 'min minus one' to 'max plus one'
 		xWidth = ( volDim[ 0 ] + 2 );
 		xyWidth = xWidth * ( volDim[ 1 ] + 2 );
-
-		nCellsX = ( long ) Math.ceil( ( volDim[ 0 ] + 2 ) / cubeSize[ 0 ] );
-		nCellsY = ( long ) Math.ceil( ( volDim[ 1 ] + 2 ) / cubeSize[ 1 ] );
-		nCellsZ = ( long ) Math.ceil( ( volDim[ 2 ] + 2 ) / cubeSize[ 2 ] );
-
-		if ( ( volDim[ 0 ] + 2 ) % cubeSize[ 0 ] == 0 )
-			nCellsX--;
-		if ( ( volDim[ 1 ] + 2 ) % cubeSize[ 1 ] == 0 )
-			nCellsY--;
-		if ( ( volDim[ 2 ] + 2 ) % cubeSize[ 2 ] == 0 )
-			nCellsZ--;
 
 		if ( LOGGER.isDebugEnabled() )
 		{
@@ -390,23 +374,23 @@ public class MarchingCubes
 					// This way, we need to remap the cube vertices:
 					// @formatter:on
 
-					if ( LOGGER.isDebugEnabled() )
+					if ( LOGGER.isTraceEnabled() )
 					{
-						LOGGER.debug( "position 7: " + ( ( int ) ( cubeSize[ 2 ] * cursorZ ) * xyWidth + ( int ) ( cubeSize[ 1 ] * cursorY ) * xWidth
+						LOGGER.trace( "position 7: " + ( ( int ) ( cubeSize[ 2 ] * cursorZ ) * xyWidth + ( int ) ( cubeSize[ 1 ] * cursorY ) * xWidth
 								+ ( int ) ( cursorX * cubeSize[ 0 ] ) ) );
-						LOGGER.debug( "position 6: " + ( ( int ) ( cubeSize[ 2 ] * cursorZ ) * xyWidth + ( int ) ( cubeSize[ 1 ] * cursorY ) * xWidth
+						LOGGER.trace( "position 6: " + ( ( int ) ( cubeSize[ 2 ] * cursorZ ) * xyWidth + ( int ) ( cubeSize[ 1 ] * cursorY ) * xWidth
 								+ ( int ) ( cubeSize[ 0 ] * ( cursorX + 1 ) ) ) );
-						LOGGER.debug( "position 3: " + ( ( int ) ( cubeSize[ 2 ] * cursorZ ) * xyWidth + ( int ) ( ( cubeSize[ 1 ] * ( cursorY + 1 ) ) ) * xWidth
+						LOGGER.trace( "position 3: " + ( ( int ) ( cubeSize[ 2 ] * cursorZ ) * xyWidth + ( int ) ( ( cubeSize[ 1 ] * ( cursorY + 1 ) ) ) * xWidth
 								+ ( int ) ( cubeSize[ 0 ] * cursorX ) ) );
-						LOGGER.debug( "position 2: " + ( ( int ) ( cubeSize[ 2 ] * cursorZ ) * xyWidth + ( int ) ( ( cubeSize[ 1 ] * ( cursorY + 1 ) ) ) * xWidth
+						LOGGER.trace( "position 2: " + ( ( int ) ( cubeSize[ 2 ] * cursorZ ) * xyWidth + ( int ) ( ( cubeSize[ 1 ] * ( cursorY + 1 ) ) ) * xWidth
 								+ ( int ) ( cubeSize[ 0 ] * ( cursorX + 1 ) ) ) );
-						LOGGER.debug( "position 4: " + ( ( ( int ) ( cubeSize[ 2 ] * ( cursorZ + 1 ) ) ) * xyWidth + ( int ) ( cubeSize[ 1 ] * cursorY ) * xWidth
+						LOGGER.trace( "position 4: " + ( ( ( int ) ( cubeSize[ 2 ] * ( cursorZ + 1 ) ) ) * xyWidth + ( int ) ( cubeSize[ 1 ] * cursorY ) * xWidth
 								+ ( int ) ( cubeSize[ 0 ] * cursorX ) ) );
-						LOGGER.debug( "position 0: " + ( ( ( int ) ( cubeSize[ 2 ] * ( cursorZ + 1 ) ) ) * xyWidth + ( int ) ( cubeSize[ 1 ] * cursorY ) * xWidth
+						LOGGER.trace( "position 0: " + ( ( ( int ) ( cubeSize[ 2 ] * ( cursorZ + 1 ) ) ) * xyWidth + ( int ) ( cubeSize[ 1 ] * cursorY ) * xWidth
 								+ ( int ) ( cubeSize[ 0 ] * ( cursorX + 1 ) ) ) );
-						LOGGER.debug( "position 5: " + ( ( ( int ) ( cubeSize[ 2 ] * ( cursorZ + 1 ) ) ) * xyWidth + ( int ) ( cubeSize[ 1 ] * ( cursorY + 1 ) ) * xWidth
+						LOGGER.trace( "position 5: " + ( ( ( int ) ( cubeSize[ 2 ] * ( cursorZ + 1 ) ) ) * xyWidth + ( int ) ( cubeSize[ 1 ] * ( cursorY + 1 ) ) * xWidth
 								+ ( int ) ( cubeSize[ 0 ] * cursorX ) ) );
-						LOGGER.debug( "position 1: " + ( ( ( int ) ( cubeSize[ 2 ] * ( cursorZ + 1 ) ) ) * xyWidth + ( int ) ( cubeSize[ 1 ] * ( cursorY + 1 ) ) * xWidth
+						LOGGER.trace( "position 1: " + ( ( ( int ) ( cubeSize[ 2 ] * ( cursorZ + 1 ) ) ) * xyWidth + ( int ) ( cubeSize[ 1 ] * ( cursorY + 1 ) ) * xWidth
 								+ ( int ) ( cubeSize[ 0 ] * ( cursorX + 1 ) ) ) );
 					}
 
@@ -632,6 +616,7 @@ public class MarchingCubes
 	 */
 	private float[] calculateIntersection( final int cursorX, final int cursorY, final int cursorZ, final int intersectedEdge )
 	{
+		LOGGER.trace("cursor position: " + cursorX + " " + cursorY + " " + cursorZ);
 		int v1x = cursorX, v1y = cursorY, v1z = cursorZ;
 		int v2x = cursorX, v2y = cursorY, v2z = cursorZ;
 
@@ -640,8 +625,8 @@ public class MarchingCubes
 		case 0:
 			// edge 0 -> from p0 to p1
 			// p0 = { 1 + cursorX, 0 + cursorY, 1 + cursorZ }
-			v1x +=1;
-			v1z+=1;
+			v1x += 1;
+			v1z += 1;
 
 			// p1 = { 1 + cursorX, 1 + cursorY, 1 + cursorZ }
 			v2x += 1;
@@ -790,7 +775,7 @@ public class MarchingCubes
 	/**
 	 * Checks if the given value matches the foreground accordingly with the 
 	 * foreground criterion. This comparison is dependent on the variable 
-	 * {@link #criterion}
+	 * {@link #criteria}
 	 * 
 	 * @param vertexValue
 	 *            value that will be compared with the foregroundValue
@@ -799,7 +784,7 @@ public class MarchingCubes
 	 */
 	private boolean foregroundCriterionTest(final double vertexValue)
 	{
-		if (criterion.equals( ForegroundCriterion.EQUAL ))
+		if (criteria.equals( ForegroundCriterion.EQUAL ))
 		{
 			return (vertexValue == foregroundValue);
 		} 
