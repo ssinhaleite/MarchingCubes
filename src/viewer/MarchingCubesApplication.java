@@ -5,7 +5,9 @@ import java.io.PrintWriter;
 import java.nio.FloatBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletionService;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorCompletionService;
@@ -114,6 +116,7 @@ public class MarchingCubesApplication
 	{
 		// Set the log level
 		System.setProperty( org.slf4j.impl.SimpleLogger.DEFAULT_LOG_LEVEL_KEY, "error" );
+//		System.setProperty( org.slf4j.impl.SimpleLogger.LOG_FILE_KEY, "messages.txt" );
 		LOGGER = LoggerFactory.getLogger( MarchingCubesApplication.class );
 
 		// get the parameters
@@ -272,7 +275,8 @@ public class MarchingCubesApplication
 		List< Chunk > chunks = new ArrayList< Chunk >();
 
 		CompletionService< viewer.Mesh > executor = null;
-		List< Future< viewer.Mesh > > resultMeshList = null;
+		Map< Future< viewer.Mesh >, Chunk > resultMeshList = null;
+		int resolution = 0;
 		for ( int voxSize = 32; voxSize > 0; voxSize /= 2 )
 		{
 			// clean the vertices, offsets and subvolumes
@@ -285,17 +289,35 @@ public class MarchingCubesApplication
 			material.setSpecular( new GLVector( 1f, 0.0f, 1f ) );
 
 			if ( voxSize == 32 )
+			{
 				material.setDiffuse( new GLVector( 1, 0, 0 ) );
+				resolution = 6;
+			}
 			if ( voxSize == 16 )
+			{
 				material.setDiffuse( new GLVector( 0, 1, 0 ) );
+				resolution = 5;
+			}
 			if ( voxSize == 8 )
+			{
 				material.setDiffuse( new GLVector( 0, 0, 1 ) );
+				resolution = 4;
+			}
 			if ( voxSize == 4 )
+			{
 				material.setDiffuse( new GLVector( 1, 0, 1 ) );
+				resolution = 3;
+			}
 			if ( voxSize == 2 )
+			{
 				material.setDiffuse( new GLVector( 0, 1, 1 ) );
+				resolution = 2;
+			}
 			if ( voxSize == 1 )
+			{
 				material.setDiffuse( new GLVector( 1, 1, 0 ) );
+				resolution = 1;
+			}
 
 			neuron.setMaterial( material );
 			neuron.setName( String.valueOf( foregroundValue + " " + voxSize ) );
@@ -308,19 +330,24 @@ public class MarchingCubesApplication
 			cubeSize[ 2 ] = 1;
 
 			util.VolumePartitioner partitioner = new util.VolumePartitioner( volumeLabels, partitionSize, cubeSize );
-			chunks = partitioner.dataPartitioning();
 
-//			chunks.clear();
-//			Chunk chunk = new Chunk();
-//			chunk.setVolume( volumeLabels );
-//			chunk.setOffset( new int[] { 0, 0, 0 } );
-//			chunks.add( chunk );
+			// TODO: use the mesh extractor to define regions of interest and
+			// call the partitioner
+			for ( int x = 0; x < volumeLabels.dimension( 0 ); x++ )
+				for ( int y = 0; y < volumeLabels.dimension( 1 ); y++ )
+					for ( int z = 0; z < volumeLabels.dimension( 2 ); z++ )
+					{
+						int[] position = new int[] { x, y, z };
+						Chunk chunk = partitioner.getChunk( position );
+						if ( chunk != null && !chunks.contains( chunk ) )
+							chunks.add( chunk );
+					}
 
 			LOGGER.info( "starting executor..." );
 			executor = new ExecutorCompletionService< viewer.Mesh >(
 					Executors.newWorkStealingPool() );
 
-			resultMeshList = new ArrayList<>();
+			resultMeshList = new HashMap< Future< viewer.Mesh >, Chunk >();
 
 			int[] volDim = new int[] { ( int ) volumeLabels.dimension( 0 ), ( int ) volumeLabels.dimension( 1 ), ( int ) volumeLabels.dimension( 2 ) };
 			LOGGER.info( "volume dimensions: " + volDim[ 0 ] + " " + volDim[ 1 ] + " " + volDim[ 2 ] );
@@ -335,10 +362,7 @@ public class MarchingCubesApplication
 				LOGGER.trace( "maxX " + maxX + " maxY: " + maxY + " maxZ: " + maxZ + " maxAxisVal: " + maxAxisVal );
 			}
 
-			if ( LOGGER.isDebugEnabled() )
-			{
-				LOGGER.debug( "creating callables for " + chunks.size() + " partitions..." );
-			}
+			LOGGER.info( "creating callables for " + chunks.size() + " partitions..." );
 
 			for ( int i = 0; i < chunks.size(); i++ )
 			{
@@ -357,7 +381,7 @@ public class MarchingCubesApplication
 				}
 
 				Future< viewer.Mesh > result = executor.submit( callable );
-				resultMeshList.add( result );
+				resultMeshList.put( result, chunks.get( i ) );
 			}
 
 			Future< viewer.Mesh > completedFuture = null;
@@ -380,7 +404,7 @@ public class MarchingCubesApplication
 					LOGGER.error( " task interrupted: " + e.getCause() );
 				}
 
-				resultMeshList.remove( completedFuture );
+				Chunk chunk = resultMeshList.remove( completedFuture );
 				viewer.Mesh m = new viewer.Mesh();
 
 				// get the mesh, if the task was able to create it
@@ -403,6 +427,7 @@ public class MarchingCubesApplication
 					neuron.setVertices( FloatBuffer.wrap( verticesArray ) );
 					neuron.recalculateNormals();
 					neuron.setDirty( true );
+					chunk.setMesh( neuron, resolution );
 				}
 			}
 
