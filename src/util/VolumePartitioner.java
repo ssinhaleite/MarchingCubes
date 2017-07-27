@@ -12,9 +12,7 @@ import net.imglib2.view.Views;
 
 /**
  * This class is responsible for create small subvolumes from a
- * RandomAccessibleInterval. Given the data, the size of each partition and the
- * size of the cube (from marching cubes algorithm), this class return a vector
- * with subvolumes and the offsets of each subvolume.
+ * RandomAccessibleInterval.
  * 
  * @author vleite
  *
@@ -38,6 +36,8 @@ public class VolumePartitioner
 	 */
 	private final int[] cubeSize;
 
+	private static List< Chunk > chunks;
+
 	/**
 	 * Constructor - initialize parameters
 	 */
@@ -47,10 +47,11 @@ public class VolumePartitioner
 		this.partitionSize = partitionSize;
 		this.cubeSize = cubeSize;
 		this.OVERLAP = cubeSize;
+		VolumePartitioner.chunks = new ArrayList< Chunk >();
 
 		if ( LOGGER.isTraceEnabled() )
 		{
-			LOGGER.trace( "partition defined as: " + partitionSize[ 0 ] + " " + partitionSize[ 1 ] + " " + partitionSize[ 2 ] );
+			LOGGER.trace( "partition size: " + partitionSize[ 0 ] + " " + partitionSize[ 1 ] + " " + partitionSize[ 2 ] );
 		}
 	}
 
@@ -61,8 +62,6 @@ public class VolumePartitioner
 	 */
 	public List< Chunk > dataPartitioning()
 	{
-		List< Chunk > chunks = new ArrayList< Chunk >();
-
 		for ( long bx = volumeLabels.min( 0 ); ( bx + partitionSize[ 0 ] ) <= volumeLabels.max( 0 ); bx += partitionSize[ 0 ] )
 		{
 			for ( long by = volumeLabels.min( 1 ); ( by + partitionSize[ 1 ] ) <= volumeLabels.max( 1 ); by += partitionSize[ 1 ] )
@@ -80,34 +79,17 @@ public class VolumePartitioner
 						LOGGER.trace( "end: " + end[ 0 ] + " " + end[ 1 ] + " " + end[ 2 ] );
 					}
 
-					if ( begin[ 0 ] - OVERLAP[ 0 ] >= 0 )
+					for ( int i = 0; i < begin.length; i++ )
 					{
-						begin[ 0 ] -= OVERLAP[ 0 ];
-					}
+						if ( begin[ i ] - OVERLAP[ i ] >= 0 )
+						{
+							begin[ i ] -= OVERLAP[ i ];
+						}
 
-					if ( begin[ 1 ] - OVERLAP[ 1 ] >= 0 )
-					{
-						begin[ 1 ] -= OVERLAP[ 1 ];
-					}
-
-					if ( begin[ 2 ] - OVERLAP[ 2 ] >= 0 )
-					{
-						begin[ 2 ] -= OVERLAP[ 2 ];
-					}
-
-					if ( volumeLabels.max( 0 ) - end[ 0 ] < partitionSize[ 0 ] )
-					{
-						end[ 0 ] = volumeLabels.max( 0 );
-					}
-
-					if ( volumeLabels.max( 1 ) - end[ 1 ] < partitionSize[ 1 ] )
-					{
-						end[ 1 ] = volumeLabels.max( 1 );
-					}
-
-					if ( volumeLabels.max( 2 ) - end[ 2 ] < partitionSize[ 2 ] )
-					{
-						end[ 2 ] = volumeLabels.max( 2 );
+						if ( volumeLabels.max( i ) - end[ i ] < partitionSize[ i ] )
+						{
+							end[ i ] = volumeLabels.max( i );
+						}
 					}
 
 					final Chunk chunk = new Chunk();
@@ -117,18 +99,72 @@ public class VolumePartitioner
 
 					if ( LOGGER.isDebugEnabled() )
 					{
-						LOGGER.debug( "partition begins at: " + begin[ 0 ] + " " + begin[ 1 ] + " " + begin[ 2 ] );
-						LOGGER.debug( "partition ends at: " + end[ 0 ] + " " + end[ 1 ] + " " + end[ 2 ] );
+						LOGGER.info( "partition begins at: " + begin[ 0 ] + " " + begin[ 1 ] + " " + begin[ 2 ] );
+						LOGGER.info( "partition ends at: " + end[ 0 ] + " " + end[ 1 ] + " " + end[ 2 ] );
 					}
 				}
 			}
 		}
-
 		return chunks;
 	}
 
-	public Chunk getChunk( int[] initialPosition )
+	/**
+	 * Given a specific position, return the chunk were this position is If the
+	 * chunk already exists, just return the chunk. If not, create a chunk for
+	 * the informed position.
+	 * 
+	 * @param position
+	 *            x, y, z coordinates
+	 * @return chunk were this position belongs to.
+	 */
+	public Chunk getChunk( int[] position )
 	{
-		return new Chunk();
+		for ( int i = 0; i < chunks.size(); i++ )
+		{
+			if ( chunks.get( i ).contains( position ) ) { return chunks.get( i ); }
+		}
+
+		long[] offset = new long[ 3 ];
+		offset[ 0 ] = ( position[ 0 ] / partitionSize[ 0 ] );
+		offset[ 1 ] = ( position[ 1 ] / partitionSize[ 1 ] );
+		offset[ 2 ] = ( position[ 2 ] / partitionSize[ 2 ] );
+
+		for ( int i = 0; i < offset.length; i++ )
+		{
+			if ( offset[ i ] > ( volumeLabels.dimension( i ) / partitionSize[ i ] ) ) { return null; }
+		}
+
+		long[] begin = new long[] { offset[ 0 ] * partitionSize[ 0 ],
+				offset[ 1 ] * partitionSize[ 1 ],
+				offset[ 2 ] * partitionSize[ 2 ] };
+		long[] end = new long[] { begin[ 0 ] + partitionSize[ 0 ],
+				begin[ 1 ] + partitionSize[ 1 ],
+				begin[ 2 ] + partitionSize[ 2 ] };
+
+		for ( int i = 0; i < begin.length; i++ )
+		{
+			if ( begin[ i ] - OVERLAP[ i ] >= 0 )
+			{
+				begin[ i ] -= OVERLAP[ i ];
+			}
+
+			if ( volumeLabels.max( i ) - end[ i ] < partitionSize[ i ] )
+			{
+				end[ i ] = volumeLabels.max( i );
+			}
+		}
+
+		final Chunk chunk = new Chunk();
+		chunk.setVolume( Views.interval( volumeLabels, begin, end ) );
+		chunk.setOffset( new int[] { ( int ) ( begin[ 0 ] / cubeSize[ 0 ] ), ( int ) ( begin[ 1 ] / cubeSize[ 1 ] ), ( int ) ( begin[ 2 ] / cubeSize[ 2 ] ) } );
+		chunks.add( chunk );
+
+		if ( LOGGER.isDebugEnabled() )
+		{
+			LOGGER.info( "partition begins at: " + begin[ 0 ] + " " + begin[ 1 ] + " " + begin[ 2 ] );
+			LOGGER.info( "partition ends at: " + end[ 0 ] + " " + end[ 1 ] + " " + end[ 2 ] );
+		}
+
+		return chunk;
 	}
 }
