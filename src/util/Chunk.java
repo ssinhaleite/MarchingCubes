@@ -111,4 +111,27 @@ public class Chunk
 		return null;
 	}
 
+	/**
+	 * Indicates if the chunk contains the position informed. The bounding box
+	 * of the chunk takes into account its offset.
+	 * 
+	 * @param position
+	 *            x, y, z in world coordinates
+	 * @return true if the point is inside the chunk, false otherwise.
+	 */
+	public boolean contains( int[] position )
+	{
+		assert volume.numDimensions() == position.length: "volume dimension is " + volume.numDimensions() + " and point dimension is " + position.length;
+
+		for ( int i = 0; i < volume.numDimensions(); i++ )
+		{
+			if ( volume.max( i ) < position[ i ] || volume.min( i ) > position[ i ] )
+			{
+				return false;
+			}
+		}
+
+		return true;
+	}
+
 }
