@@ -630,8 +630,8 @@ public class MarchingCubes
 
 			// p1 = { 1 + cursorX, 1 + cursorY, 1 + cursorZ }
 			v2x += 1;
-			v2y+=1;
-			v2z+=1;
+			v2y += 1;
+			v2z += 1;
 
 			break;
 		case 1:
@@ -662,8 +662,8 @@ public class MarchingCubes
 			v1x += 1;
 
 			// p0 = { 1 + cursorX, 0 + cursorY, 1 + cursorZ }
-			v2x+=1;
-			v2z+=1;
+			v2x += 1;
+			v2z += 1;
 
 			break;
 		case 4:
@@ -704,8 +704,8 @@ public class MarchingCubes
 		case 8:
 			// edge 8 -> from p0 to p4
 			// p0 = { 1 + cursorX, 0 + cursorY, 1 + cursorZ }
-			v1x+=1;
-			v1z+=1;
+			v1x += 1;
+			v1z += 1;
 
 			// p4 = { 0 + cursorX, 0 + cursorY, 1 + cursorZ }
 			v2z += 1;
