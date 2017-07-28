@@ -1,12 +1,15 @@
 package util;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import bdv.labels.labelset.LabelMultisetType;
 import graphics.scenery.Mesh;
 import net.imglib2.RandomAccessibleInterval;
 
 /**
- * Chunk is a part of the volume. Each chunk knows its relation with the volume,
- * its offset and keeps its mesh in different resolutions.
+ * Chunk is a part of the volume. Each chunk knows its offset and keeps its mesh
+ * in different resolutions.
  * 
  * @author vleite
  *
@@ -24,10 +27,9 @@ public class Chunk
 	private int[] offset;
 
 	/**
-	 * Scenery Mesh. Each position corresponds to one resolution. 1 - the most
-	 * detailed, 8 - the least detailed
+	 * All the mesh generated for the chunk and its resolution
 	 */
-	private Mesh[] mesh;
+	private Map< int[], Mesh > meshMap;
 
 	/**
 	 * Constructor, initialize variables with dummy values.
@@ -36,7 +38,7 @@ public class Chunk
 	{
 		volume = null;
 		offset = null;
-		mesh = new Mesh[ 8 ];
+		meshMap = new HashMap< int[], Mesh >();
 	}
 
 	/**
@@ -85,30 +87,26 @@ public class Chunk
 	 * Define the {@link#mesh} generated for the chunk
 	 * 
 	 * @param mesh
-	 *            list of vertices
+	 *            sceneryMesh
 	 * @param resolution
-	 *            from 1 to 8, represents the index of the vector but also the
-	 *            resolution of the mesh.
+	 *            the cube size used to generate the mesh
 	 */
-	public void setMesh( Mesh mesh, int resolution )
+	public void setMesh( Mesh mesh, int[] resolution )
 	{
-		this.mesh[ resolution ] = mesh;
+		meshMap.put( resolution, mesh );
 	}
 
 	/**
 	 * Return the {@link#mesh} in a specific resolution.
 	 * 
 	 * @param resolution
-	 *            from 1 to 8, represents the index of the vector
-	 * @return the {@link#mesh} at resolution position, if no mesh was found
+	 *            cube size used to generate the mesh
+	 * @return the {@link#mesh} at the given resolution, if no mesh was found
 	 *         return null.
 	 */
-	public Mesh getMesh( int resolution )
+	public Mesh getMesh( int[] resolution )
 	{
-		if ( mesh[ resolution ] != null )
-			return mesh[ resolution ];
-
-		return null;
+		return meshMap.get( resolution );
 	}
 
 	/**
