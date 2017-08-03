@@ -36,7 +36,6 @@ import graphics.scenery.SceneryElement;
 import graphics.scenery.backends.Renderer;
 import graphics.scenery.utils.SceneryPanel;
 import javafx.application.Platform;
-import javafx.event.EventHandler;
 import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.VPos;
@@ -50,7 +49,6 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.text.TextAlignment;
 import javafx.stage.Stage;
-import javafx.stage.WindowEvent;
 import net.imglib2.RandomAccessibleInterval;
 import util.Chunk;
 import util.HDF5Reader;
@@ -81,7 +79,7 @@ public class JavaFXApplication
 //	static int[] volDim = {2340, 1685, 153};
 
 	/** small hdf5 for test - subset from sample B */
-	static String path = "data/sample_B_20160708_frags_46_50.hdf";
+	static String path = "resources/sample_B_20160708_frags_46_50.hdf";
 
 	static int foregroundValue = 7;
 
