@@ -1,10 +1,7 @@
-package viewer;
+
 
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.nio.FloatBuffer;
 import java.util.ArrayList;
-import java.util.Arrays;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,7 +16,6 @@ import cleargl.GLVector;
 import graphics.scenery.Box;
 import graphics.scenery.Camera;
 import graphics.scenery.DetachedHeadCamera;
-import graphics.scenery.Material;
 import graphics.scenery.Mesh;
 import graphics.scenery.PointLight;
 import graphics.scenery.Scene;
@@ -30,6 +26,8 @@ import ncsa.hdf.hdf5lib.exceptions.HDF5FileNotFoundException;
 import net.imglib2.RandomAccessibleInterval;
 import util.HDF5Reader;
 import util.Parameters;
+import viewer.MeshExtractor;
+import viewer.MeshView;
 
 /**
  * Unit test for marching cubes
@@ -43,15 +41,8 @@ public class MarchingCubesApplication
 
 	private static RandomAccessibleInterval< LabelMultisetType > volumeLabels = null;
 
-	private static float[] verticesArray = new float[ 0 ];
-
-	private static int[] cubeSize = { 4, 4, 4 };
-
-	private static PrintWriter writer = null;
-
-	private static float maxAxisVal = 0;
-
 	private static marchingCubes.MarchingCubes.ForegroundCriterion criterion = marchingCubes.MarchingCubes.ForegroundCriterion.EQUAL;
+
 
 	/**
 	 * This method loads the hdf file
@@ -183,14 +174,6 @@ public class MarchingCubesApplication
 				LOGGER.error( "Failed to load the data" );
 				return;
 			}
-			try
-			{
-				writer = new PrintWriter( "vertices_.txt", "UTF-8" );
-			}
-			catch ( IOException e )
-			{
-				LOGGER.error( "error on printWriter initialization: " + e.getCause() );
-			}
 
 			setRenderer( Renderer.Factory.createRenderer( getHub(), getApplicationName(), getScene(), getWindowWidth(),
 					getWindowHeight() ) );
@@ -241,81 +224,30 @@ public class MarchingCubesApplication
 
 	private static void marchingCube( int foregroundValue, Scene scene )
 	{
+		int[] cubeSize = new int[ 3 ];
+		MeshView meshView = new MeshView( foregroundValue, scene );
 
 		for ( int voxelSize = 32; voxelSize > 0; voxelSize /= 2 )
 		{
-
-			Mesh completeNeuron = new Mesh();
-			final Material material = new Material();
-			material.setAmbient( new GLVector( 1f, 0.0f, 1f ) );
-			material.setSpecular( new GLVector( 1f, 0.0f, 1f ) );
-
-			if ( voxelSize == 32 )
-			{
-				material.setDiffuse( new GLVector( 1, 0, 0 ) );
-			}
-			if ( voxelSize == 16 )
-			{
-				material.setDiffuse( new GLVector( 0, 1, 0 ) );
-			}
-			if ( voxelSize == 8 )
-			{
-				material.setDiffuse( new GLVector( 0, 0, 1 ) );
-			}
-			if ( voxelSize == 4 )
-			{
-				material.setDiffuse( new GLVector( 1, 0, 1 ) );
-			}
-			if ( voxelSize == 2 )
-			{
-				material.setDiffuse( new GLVector( 0, 1, 1 ) );
-			}
-			if ( voxelSize == 1 )
-			{
-				material.setDiffuse( new GLVector( 1, 1, 0 ) );
-			}
-
-			completeNeuron.setMaterial( material );
-			completeNeuron.setName( String.valueOf( foregroundValue + " " + voxelSize ) );
-			completeNeuron.setPosition( new GLVector( 0.0f, 0.0f, 0.0f ) );
-			completeNeuron.setScale( new GLVector( 4.0f, 4.0f, 40.0f ) );
-//			neuron.setGeometryType( GeometryType.POINTS );
-			scene.addChild( completeNeuron );
+			meshView.addMesh();
 
 			cubeSize[ 0 ] = voxelSize;
 			cubeSize[ 1 ] = voxelSize;
 			cubeSize[ 2 ] = 1;
 
 			MeshExtractor meshExtractor = new MeshExtractor( volumeLabels, cubeSize, foregroundValue, criterion );
-			int[] position = new int[] { 450, 0, 0 };
+			int[] position = new int[] { 0, 0, 0 };
 			meshExtractor.createChunks( position );
 
-			float[] completeNeuronVertices = new float[ 0 ];
-			int completeMeshSize = 0;
 			while ( meshExtractor.hasNext() )
 			{
 				Mesh neuron = new Mesh();
 				neuron = meshExtractor.next();
 
-				if ( completeNeuron.getVertices().hasArray() )
-				{
-					completeNeuronVertices = completeNeuron.getVertices().array();
-					completeMeshSize = completeNeuronVertices.length;
-				}
-
-				float[] neuronVertices = neuron.getVertices().array();
-				int meshSize = neuronVertices.length;
-				verticesArray = Arrays.copyOf( completeNeuronVertices, completeMeshSize + meshSize );
-				System.arraycopy( neuronVertices, 0, verticesArray, completeMeshSize, meshSize );
-
-				System.out.println( "number of elements complete mesh: " + verticesArray.length );
-				completeNeuron.setVertices( FloatBuffer.wrap( verticesArray ) );
-				completeNeuron.recalculateNormals();
-				completeNeuron.setDirty( true );
+				meshView.render( neuron, cubeSize );
 			}
 
 			LOGGER.info( "all results generated!" );
-			writer.close();
 
 			// Pause for 2 seconds
 			try
@@ -327,8 +259,9 @@ public class MarchingCubesApplication
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
+
 			if ( voxelSize != 1 )
-				scene.removeChild( completeNeuron );
+				meshView.removeMesh();
 		}
 	}
 
@@ -346,45 +279,45 @@ public class MarchingCubesApplication
 	 *            time this method is called it add more vertices to the already
 	 *            existing array.
 	 */
-	public static void updateMesh( viewer.Mesh m, Mesh neuron, boolean overwriteArray )
-	{
-		/** max value int = 2,147,483,647 */
-		if ( LOGGER.isDebugEnabled() )
-		{
-			LOGGER.debug( "previous size of vertices: " + verticesArray.length );
-		}
-
-		final int vertexCount;
-		// resize array to fit the new mesh
-		if ( overwriteArray )
-		{
-			vertexCount = 0;
-			verticesArray = new float[ m.getNumberOfVertices() * 3 ];
-		}
-		else
-		{
-			vertexCount = verticesArray.length;
-			verticesArray = Arrays.copyOf( verticesArray, ( m.getNumberOfVertices() * 3 + vertexCount ) );
-		}
-
-		float[][] vertices = m.getVertices();
-		int v = 0;
-		for ( int i = 0; i < m.getNumberOfVertices(); i++ )
-		{
-			verticesArray[ vertexCount + v++ ] = vertices[ i ][ 0 ];
-			verticesArray[ vertexCount + v++ ] = vertices[ i ][ 1 ];
-			verticesArray[ vertexCount + v++ ] = vertices[ i ][ 2 ];
-		}
-
-		// omp parallel for
-		for ( int i = vertexCount; i < verticesArray.length; ++i )
-		{
-			verticesArray[ i ] /= maxAxisVal;
-			writer.println( verticesArray[ i ] );
-		}
-
-		neuron.setVertices( FloatBuffer.wrap( verticesArray ) );
-		neuron.recalculateNormals();
-		neuron.setDirty( true );
-	}
+//	public static void updateMesh( viewer.Mesh m, Mesh neuron, boolean overwriteArray )
+//	{
+//		/** max value int = 2,147,483,647 */
+//		if ( LOGGER.isDebugEnabled() )
+//		{
+//			LOGGER.debug( "previous size of vertices: " + verticesArray.length );
+//		}
+//
+//		final int vertexCount;
+//		// resize array to fit the new mesh
+//		if ( overwriteArray )
+//		{
+//			vertexCount = 0;
+//			verticesArray = new float[ m.getNumberOfVertices() * 3 ];
+//		}
+//		else
+//		{
+//			vertexCount = verticesArray.length;
+//			verticesArray = Arrays.copyOf( verticesArray, ( m.getNumberOfVertices() * 3 + vertexCount ) );
+//		}
+//
+//		float[][] vertices = m.getVertices();
+//		int v = 0;
+//		for ( int i = 0; i < m.getNumberOfVertices(); i++ )
+//		{
+//			verticesArray[ vertexCount + v++ ] = vertices[ i ][ 0 ];
+//			verticesArray[ vertexCount + v++ ] = vertices[ i ][ 1 ];
+//			verticesArray[ vertexCount + v++ ] = vertices[ i ][ 2 ];
+//		}
+//
+//		// omp parallel for
+//		for ( int i = vertexCount; i < verticesArray.length; ++i )
+//		{
+//			verticesArray[ i ] /= maxAxisVal;
+//			writer.println( verticesArray[ i ] );
+//		}
+//
+//		neuron.setVertices( FloatBuffer.wrap( verticesArray ) );
+//		neuron.recalculateNormals();
+//		neuron.setDirty( true );
+//	}
 }
