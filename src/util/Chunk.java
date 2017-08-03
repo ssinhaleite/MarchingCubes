@@ -31,6 +31,18 @@ public class Chunk
 	 */
 	private Map< int[], Mesh > meshMap;
 
+	private int index;
+
+	public int getIndex()
+	{
+		return index;
+	}
+
+	public void setIndex( int index )
+	{
+		this.index = index;
+	}
+
 	/**
 	 * Constructor, initialize variables with dummy values.
 	 */
@@ -39,6 +51,7 @@ public class Chunk
 		volume = null;
 		offset = null;
 		meshMap = new HashMap< int[], Mesh >();
+		index = -1;
 	}
 
 	/**
@@ -132,4 +145,8 @@ public class Chunk
 		return true;
 	}
 
+	public int[] getChunkBoundinBox()
+	{
+		return new int[] { ( int ) volume.min( 0 ), ( int ) volume.min( 1 ), ( int ) volume.min( 2 ), ( int ) volume.max( 0 ), ( int ) volume.max( 1 ), ( int ) volume.max( 2 ) };
+	}
 }
