@@ -99,8 +99,8 @@ public class VolumePartitioner
 
 					if ( LOGGER.isDebugEnabled() )
 					{
-						LOGGER.info( "partition begins at: " + begin[ 0 ] + " " + begin[ 1 ] + " " + begin[ 2 ] );
-						LOGGER.info( "partition ends at: " + end[ 0 ] + " " + end[ 1 ] + " " + end[ 2 ] );
+						LOGGER.debug( "partition begins at: " + begin[ 0 ] + " " + begin[ 1 ] + " " + begin[ 2 ] );
+						LOGGER.debug( "partition ends at: " + end[ 0 ] + " " + end[ 1 ] + " " + end[ 2 ] );
 					}
 				}
 			}
@@ -109,7 +109,7 @@ public class VolumePartitioner
 	}
 
 	/**
-	 * Given a specific position, return the chunk were this position is If the
+	 * Given a specific position, return the chunk were this position is. If the
 	 * chunk already exists, just return the chunk. If not, create a chunk for
 	 * the informed position.
 	 * 
@@ -124,15 +124,11 @@ public class VolumePartitioner
 			if ( chunks.get( i ).contains( position ) ) { return chunks.get( i ); }
 		}
 
-		long[] offset = new long[ 3 ];
-		offset[ 0 ] = ( position[ 0 ] / partitionSize[ 0 ] );
-		offset[ 1 ] = ( position[ 1 ] / partitionSize[ 1 ] );
-		offset[ 2 ] = ( position[ 2 ] / partitionSize[ 2 ] );
+		long[] offset = getVolumeOffset( position );
 
-		for ( int i = 0; i < offset.length; i++ )
-		{
-			if ( offset[ i ] > ( volumeLabels.dimension( i ) / partitionSize[ i ] ) ) { return null; }
-		}
+		int xWidth = ( int ) volumeLabels.dimension( 0 );
+		int xyWidth = ( int ) ( xWidth * volumeLabels.dimension( 1 ) );
+		int index = ( int ) ( offset[ 0 ] + offset[ 1 ] * xWidth + offset[ 2 ] * xyWidth );
 
 		long[] begin = new long[] { offset[ 0 ] * partitionSize[ 0 ],
 				offset[ 1 ] * partitionSize[ 1 ],
@@ -156,15 +152,41 @@ public class VolumePartitioner
 
 		final Chunk chunk = new Chunk();
 		chunk.setVolume( Views.interval( volumeLabels, begin, end ) );
-		chunk.setOffset( new int[] { ( int ) ( begin[ 0 ] / cubeSize[ 0 ] ), ( int ) ( begin[ 1 ] / cubeSize[ 1 ] ), ( int ) ( begin[ 2 ] / cubeSize[ 2 ] ) } );
+		chunk.setOffset( new int[] { ( int ) ( begin[ 0 ] / cubeSize[ 0 ] ), ( int ) ( begin[ 1 ] / cubeSize[ 1 ] ), ( int ) ( ( begin[ 2 ] / cubeSize[ 2 ] ) ) } );
+		chunk.setIndex( index );
 		chunks.add( chunk );
 
 		if ( LOGGER.isDebugEnabled() )
 		{
-			LOGGER.info( "partition begins at: " + begin[ 0 ] + " " + begin[ 1 ] + " " + begin[ 2 ] );
-			LOGGER.info( "partition ends at: " + end[ 0 ] + " " + end[ 1 ] + " " + end[ 2 ] );
+			LOGGER.debug( "partition begins at: " + begin[ 0 ] + " " + begin[ 1 ] + " " + begin[ 2 ] );
+			LOGGER.debug( "partition ends at: " + end[ 0 ] + " " + end[ 1 ] + " " + end[ 2 ] );
 		}
 
 		return chunk;
+	}
+
+	public long[] getVolumeOffset( int[] position )
+	{
+		long[] offset = new long[ 3 ];
+		offset[ 0 ] = ( position[ 0 ] / partitionSize[ 0 ] );
+		offset[ 1 ] = ( position[ 1 ] / partitionSize[ 1 ] );
+		offset[ 2 ] = ( position[ 2 ] / partitionSize[ 2 ] );
+
+		for ( int i = 0; i < offset.length; i++ )
+		{
+			if ( position[ i ] % partitionSize[ i ] == 0 )
+			{
+				if ( offset[ i ] > 0 )
+					offset[ i ]--;
+			}
+
+			if ( offset[ i ] >= ( volumeLabels.dimension( i ) / partitionSize[ i ] ) )
+			{
+				offset[ i ]--;
+			}
+		}
+
+		LOGGER.info( "volume offset: " + offset[ 0 ] + " " + offset[ 1 ] + " " + offset[ 2 ] );
+		return offset;
 	}
 }
