@@ -1,11 +1,10 @@
-package tests;
+package javafx;
 
 import javafx.application.Application;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
-import viewer.Viewer3D;
 
-public class ExampleApplication extends Application
+public class JavaFXApplication extends Application
 {
 	public static void main( final String[] args )
 	{
@@ -15,16 +14,14 @@ public class ExampleApplication extends Application
 	@Override
 	public void start( final Stage primaryStage ) throws Exception
 	{
-		primaryStage.setTitle( "Hello World!" );
-		System.out.println( "creating viewer... " );
-		final Viewer3D viewer3D = new Viewer3D( null );
-		System.out.println( "... " );
-		viewer3D.init();
+		final SimpleSceneryScene simpleSceneryScene = new SimpleSceneryScene( null );
 
 		final StackPane stackPane = new StackPane();
-		stackPane.getChildren().addAll( viewer3D.getPanel() );
+		stackPane.getChildren().addAll( simpleSceneryScene.getPanel() );
 		final javafx.scene.Scene scene = new javafx.scene.Scene( stackPane );
 		primaryStage.setScene( scene );
 		primaryStage.show();
+
+		simpleSceneryScene.init();
 	}
 }
