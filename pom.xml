@@ -22,7 +22,7 @@
           <archive>
             <manifest>
               <addClasspath>true</addClasspath>
-              <mainClass>viewer.MarchingCubesApplication</mainClass>
+              <mainClass>application.MarchingCubesApplication</mainClass>
             </manifest>
           </archive>
           <descriptorRefs>
