@@ -60,6 +60,9 @@ public class SimpleSceneryScene
 		cam.setPosition( new GLVector( 2f, 2f, 10 ) );
 		scene.addChild( cam );
 
+		// Add a delta for keyboard controls
+		cam.setDeltaT( 5 );
+
 		final PointLight[] lights = new PointLight[ 4 ];
 
 		for ( int i = 0; i < lights.length; i++ )
