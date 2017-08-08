@@ -1,6 +1,5 @@
 package javafx;
 
-import graphics.scenery.utils.SceneryPanel;
 import javafx.application.Application;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
@@ -16,18 +15,17 @@ public class JavaFXApplicationSceneryApplication extends Application
 	public void start( final Stage primaryStage ) throws Exception
 	{
 		primaryStage.setTitle( "JavaFX - Scenery Application" );
-
 		final StackPane stackPane = new StackPane();
 
-		SceneryPanel scPanel = new SceneryPanel( 500, 500 );
-		stackPane.getChildren().addAll( scPanel );
+		final SimpleSceneryApplication sceneryApplication = new SimpleSceneryApplication( "JavaFX - Scenery Application", 500, 500, false );
+		stackPane.getChildren().addAll( sceneryApplication.getPanel() );
 
 		final javafx.scene.Scene scene = new javafx.scene.Scene( stackPane );
 		primaryStage.setScene( scene );
 		primaryStage.show();
 
-		final SimpleSceneryApplication sceneryApplication = new SimpleSceneryApplication( "JavaFX - Scenery Application", 500, 500, false );
-		sceneryApplication.setPanel( scPanel );
-		sceneryApplication.main();
+		new Thread( () -> {
+			sceneryApplication.main();
+		} ).start();
 	}
 }
