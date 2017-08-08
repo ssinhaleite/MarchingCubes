@@ -19,6 +19,8 @@ public class SimpleSceneryApplication extends SceneryDefaultApplication
 	public SimpleSceneryApplication( String applicationName, int windowWidth, int windowHeight, boolean wantREPL )
 	{
 		super( applicationName, windowWidth, windowHeight, wantREPL );
+
+		scPanel = new SceneryPanel( 500, 500 );
 	}
 
 	public void init()
