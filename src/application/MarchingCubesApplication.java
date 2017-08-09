@@ -31,6 +31,9 @@ public class MarchingCubesApplication
 	/** volume with the labeled segmentation */
 	private static RandomAccessibleInterval< LabelMultisetType > volumeLabels = null;
 
+	/** resolution of the volume */
+	private static float[] resolution = new float[] { 4f, 4f, 40f };
+
 	/**
 	 * Main method - starts the scenery application
 	 * 
@@ -68,6 +71,7 @@ public class MarchingCubesApplication
 		final MarchingCubesSceneryApplication sceneryApplication = new MarchingCubesSceneryApplication( "Marching cube", 800, 600 );
 		sceneryApplication.setVolumeLabels( volumeLabels );
 		sceneryApplication.setForegroundValue( params.foregroundValue );
+		sceneryApplication.setVolumeResolution( resolution );
 		sceneryApplication.main();
 	}
 
