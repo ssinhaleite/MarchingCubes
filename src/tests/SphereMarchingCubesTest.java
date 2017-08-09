@@ -38,6 +38,7 @@ public class SphereMarchingCubesTest
 		final MarchingCubesSceneryApplication sceneryApplication = new MarchingCubesSceneryApplication( "Marching cubes", 800, 600 );
 		sceneryApplication.setVolumeLabels( volumeLabels );
 		sceneryApplication.setForegroundValue( 1 );
+		sceneryApplication.setVolumeResolution( new float[] { 0.5f, 0.75f, 0.5f } );
 		sceneryApplication.main();
 	}
 
