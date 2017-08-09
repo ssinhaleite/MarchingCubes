@@ -42,6 +42,8 @@ public class MarchingCubesSceneryApplication extends SceneryDefaultApplication
 
 	private static float[] verticesArray = new float[ 0 ];
 
+	private static float[] volumeResolution;
+
 	public MarchingCubesSceneryApplication( String applicationName, int windowWidth, int windowHeight )
 	{
 		super( applicationName, windowWidth, windowHeight, false );
@@ -55,6 +57,11 @@ public class MarchingCubesSceneryApplication extends SceneryDefaultApplication
 	public void setVolumeLabels( RandomAccessibleInterval< LabelMultisetType > volumeLabels )
 	{
 		this.volumeLabels = volumeLabels;
+	}
+
+	public void setVolumeResolution( float[] resolution )
+	{
+		this.volumeResolution = resolution;
 	}
 
 	@Override
@@ -75,7 +82,7 @@ public class MarchingCubesSceneryApplication extends SceneryDefaultApplication
 
 		cam.perspectiveCamera( 50f, getWindowHeight(), getWindowWidth(), 0.001f, 1000.0f );
 		cam.setActive( true );
-		cam.setPosition( new GLVector( 2f, 2f, 10 ) );
+		cam.setPosition( new GLVector( volumeResolution[ 0 ] / 2, volumeResolution[ 1 ] / 2, 10 ) );
 		getScene().addChild( cam );
 
 		PointLight[] lights = new PointLight[ 4 ];
@@ -147,7 +154,7 @@ public class MarchingCubesSceneryApplication extends SceneryDefaultApplication
 			completeNeuron.setMaterial( material );
 			completeNeuron.setName( String.valueOf( foregroundValue + " " + voxelSize ) );
 			completeNeuron.setPosition( new GLVector( 0.0f, 0.0f, 0.0f ) );
-			completeNeuron.setScale( new GLVector( 4.0f, 4.0f, 40.0f ) );
+			completeNeuron.setScale( new GLVector( volumeResolution[ 0 ], volumeResolution[ 1 ], volumeResolution[ 2 ] ) );
 			scene.addChild( completeNeuron );
 
 			cubeSize[ 0 ] = voxelSize;
