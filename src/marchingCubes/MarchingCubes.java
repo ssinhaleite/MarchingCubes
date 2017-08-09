@@ -14,7 +14,7 @@ import net.imglib2.FinalInterval;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.view.ExtendedRandomAccessibleInterval;
 import net.imglib2.view.Views;
-import viewer.Mesh;
+import util.Mesh;
 
 /**
  * This class implements the marching cubes algorithm. Based on

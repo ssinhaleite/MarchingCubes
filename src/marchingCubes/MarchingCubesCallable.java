@@ -1,10 +1,10 @@
-package viewer;
+package marchingCubes;
 
 import java.util.concurrent.Callable;
 
 import bdv.labels.labelset.LabelMultisetType;
-import marchingCubes.MarchingCubes;
 import net.imglib2.RandomAccessibleInterval;
+import util.Mesh;
 
 public class MarchingCubesCallable implements Callable< Mesh >
 {

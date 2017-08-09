@@ -1,4 +1,4 @@
-package viewer;
+package util;
 
 import java.nio.FloatBuffer;
 import java.util.ArrayList;
@@ -16,8 +16,8 @@ import org.slf4j.LoggerFactory;
 
 import bdv.labels.labelset.LabelMultisetType;
 import graphics.scenery.Mesh;
+import marchingCubes.MarchingCubesCallable;
 import net.imglib2.RandomAccessibleInterval;
-import util.Chunk;
 
 /**
  * This class is responsible for generate region of interests (map of
@@ -48,11 +48,11 @@ public class MeshExtractor
 
 	private marchingCubes.MarchingCubes.ForegroundCriterion criterion;
 
-	private static Map< Future< viewer.Mesh >, Chunk > resultMeshMap = null;
+	private static Map< Future< util.Mesh >, Chunk > resultMeshMap = null;
 
 	private static List< Chunk > processedChunksList = null;
 
-	private static CompletionService< viewer.Mesh > executor = null;
+	private static CompletionService< util.Mesh > executor = null;
 
 	private static util.VolumePartitioner partitioner;
 
@@ -64,10 +64,10 @@ public class MeshExtractor
 		this.foregroundValue = foregroundValue;
 		this.criterion = criterion;
 
-		executor = new ExecutorCompletionService< viewer.Mesh >(
+		executor = new ExecutorCompletionService< util.Mesh >(
 				Executors.newWorkStealingPool() );
 
-		resultMeshMap = new HashMap< Future< viewer.Mesh >, Chunk >();
+		resultMeshMap = new HashMap< Future< util.Mesh >, Chunk >();
 
 		processedChunksList = new ArrayList< Chunk >();
 
@@ -94,7 +94,7 @@ public class MeshExtractor
 
 	public Mesh next()
 	{
-		Future< viewer.Mesh > completedFuture = null;
+		Future< util.Mesh > completedFuture = null;
 		// block until any task completes
 		try
 		{
@@ -111,7 +111,7 @@ public class MeshExtractor
 		}
 
 		Chunk chunk = resultMeshMap.remove( completedFuture );
-		viewer.Mesh m = new viewer.Mesh();
+		util.Mesh m = new util.Mesh();
 
 		// get the mesh, if the task was able to create it
 		try
@@ -297,7 +297,7 @@ public class MeshExtractor
 		MarchingCubesCallable callable = new MarchingCubesCallable( chunk.getVolume(), volumeDimension, chunk.getOffset(), cubeSize, criterion, foregroundValue,
 				true );
 
-		Future< viewer.Mesh > result = executor.submit( callable );
+		Future< util.Mesh > result = executor.submit( callable );
 
 		resultMeshMap.put( result, chunk );
 		processedChunksList.add( chunk );
@@ -335,7 +335,7 @@ public class MeshExtractor
 	 * @param sceneryMesh
 	 *            scenery mesh that will receive the information
 	 */
-	public void updateMesh( viewer.Mesh mesh, Mesh sceneryMesh )
+	public void updateMesh( util.Mesh mesh, Mesh sceneryMesh )
 	{
 		float[] verticesArray = new float[ mesh.getNumberOfVertices() * 3 ];
 

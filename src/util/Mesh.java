@@ -1,4 +1,4 @@
-package viewer;
+package util;
 
 /**
  * the primary structure used to pass around the components of a mesh
