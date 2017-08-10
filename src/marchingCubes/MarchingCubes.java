@@ -743,13 +743,13 @@ public class MarchingCubes
 			break;
 		}
 
-		v1x = ( v1x + offset[ 0 ] ) * cubeSize[ 0 ];
-		v1y = ( v1y + offset[ 1 ] ) * cubeSize[ 1 ];
-		v1z = ( v1z + offset[ 2 ] ) * cubeSize[ 2 ];
+		v1x = ( v1x + ( offset[ 0 ] / cubeSize[ 0 ] ) ) * cubeSize[ 0 ];
+		v1y = ( v1y + ( offset[ 1 ] / cubeSize[ 1 ] ) ) * cubeSize[ 1 ];
+		v1z = ( v1z + ( offset[ 2 ] / cubeSize[ 2 ] ) ) * cubeSize[ 2 ];
 
-		v2x = ( v2x + offset[ 0 ] ) * cubeSize[ 0 ];
-		v2y = ( v2y + offset[ 1 ] ) * cubeSize[ 1 ];
-		v2z = ( v2z + offset[ 2 ] ) * cubeSize[ 2 ];
+		v2x = ( v2x + ( offset[ 0 ] / cubeSize[ 0 ] ) ) * cubeSize[ 0 ];
+		v2y = ( v2y + ( offset[ 1 ] / cubeSize[ 1 ] ) ) * cubeSize[ 1 ];
+		v2z = ( v2z + ( offset[ 2 ] / cubeSize[ 2 ] ) ) * cubeSize[ 2 ];
 
 		if (LOGGER.isTraceEnabled())
 		{
