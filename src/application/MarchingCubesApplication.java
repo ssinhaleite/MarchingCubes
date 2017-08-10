@@ -1,25 +1,17 @@
-package viewer;
-
-import java.nio.FloatBuffer;
-import java.util.Arrays;
+package application;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import bdv.labels.labelset.LabelMultisetType;
 import cleargl.GLVector;
 import graphics.scenery.Box;
 import graphics.scenery.Camera;
 import graphics.scenery.DetachedHeadCamera;
-import graphics.scenery.Material;
 import graphics.scenery.Mesh;
 import graphics.scenery.PointLight;
-import graphics.scenery.Scene;
 import graphics.scenery.SceneryDefaultApplication;
 import graphics.scenery.SceneryElement;
 import graphics.scenery.backends.Renderer;
-import net.imglib2.RandomAccessibleInterval;
-import util.MeshExtractor;
 
 /**
  * Class responsible for create the world/scene
@@ -27,36 +19,16 @@ import util.MeshExtractor;
  * @author vleite
  *
  */
-public class MarchingCubesSceneryApplication extends SceneryDefaultApplication
+public class MarchingCubesApplication extends SceneryDefaultApplication
 {
 	/** logger */
-	static final Logger LOGGER = LoggerFactory.getLogger( MarchingCubesSceneryApplication.class );
+	static final Logger LOGGER = LoggerFactory.getLogger( MarchingCubesApplication.class );
 
-	private static marchingCubes.MarchingCubes.ForegroundCriterion criterion = marchingCubes.MarchingCubes.ForegroundCriterion.EQUAL;
+	private float[] volumeResolution = null;
 
-	private static int[] cubeSize = { 4, 4, 4 };
-
-	private int foregroundValue;
-
-	private RandomAccessibleInterval< LabelMultisetType > volumeLabels = null;
-
-	private static float[] verticesArray = new float[ 0 ];
-
-	private static float[] volumeResolution;
-
-	public MarchingCubesSceneryApplication( String applicationName, int windowWidth, int windowHeight )
+	public MarchingCubesApplication( String applicationName, int windowWidth, int windowHeight )
 	{
 		super( applicationName, windowWidth, windowHeight, false );
-	}
-
-	public void setForegroundValue( int foregroundValue )
-	{
-		this.foregroundValue = foregroundValue;
-	}
-
-	public void setVolumeLabels( RandomAccessibleInterval< LabelMultisetType > volumeLabels )
-	{
-		this.volumeLabels = volumeLabels;
 	}
 
 	public void setVolumeResolution( float[] resolution )
@@ -82,7 +54,10 @@ public class MarchingCubesSceneryApplication extends SceneryDefaultApplication
 
 		cam.perspectiveCamera( 50f, getWindowHeight(), getWindowWidth(), 0.001f, 1000.0f );
 		cam.setActive( true );
-		cam.setPosition( new GLVector( volumeResolution[ 0 ] / 2, volumeResolution[ 1 ] / 2, 10 ) );
+		if ( volumeResolution == null )
+			cam.setPosition( new GLVector( 0, 0, 10 ) );
+		else
+			cam.setPosition( new GLVector( volumeResolution[ 0 ] / 2, volumeResolution[ 1 ] / 2, 10 ) );
 		getScene().addChild( cam );
 
 		PointLight[] lights = new PointLight[ 4 ];
@@ -105,104 +80,15 @@ public class MarchingCubesSceneryApplication extends SceneryDefaultApplication
 		{
 			getScene().addChild( lights[ i ] );
 		}
-
-		new Thread()
-		{
-			public void run()
-			{
-				marchingCube( foregroundValue, getScene() );
-			}
-		}.start();
 	}
 
-	private void marchingCube( int foregroundValue, Scene scene )
+	public void addChild( Mesh child )
 	{
-		for ( int voxelSize = 32; voxelSize > 0; voxelSize /= 2 )
-		{
-			LOGGER.info( "voxel size: " + voxelSize );
+		getScene().addChild( child );
+	}
 
-			Mesh completeNeuron = new Mesh();
-			final Material material = new Material();
-			material.setAmbient( new GLVector( 1f, 0.0f, 1f ) );
-			material.setSpecular( new GLVector( 1f, 0.0f, 1f ) );
-
-			if ( voxelSize == 32 )
-			{
-				material.setDiffuse( new GLVector( 1, 0, 0 ) );
-			}
-			if ( voxelSize == 16 )
-			{
-				material.setDiffuse( new GLVector( 0, 1, 0 ) );
-			}
-			if ( voxelSize == 8 )
-			{
-				material.setDiffuse( new GLVector( 0, 0, 1 ) );
-			}
-			if ( voxelSize == 4 )
-			{
-				material.setDiffuse( new GLVector( 1, 0, 1 ) );
-			}
-			if ( voxelSize == 2 )
-			{
-				material.setDiffuse( new GLVector( 0, 1, 1 ) );
-			}
-			if ( voxelSize == 1 )
-			{
-				material.setDiffuse( new GLVector( 1, 1, 0 ) );
-			}
-
-			completeNeuron.setMaterial( material );
-			completeNeuron.setName( String.valueOf( foregroundValue + " " + voxelSize ) );
-			completeNeuron.setPosition( new GLVector( 0.0f, 0.0f, 0.0f ) );
-			completeNeuron.setScale( new GLVector( volumeResolution[ 0 ], volumeResolution[ 1 ], volumeResolution[ 2 ] ) );
-			scene.addChild( completeNeuron );
-
-			cubeSize[ 0 ] = voxelSize;
-			cubeSize[ 1 ] = voxelSize;
-			cubeSize[ 2 ] = 1;
-
-			MeshExtractor meshExtractor = new MeshExtractor( volumeLabels, cubeSize, foregroundValue, criterion );
-			int[] position = new int[] { 0, 0, 0 };
-			meshExtractor.createChunks( position );
-
-			float[] completeNeuronVertices = new float[ 0 ];
-			int completeMeshSize = 0;
-			while ( meshExtractor.hasNext() )
-			{
-				Mesh neuron = new Mesh();
-				neuron = meshExtractor.next();
-
-				if ( completeNeuron.getVertices().hasArray() )
-				{
-					completeNeuronVertices = completeNeuron.getVertices().array();
-					completeMeshSize = completeNeuronVertices.length;
-				}
-
-				float[] neuronVertices = neuron.getVertices().array();
-				int meshSize = neuronVertices.length;
-				verticesArray = Arrays.copyOf( completeNeuronVertices, completeMeshSize + meshSize );
-				System.arraycopy( neuronVertices, 0, verticesArray, completeMeshSize, meshSize );
-
-				System.out.println( "number of elements complete mesh: " + verticesArray.length );
-				completeNeuron.setVertices( FloatBuffer.wrap( verticesArray ) );
-				completeNeuron.recalculateNormals();
-				completeNeuron.setDirty( true );
-			}
-
-			LOGGER.info( "all results generated!" );
-
-			// Pause for 2 seconds
-			try
-			{
-				Thread.sleep( 2000 );
-			}
-			catch ( InterruptedException e )
-			{
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			if ( voxelSize != 1 )
-				scene.removeChild( completeNeuron );
-		}
+	public void removeChild( Mesh child )
+	{
+		getScene().removeChild( child );
 	}
 }
