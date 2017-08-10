@@ -1,9 +1,7 @@
 package util;
 
 import java.nio.FloatBuffer;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletionService;
 import java.util.concurrent.ExecutionException;
@@ -16,6 +14,7 @@ import org.slf4j.LoggerFactory;
 
 import bdv.labels.labelset.LabelMultisetType;
 import graphics.scenery.Mesh;
+import marchingCubes.MarchingCubes.ForegroundCriterion;
 import marchingCubes.MarchingCubesCallable;
 import net.imglib2.RandomAccessibleInterval;
 
@@ -46,17 +45,17 @@ public class MeshExtractor
 
 	private int nCellsX, nCellsY, nCellsZ;
 
-	private marchingCubes.MarchingCubes.ForegroundCriterion criterion;
+	private ForegroundCriterion criterion;
 
 	private static Map< Future< util.Mesh >, Chunk > resultMeshMap = null;
 
-	private static List< Chunk > processedChunksList = null;
+	private static Map< Chunk, int[] > chunkResolutionMap = null;
 
 	private static CompletionService< util.Mesh > executor = null;
 
 	private static util.VolumePartitioner partitioner;
 
-	public MeshExtractor( RandomAccessibleInterval< LabelMultisetType > volumeLabels, final int[] cubeSize, final int foregroundValue, final marchingCubes.MarchingCubes.ForegroundCriterion criterion )
+	public MeshExtractor( RandomAccessibleInterval< LabelMultisetType > volumeLabels, final int[] cubeSize, final int foregroundValue, final ForegroundCriterion criterion )
 	{
 		this.volumeLabels = volumeLabels;
 		this.partitionSize = new int[] { 1, 1, 1 };
@@ -69,7 +68,7 @@ public class MeshExtractor
 
 		resultMeshMap = new HashMap< Future< util.Mesh >, Chunk >();
 
-		processedChunksList = new ArrayList< Chunk >();
+		chunkResolutionMap = new HashMap< Chunk, int[] >();
 
 		generatePartitionSize();
 		nCellsX = ( int ) Math.ceil( ( volumeLabels.dimension( 0 ) ) / partitionSize[ 0 ] );
@@ -82,13 +81,18 @@ public class MeshExtractor
 			nCellsY--;
 		if ( volumeLabels.dimension( 2 ) % partitionSize[ 2 ] == 0 )
 			nCellsZ--;
-		System.out.println( " nCells: " + nCellsX + " " + nCellsY + " " + nCellsZ );
+
 		partitioner = new util.VolumePartitioner( this.volumeLabels, partitionSize, this.cubeSize );
+	}
+
+	public void setCubeSize( int[] cubeSize )
+	{
+		this.cubeSize = cubeSize;
 	}
 
 	public boolean hasNext()
 	{
-		System.out.println( "hasNext - there is/are " + resultMeshMap.size() + " threads to calculate the mesh" );
+		LOGGER.trace( "There is/are {} threads to calculate the chunk mesh", resultMeshMap.size() );
 		return resultMeshMap.size() > 0;
 	}
 
@@ -123,7 +127,7 @@ public class MeshExtractor
 		{
 			LOGGER.error( "Mesh creation failed: " + e.getCause() );
 		}
-		
+
 		Mesh sceneryMesh = new Mesh();
 		updateMesh( m, sceneryMesh );
 
@@ -138,6 +142,12 @@ public class MeshExtractor
 		index -= ( y * xWidth );
 		int x = index;
 		int[] newPosition = new int[] { x * ( partitionSize[ 0 ] + 1 ), y * ( partitionSize[ 1 ] + 1 ), z * ( partitionSize[ 2 ] + 1 ) };
+
+		if ( LOGGER.isDebugEnabled() )
+		{
+			LOGGER.debug( "chunk " + chunk );
+			LOGGER.debug( "chunk number of meshes resolutions: " + chunk.getNumberOfMeshResolutions() );
+		}
 
 		createChunks( newPosition );
 
@@ -156,134 +166,131 @@ public class MeshExtractor
 	{
 		if ( position == null )
 		{
-			System.out.println( "position is null" );
+			LOGGER.info( "Given position to create a chunk is null" );
 			return;
 		}
 
 		long[] offset = partitioner.getVolumeOffset( position );
-		System.out.println( " offset: " + offset[ 0 ] + " " + offset[ 1 ] + " " + offset[ 2 ] );
+		LOGGER.trace( "offset: {}, {}, {}", offset[ 0 ], offset[ 1 ], offset[ 2 ] );
+
 		int[] newPosition = null;
 		if ( offset[ 0 ] >= 0 && offset[ 0 ] < nCellsX && offset[ 1 ] >= 0 && offset[ 1 ] < nCellsY && offset[ 2 ] >= 0 && offset[ 2 ] < nCellsZ )
 			newPosition = new int[] { ( int ) ( offset[ 0 ] * ( partitionSize[ 0 ] + 1 ) ), ( int ) ( offset[ 1 ] * ( partitionSize[ 1 ] + 1 ) ), ( int ) ( offset[ 2 ] * ( partitionSize[ 2 ] + 1 ) ) };
 		else
 		{
-			System.out.println( "the offset does not fit in the data" );
+			LOGGER.debug( "The offset does not fit in the data" );
 			return;
 		}
 
-		System.out.println( "initial position is: " + newPosition[ 0 ] + " " + newPosition[ 1 ] + " " + newPosition[ 2 ] );
+		LOGGER.trace( "Initial position is: {}, {}, {}", newPosition[ 0 ], newPosition[ 1 ], newPosition[ 2 ] );
 
 		// creates the callable for the chunk in the given position
-		System.out.println( " myself " );
 		createChunk( newPosition );
 
 		// if one of the neighbors chunks exist, creates it
 		// newOffsetposition = x + partitionSizeX, y, z
 		int[] newOffset = new int[] { ( int ) ( offset[ 0 ] + 1 ), ( int ) offset[ 1 ], ( int ) offset[ 2 ] };
-		System.out.println( " offset: " + newOffset[ 0 ] + " " + newOffset[ 1 ] + " " + newOffset[ 2 ] );
+		LOGGER.trace( "New offset: {}, {}, {}", offset[ 0 ], offset[ 1 ], offset[ 2 ] );
+
 		if ( newOffset[ 0 ] < nCellsX )
 		{
-			System.out.println( " right " );
 			newPosition = new int[] {
 					( int ) ( newOffset[ 0 ] * ( partitionSize[ 0 ] + 1 ) ),
 					( int ) ( newOffset[ 1 ] * ( partitionSize[ 1 ] + 1 ) ),
 					( int ) ( newOffset[ 2 ] * ( partitionSize[ 2 ] + 1 ) ) };
 			createChunk( newPosition );
 		}
-		else
-			System.out.println( " no right " );
 
 		// position = x - partitionSizeX, y, z
 		newOffset = new int[] { ( int ) ( offset[ 0 ] - 1 ), ( int ) offset[ 1 ], ( int ) offset[ 2 ] };
-		System.out.println( " offset: " + newOffset[ 0 ] + " " + newOffset[ 1 ] + " " + newOffset[ 2 ] );
+		LOGGER.trace( "New offset: {}, {}, {}", offset[ 0 ], offset[ 1 ], offset[ 2 ] );
+
 		if ( newOffset[ 0 ] >= 0 )
 		{
-			System.out.println( " left " );
 			newPosition = new int[] {
 					( int ) ( newOffset[ 0 ] * ( partitionSize[ 0 ] + 1 ) ),
 					( int ) ( newOffset[ 1 ] * ( partitionSize[ 1 ] + 1 ) ),
 					( int ) ( newOffset[ 2 ] * ( partitionSize[ 2 ] + 1 ) ) };
 			createChunk( newPosition );
 		}
-		else
-			System.out.println( " no left " );
 
 		// position = x, y + partitionSizeY, z
 		newOffset = new int[] { ( int ) offset[ 0 ], ( int ) ( offset[ 1 ] + 1 ), ( int ) offset[ 2 ] };
-		System.out.println( " offset: " + newOffset[ 0 ] + " " + newOffset[ 1 ] + " " + newOffset[ 2 ] );
+		LOGGER.trace( "New offset: {}, {}, {}", offset[ 0 ], offset[ 1 ], offset[ 2 ] );
+
 		if ( newOffset[ 1 ] < nCellsY )
 		{
-			System.out.println( " down " );
 			newPosition = new int[] {
 					( int ) ( newOffset[ 0 ] * ( partitionSize[ 0 ] + 1 ) ),
 					( int ) ( newOffset[ 1 ] * ( partitionSize[ 1 ] + 1 ) ),
 					( int ) ( newOffset[ 2 ] * ( partitionSize[ 2 ] + 1 ) ) };
 			createChunk( newPosition );
 		}
-		else
-			System.out.println( " no down " );
 
 		// position = x, y - partitionSizeY, z
 		newOffset = new int[] { ( int ) offset[ 0 ], ( int ) ( offset[ 1 ] - 1 ), ( int ) offset[ 2 ] };
-		System.out.println( " offset: " + newOffset[ 0 ] + " " + newOffset[ 1 ] + " " + newOffset[ 2 ] );
+		LOGGER.trace( "New offset: {}, {}, {}", offset[ 0 ], offset[ 1 ], offset[ 2 ] );
+
 		if ( newOffset[ 1 ] >= 0 )
 		{
-			System.out.println( " up " );
 			newPosition = new int[] {
 					( int ) ( newOffset[ 0 ] * ( partitionSize[ 0 ] + 1 ) ),
 					( int ) ( newOffset[ 1 ] * ( partitionSize[ 1 ] + 1 ) ),
 					( int ) ( newOffset[ 2 ] * ( partitionSize[ 2 ] + 1 ) ) };
 			createChunk( newPosition );
 		}
-		else
-			System.out.println( " no up " );
 
 		// position = x, y, z + partitionSizeZ
 		newOffset = new int[] { ( int ) offset[ 0 ], ( int ) offset[ 1 ], ( int ) offset[ 2 ] + 1 };
-		System.out.println( " offset: " + newOffset[ 0 ] + " " + newOffset[ 1 ] + " " + newOffset[ 2 ] );
+		LOGGER.trace( "New offset: {}, {}, {}", offset[ 0 ], offset[ 1 ], offset[ 2 ] );
+
 		if ( newOffset[ 2 ] < nCellsZ )
 		{
-			System.out.println( " back " );
 			newPosition = new int[] {
 					( int ) ( newOffset[ 0 ] * ( partitionSize[ 0 ] + 1 ) ),
 					( int ) ( newOffset[ 1 ] * ( partitionSize[ 1 ] + 1 ) ),
 					( int ) ( newOffset[ 2 ] * ( partitionSize[ 2 ] + 1 ) ) };
 			createChunk( newPosition );
 		}
-		else
-			System.out.println( " no back " );
 
 		// position = x, y, z - partitionSizeZ
 		newOffset = new int[] { ( int ) offset[ 0 ], ( int ) offset[ 1 ], ( int ) offset[ 2 ] - 1 };
-		System.out.println( " offset: " + newOffset[ 0 ] + " " + newOffset[ 1 ] + " " + newOffset[ 2 ] );
+		LOGGER.trace( "New offset: {}, {}, {}", offset[ 0 ], offset[ 1 ], offset[ 2 ] );
+
 		if ( newOffset[ 2 ] >= 0 )
 		{
-			System.out.println( " front " );
 			newPosition = new int[] {
 					( int ) ( newOffset[ 0 ] * ( partitionSize[ 0 ] + 1 ) ),
 					( int ) ( newOffset[ 1 ] * ( partitionSize[ 1 ] + 1 ) ),
 					( int ) ( newOffset[ 2 ] * ( partitionSize[ 2 ] + 1 ) ) };
 			createChunk( newPosition );
 		}
-		else
-			System.out.println( " no front " );
 
-		System.out.println( "there is/are " + resultMeshMap.size() + " threads to calculate the mesh" );
+		LOGGER.trace( "There is/are {} threads to calculate chunk mesh", resultMeshMap.size() );
 	}
 
 	private void createChunk( int[] position )
 	{
 		Chunk chunk = partitioner.getChunk( position );
-		int[] chunkBb = chunk.getChunkBoundinBox();
-		System.out.println( "position: " + position[ 0 ] + " " + position[ 1 ] + " " + position[ 2 ] );
-		System.out.print( "adding in the set: " + chunkBb[ 0 ] + " " + chunkBb[ 1 ] + " " + chunkBb[ 2 ] );
-		System.out.println( " to " + chunkBb[ 3 ] + " " + chunkBb[ 4 ] + " " + chunkBb[ 5 ] );
-
-		// if the chunk was added to the callable, do not add it again
-		if ( !processedChunksList.isEmpty() && processedChunksList.contains( chunk ) )
+		if ( LOGGER.isTraceEnabled() )
 		{
-			System.out.println( "chunk already processed" );
-			return;
+			int[] chunkBb = chunk.getChunkBoundinBox();
+			LOGGER.trace( "position: " + position[ 0 ] + " " + position[ 1 ] + " " + position[ 2 ] );
+			LOGGER.trace( "adding in the set: " + chunkBb[ 0 ] + " " + chunkBb[ 1 ] + " " + chunkBb[ 2 ] );
+			LOGGER.trace( " to " + chunkBb[ 3 ] + " " + chunkBb[ 4 ] + " " + chunkBb[ 5 ] );
+		}
+
+		// if the chunk was added to the callable for an specific cube size, do
+		// not add it again
+		if ( !chunkResolutionMap.isEmpty() && chunkResolutionMap.containsKey( chunk ) )
+		{
+			int[] resolution = chunkResolutionMap.get( chunk );
+
+			if ( resolution[ 0 ] == cubeSize[ 0 ] && resolution[ 1 ] == cubeSize[ 1 ] && resolution[ 2 ] == cubeSize[ 2 ] )
+			{
+				LOGGER.debug( "chunk already processed" );
+				return;
+			}
 		}
 
 		createCallable( chunk );
@@ -300,7 +307,7 @@ public class MeshExtractor
 		Future< util.Mesh > result = executor.submit( callable );
 
 		resultMeshMap.put( result, chunk );
-		processedChunksList.add( chunk );
+		chunkResolutionMap.put( chunk, new int[] { cubeSize[ 0 ], cubeSize[ 1 ], cubeSize[ 2 ] } );
 	}
 
 	private void generatePartitionSize()
