@@ -17,7 +17,7 @@ import ch.systemsx.cisd.hdf5.IHDF5Reader;
 import cleargl.GLVector;
 import graphics.scenery.Material;
 import graphics.scenery.Mesh;
-import marchingCubes.MarchingCubes;
+import marchingCubes.MarchingCubes.ForegroundCriterion;
 import ncsa.hdf.hdf5lib.exceptions.HDF5FileNotFoundException;
 import net.imglib2.RandomAccessibleInterval;
 import util.HDF5Reader;
@@ -40,7 +40,7 @@ public class MarchingCubesCommand
 	/** resolution of the volume */
 	private static float[] resolution = new float[] { 4f, 4f, 40f };
 
-	private static MarchingCubes.ForegroundCriterion criterion = MarchingCubes.ForegroundCriterion.EQUAL;
+	private static ForegroundCriterion criterion = ForegroundCriterion.EQUAL;
 
 	private static int[] cubeSize = { 4, 4, 4 };
 

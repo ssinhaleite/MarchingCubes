@@ -36,7 +36,7 @@ public class PerformanceRAITest
 
 	static String filename = "";
 
-	static marchingCubes.MarchingCubes.ForegroundCriterion criterion = marchingCubes.MarchingCubes.ForegroundCriterion.EQUAL;
+	static MarchingCubes.ForegroundCriterion criterion = MarchingCubes.ForegroundCriterion.EQUAL;
 
 	public static void main( String[] args ) throws IOException
 	{

@@ -16,7 +16,7 @@ import ch.systemsx.cisd.hdf5.IHDF5Reader;
 import cleargl.GLVector;
 import graphics.scenery.Material;
 import graphics.scenery.Mesh;
-import marchingCubes.MarchingCubes;
+import marchingCubes.MarchingCubes.ForegroundCriterion;
 import net.imglib2.RandomAccessibleInterval;
 import util.HDF5Reader;
 import util.MeshExtractor;
@@ -49,7 +49,7 @@ public class SphereMarchingCubesTest
 		} ).start();
 
 		new Thread( () -> {
-			MeshExtractor meshExtractor = new MeshExtractor( volumeLabels, new int[] { 32, 32, 32 }, 1, MarchingCubes.ForegroundCriterion.EQUAL );
+			MeshExtractor meshExtractor = new MeshExtractor( volumeLabels, new int[] { 32, 32, 32 }, 1, ForegroundCriterion.EQUAL );
 
 			for ( int voxelSize = 32; voxelSize > 0; voxelSize /= 2 )
 			{

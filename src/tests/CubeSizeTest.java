@@ -1,5 +1,11 @@
 package tests;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.sql.Timestamp;
+import java.util.ArrayList;
+
 import bdv.img.h5.H5LabelMultisetSetupImageLoader;
 import bdv.labels.labelset.LabelMultisetType;
 import ch.systemsx.cisd.hdf5.HDF5Factory;
@@ -7,12 +13,6 @@ import ch.systemsx.cisd.hdf5.IHDF5Reader;
 import marchingCubes.MarchingCubes;
 import net.imglib2.RandomAccessibleInterval;
 import util.HDF5Reader;
-
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.PrintStream;
-import java.sql.Timestamp;
-import java.util.ArrayList;
 
 /**
  * Unit test for marching cubes
@@ -38,7 +38,7 @@ public class CubeSizeTest
 
 	static String filename = "";
 
-	static marchingCubes.MarchingCubes.ForegroundCriterion criterion = marchingCubes.MarchingCubes.ForegroundCriterion.EQUAL;
+	static MarchingCubes.ForegroundCriterion criterion = MarchingCubes.ForegroundCriterion.EQUAL;
 
 	public static void main( String[] args ) throws IOException
 	{

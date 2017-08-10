@@ -3,6 +3,7 @@ package marchingCubes;
 import java.util.concurrent.Callable;
 
 import bdv.labels.labelset.LabelMultisetType;
+import marchingCubes.MarchingCubes.ForegroundCriterion;
 import net.imglib2.RandomAccessibleInterval;
 import util.Mesh;
 
@@ -23,7 +24,7 @@ public class MarchingCubesCallable implements Callable< Mesh >
 	/**
 	 * defines if the criterion that will be used to generate the mesh
 	 */
-	MarchingCubes.ForegroundCriterion criterion;
+	ForegroundCriterion criterion;
 
 	/** the value to match the criterion */
 	int foregroundValue;
@@ -34,7 +35,7 @@ public class MarchingCubesCallable implements Callable< Mesh >
 	 */
 	boolean copyToArray;
 
-	public MarchingCubesCallable( RandomAccessibleInterval< LabelMultisetType > input, int[] volDim, int[] offset, int[] cubeSize, MarchingCubes.ForegroundCriterion criterion, int level, boolean usingRAI )
+	public MarchingCubesCallable( RandomAccessibleInterval< LabelMultisetType > input, int[] volDim, int[] offset, int[] cubeSize, ForegroundCriterion criterion, int level, boolean usingRAI )
 	{
 		this.volume = input;
 		this.volDim = volDim;
