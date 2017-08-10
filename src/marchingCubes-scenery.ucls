@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <class-diagram version="1.2.0" icons="true" always-add-relationships="true" generalizations="true" realizations="true" 
   associations="true" dependencies="true" nesting-relationships="true" router="FAN">  
-  <class id="1" language="java" name="MarchingCubesApplication" project="MarchingCubes" 
-    file="/MarchingCubes/src/MarchingCubesApplication.java" binary="false" corner="BOTTOM_RIGHT">    
-    <position height="-1" width="-1" x="493" y="162"/>    
+  <class id="1" language="java" name="application.MarchingCubesApplication" project="MarchingCubes" 
+    file="/MarchingCubes/src/application/MarchingCubesApplication.java" binary="false" corner="BOTTOM_RIGHT">    
+    <position height="-1" width="-1" x="1535" y="432"/>    
     <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
       sort-features="false" accessors="true" visibility="true">      
       <attributes public="true" package="true" protected="true" private="true" static="true"/>      
       <operations public="true" package="true" protected="true" private="true" static="true"/>    
     </display>  
   </class>  
-  <class id="2" language="java" name="MarchingCubesApplication.MarchingCubesViewer" project="MarchingCubes" 
-    file="/MarchingCubes/src/MarchingCubesApplication.java" binary="false" corner="BOTTOM_RIGHT">    
-    <position height="-1" width="-1" x="74" y="120"/>    
+  <class id="2" language="java" name="application.MarchingCubesCommand" project="MarchingCubes" 
+    file="/MarchingCubes/src/application/MarchingCubesCommand.java" binary="false" corner="BOTTOM_RIGHT">    
+    <position height="-1" width="-1" x="1262" y="19"/>    
     <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
       sort-features="false" accessors="true" visibility="true">      
       <attributes public="true" package="true" protected="true" private="true" static="true"/>      
@@ -21,7 +21,7 @@
   </class>  
   <class id="3" language="java" name="marchingCubes.MarchingCubesTables" project="MarchingCubes" 
     file="/MarchingCubes/src/marchingCubes/MarchingCubesTables.java" binary="false" corner="BOTTOM_RIGHT">    
-    <position height="-1" width="-1" x="2194" y="-44"/>    
+    <position height="-1" width="-1" x="20" y="-116"/>    
     <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
       sort-features="false" accessors="true" visibility="true">      
       <attributes public="true" package="true" protected="true" private="true" static="true"/>      
@@ -30,7 +30,7 @@
   </class>  
   <enumeration id="4" language="java" name="marchingCubes.MarchingCubes.ForegroundCriterion" project="MarchingCubes" 
     file="/MarchingCubes/src/marchingCubes/MarchingCubes.java" binary="false" corner="BOTTOM_RIGHT">    
-    <position height="-1" width="-1" x="1669" y="567"/>    
+    <position height="-1" width="-1" x="868" y="162"/>    
     <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
       sort-features="false" accessors="true" visibility="true">      
       <attributes public="true" package="true" protected="true" private="true" static="true"/>      
@@ -39,107 +39,106 @@
   </enumeration>  
   <class id="5" language="java" name="marchingCubes.MarchingCubes" project="MarchingCubes" 
     file="/MarchingCubes/src/marchingCubes/MarchingCubes.java" binary="false" corner="BOTTOM_RIGHT">    
-    <position height="-1" width="-1" x="1654" y="92"/>    
+    <position height="-1" width="-1" x="63" y="271"/>    
     <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
       sort-features="false" accessors="true" visibility="true">      
       <attributes public="true" package="true" protected="true" private="true" static="true"/>      
       <operations public="true" package="true" protected="true" private="true" static="true"/>    
     </display>  
   </class>  
-  <class id="6" language="java" name="util.VolumePartitioner" project="MarchingCubes" 
+  <class id="6" language="java" name="marchingCubes.MarchingCubesCallable" project="MarchingCubes" 
+    file="/MarchingCubes/src/marchingCubes/MarchingCubesCallable.java" binary="false" corner="BOTTOM_RIGHT">    
+    <position height="-1" width="-1" x="572" y="-98"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
+      sort-features="false" accessors="true" visibility="true">      
+      <attributes public="true" package="true" protected="true" private="true" static="true"/>      
+      <operations public="true" package="true" protected="true" private="true" static="true"/>    
+    </display>  
+  </class>  
+  <class id="7" language="java" name="util.Mesh" project="MarchingCubes" file="/MarchingCubes/src/util/Mesh.java" 
+    binary="false" corner="BOTTOM_RIGHT">    
+    <position height="-1" width="-1" x="440" y="674"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
+      sort-features="false" accessors="true" visibility="true">      
+      <attributes public="true" package="true" protected="true" private="true" static="true"/>      
+      <operations public="true" package="true" protected="true" private="true" static="true"/>    
+    </display>  
+  </class>  
+  <class id="8" language="java" name="util.VolumePartitioner" project="MarchingCubes" 
     file="/MarchingCubes/src/util/VolumePartitioner.java" binary="false" corner="BOTTOM_RIGHT">    
-    <position height="-1" width="-1" x="719" y="1181"/>    
+    <position height="-1" width="-1" x="795" y="1062"/>    
     <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
       sort-features="false" accessors="true" visibility="true">      
       <attributes public="true" package="true" protected="true" private="true" static="true"/>      
       <operations public="true" package="true" protected="true" private="true" static="true"/>    
     </display>  
   </class>  
-  <class id="7" language="java" name="util.Chunk" project="MarchingCubes" file="/MarchingCubes/src/util/Chunk.java" 
+  <class id="9" language="java" name="util.Chunk" project="MarchingCubes" file="/MarchingCubes/src/util/Chunk.java" 
     binary="false" corner="BOTTOM_RIGHT">    
-    <position height="-1" width="-1" x="725" y="844"/>    
+    <position height="-1" width="-1" x="1376" y="1115"/>    
     <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
       sort-features="false" accessors="true" visibility="true">      
       <attributes public="true" package="true" protected="true" private="true" static="true"/>      
       <operations public="true" package="true" protected="true" private="true" static="true"/>    
     </display>  
   </class>  
-  <class id="8" language="java" name="util.Parameters" project="MarchingCubes" 
+  <class id="10" language="java" name="util.MeshExtractor" project="MarchingCubes" 
+    file="/MarchingCubes/src/util/MeshExtractor.java" binary="false" corner="BOTTOM_RIGHT">    
+    <position height="419" width="470" x="623" y="446"/>    
+    <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
+      sort-features="false" accessors="true" visibility="true">      
+      <attributes public="true" package="true" protected="true" private="true" static="true"/>      
+      <operations public="true" package="true" protected="true" private="true" static="true"/>    
+    </display>  
+  </class>  
+  <class id="11" language="java" name="util.Parameters" project="MarchingCubes" 
     file="/MarchingCubes/src/util/Parameters.java" binary="false" corner="BOTTOM_RIGHT">    
-    <position height="-1" width="-1" x="83" y="312"/>    
+    <position height="-1" width="-1" x="1621" y="-87"/>    
     <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
       sort-features="false" accessors="true" visibility="true">      
       <attributes public="true" package="true" protected="true" private="true" static="true"/>      
       <operations public="true" package="true" protected="true" private="true" static="true"/>    
     </display>  
   </class>  
-  <class id="9" language="java" name="util.HDF5Reader" project="MarchingCubes" 
+  <class id="12" language="java" name="util.HDF5Reader" project="MarchingCubes" 
     file="/MarchingCubes/src/util/HDF5Reader.java" binary="false" corner="BOTTOM_RIGHT">    
-    <position height="-1" width="-1" x="487" y="-58"/>    
+    <position height="-1" width="-1" x="1737" y="174"/>    
     <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
       sort-features="false" accessors="true" visibility="true">      
       <attributes public="true" package="true" protected="true" private="true" static="true"/>      
       <operations public="true" package="true" protected="true" private="true" static="true"/>    
     </display>  
   </class>  
-  <class id="10" language="java" name="viewer.MeshView" project="MarchingCubes" 
-    file="/MarchingCubes/src/viewer/MeshView.java" binary="false" corner="BOTTOM_RIGHT">    
-    <position height="-1" width="-1" x="503" y="487"/>    
-    <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
-      sort-features="false" accessors="true" visibility="true">      
-      <attributes public="true" package="true" protected="true" private="true" static="true"/>      
-      <operations public="true" package="true" protected="true" private="true" static="true"/>    
-    </display>  
-  </class>  
-  <class id="11" language="java" name="viewer.MarchingCubesCallable" project="MarchingCubes" 
-    file="/MarchingCubes/src/viewer/MarchingCubesCallable.java" binary="false" corner="BOTTOM_RIGHT">    
-    <position height="-1" width="-1" x="2274" y="430"/>    
-    <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
-      sort-features="false" accessors="true" visibility="true">      
-      <attributes public="true" package="true" protected="true" private="true" static="true"/>      
-      <operations public="true" package="true" protected="true" private="true" static="true"/>    
-    </display>  
-  </class>  
-  <class id="12" language="java" name="viewer.Mesh" project="MarchingCubes" file="/MarchingCubes/src/viewer/Mesh.java" 
-    binary="false" corner="BOTTOM_RIGHT">    
-    <position height="-1" width="-1" x="1891" y="824"/>    
-    <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
-      sort-features="false" accessors="true" visibility="true">      
-      <attributes public="true" package="true" protected="true" private="true" static="true"/>      
-      <operations public="true" package="true" protected="true" private="true" static="true"/>    
-    </display>  
-  </class>  
-  <class id="13" language="java" name="viewer.MeshExtractor" project="MarchingCubes" 
-    file="/MarchingCubes/src/viewer/MeshExtractor.java" binary="false" corner="BOTTOM_RIGHT">    
-    <position height="-1" width="-1" x="1434" y="914"/>    
-    <display autosize="true" stereotype="true" package="true" initial-value="false" signature="true" 
-      sort-features="false" accessors="true" visibility="true">      
-      <attributes public="true" package="true" protected="true" private="true" static="true"/>      
-      <operations public="true" package="true" protected="true" private="true" static="true"/>    
-    </display>  
-  </class>  
-  <association id="14">    
-    <end type="SOURCE" refId="5" navigable="false">      
-      <attribute id="15" name="criteria"/>      
-      <multiplicity id="16" minimum="0" maximum="1"/>    
-    </end>    
-    <end type="TARGET" refId="4" navigable="true"/>    
-    <display labels="true" multiplicity="true"/>  
-  </association>  
-  <association id="17">    
-    <end type="SOURCE" refId="1" navigable="false">      
-      <attribute id="18" name="criterion"/>      
-      <multiplicity id="19" minimum="0" maximum="1"/>    
-    </end>    
-    <end type="TARGET" refId="4" navigable="true"/>    
-    <display labels="true" multiplicity="true"/>  
-  </association>  
-  <dependency id="20">    
-    <end type="SOURCE" refId="1"/>    
-    <end type="TARGET" refId="13"/>  
+  <dependency id="13">    
+    <end type="SOURCE" refId="6"/>    
+    <end type="TARGET" refId="5"/>  
   </dependency>  
+  <dependency id="14">    
+    <end type="SOURCE" refId="10"/>    
+    <end type="TARGET" refId="6"/>  
+  </dependency>  
+  <dependency id="15">    
+    <end type="SOURCE" refId="2"/>    
+    <end type="TARGET" refId="11"/>  
+  </dependency>  
+  <dependency id="16">    
+    <end type="SOURCE" refId="6"/>    
+    <end type="TARGET" refId="7"/>  
+  </dependency>  
+  <dependency id="17">    
+    <end type="SOURCE" refId="5"/>    
+    <end type="TARGET" refId="3"/>  
+  </dependency>  
+  <association id="18">    
+    <end type="SOURCE" refId="10" navigable="false">      
+      <attribute id="19" name="resultMeshMap"/>      
+      <multiplicity id="20" minimum="0" maximum="2147483647"/>    
+    </end>    
+    <end type="TARGET" refId="9" navigable="true"/>    
+    <display labels="true" multiplicity="true"/>  
+  </association>  
   <association id="21">    
-    <end type="SOURCE" refId="13" navigable="false">      
+    <end type="SOURCE" refId="10" navigable="false">      
       <attribute id="22" name="criterion"/>      
       <multiplicity id="23" minimum="0" maximum="1"/>    
     </end>    
@@ -147,105 +146,73 @@
     <display labels="true" multiplicity="true"/>  
   </association>  
   <dependency id="24">    
-    <end type="SOURCE" refId="1"/>    
-    <end type="TARGET" refId="8"/>  
+    <end type="SOURCE" refId="10"/>    
+    <end type="TARGET" refId="7"/>  
   </dependency>  
-  <dependency id="25">    
-    <end type="SOURCE" refId="13"/>    
-    <end type="TARGET" refId="12"/>  
-  </dependency>  
-  <dependency id="26">    
-    <end type="SOURCE" refId="1"/>    
-    <end type="TARGET" refId="5"/>  
-  </dependency>  
-  <association id="27">    
-    <end type="SOURCE" refId="13" navigable="false">      
-      <attribute id="28" name="partitioner"/>      
-      <multiplicity id="29" minimum="0" maximum="1"/>    
-    </end>    
-    <end type="TARGET" refId="6" navigable="true"/>    
-    <display labels="true" multiplicity="true"/>  
-  </association>  
-  <dependency id="30">    
-    <end type="SOURCE" refId="5"/>    
-    <end type="TARGET" refId="3"/>  
-  </dependency>  
-  <dependency id="31">    
-    <end type="SOURCE" refId="11"/>    
-    <end type="TARGET" refId="5"/>  
-  </dependency>  
-  <association id="32">    
-    <end type="SOURCE" refId="6" navigable="false">      
-      <attribute id="33" name="chunks"/>      
-      <multiplicity id="34" minimum="0" maximum="2147483647"/>    
-    </end>    
-    <end type="TARGET" refId="7" navigable="true"/>    
-    <display labels="true" multiplicity="true"/>  
-  </association>  
-  <association id="35">    
+  <association id="25">    
     <end type="SOURCE" refId="2" navigable="false">      
-      <attribute id="36" name="params"/>      
-      <multiplicity id="37" minimum="0" maximum="1"/>    
-    </end>    
-    <end type="TARGET" refId="8" navigable="true"/>    
-    <display labels="true" multiplicity="true"/>  
-  </association>  
-  <nesting id="38">    
-    <end type="SOURCE" refId="5"/>    
-    <end type="TARGET" refId="4"/>  
-  </nesting>  
-  <dependency id="39">    
-    <end type="SOURCE" refId="13"/>    
-    <end type="TARGET" refId="5"/>  
-  </dependency>  
-  <association id="40">    
-    <end type="SOURCE" refId="13" navigable="false">      
-      <attribute id="41" name="resultMeshMap"/>      
-      <multiplicity id="42" minimum="0" maximum="2147483647"/>    
-    </end>    
-    <end type="TARGET" refId="7" navigable="true"/>    
-    <display labels="true" multiplicity="true"/>  
-  </association>  
-  <dependency id="43">    
-    <end type="SOURCE" refId="13"/>    
-    <end type="TARGET" refId="11"/>  
-  </dependency>  
-  <dependency id="44">    
-    <end type="SOURCE" refId="1"/>    
-    <end type="TARGET" refId="9"/>  
-  </dependency>  
-  <nesting id="45">    
-    <end type="SOURCE" refId="1"/>    
-    <end type="TARGET" refId="2"/>  
-  </nesting>  
-  <dependency id="46">    
-    <end type="SOURCE" refId="1"/>    
-    <end type="TARGET" refId="10"/>  
-  </dependency>  
-  <association id="47">    
-    <end type="SOURCE" refId="5" navigable="false">      
-      <attribute id="48" name="mesh"/>      
-      <multiplicity id="49" minimum="0" maximum="1"/>    
-    </end>    
-    <end type="TARGET" refId="12" navigable="true"/>    
-    <display labels="true" multiplicity="true"/>  
-  </association>  
-  <dependency id="50">    
-    <end type="SOURCE" refId="11"/>    
-    <end type="TARGET" refId="12"/>  
-  </dependency>  
-  <association id="51">    
-    <end type="SOURCE" refId="11" navigable="false">      
-      <attribute id="52" name="criterion"/>      
-      <multiplicity id="53" minimum="0" maximum="1"/>    
+      <attribute id="26" name="criterion"/>      
+      <multiplicity id="27" minimum="0" maximum="1"/>    
     </end>    
     <end type="TARGET" refId="4" navigable="true"/>    
     <display labels="true" multiplicity="true"/>  
   </association>  
-  <association id="54">    
-    <end type="SOURCE" refId="13" navigable="false">      
-      <attribute id="55" name="processedChunksList"/>      
-      <multiplicity id="56" minimum="0" maximum="2147483647"/>    
+  <association id="28">    
+    <end type="SOURCE" refId="5" navigable="false">      
+      <attribute id="29" name="criteria"/>      
+      <multiplicity id="30" minimum="0" maximum="1"/>    
+    </end>    
+    <end type="TARGET" refId="4" navigable="true"/>    
+    <display labels="true" multiplicity="true"/>  
+  </association>  
+  <association id="31">    
+    <end type="SOURCE" refId="8" navigable="false">      
+      <attribute id="32" name="chunks"/>      
+      <multiplicity id="33" minimum="0" maximum="2147483647"/>    
+    </end>    
+    <end type="TARGET" refId="9" navigable="true"/>    
+    <display labels="true" multiplicity="true"/>  
+  </association>  
+  <dependency id="34">    
+    <end type="SOURCE" refId="2"/>    
+    <end type="TARGET" refId="12"/>  
+  </dependency>  
+  <dependency id="35">    
+    <end type="SOURCE" refId="2"/>    
+    <end type="TARGET" refId="10"/>  
+  </dependency>  
+  <association id="36">    
+    <end type="SOURCE" refId="10" navigable="false">      
+      <attribute id="37" name="partitioner"/>      
+      <multiplicity id="38" minimum="0" maximum="1"/>    
+    </end>    
+    <end type="TARGET" refId="8" navigable="true"/>    
+    <display labels="true" multiplicity="true"/>  
+  </association>  
+  <nesting id="39">    
+    <end type="SOURCE" refId="5"/>    
+    <end type="TARGET" refId="4"/>  
+  </nesting>  
+  <association id="40">    
+    <end type="SOURCE" refId="6" navigable="false">      
+      <attribute id="41" name="criterion"/>      
+      <multiplicity id="42" minimum="0" maximum="1"/>    
+    </end>    
+    <end type="TARGET" refId="4" navigable="true"/>    
+    <display labels="true" multiplicity="true"/>  
+  </association>  
+  <association id="43">    
+    <end type="SOURCE" refId="2" navigable="false">      
+      <attribute id="44" name="sceneryApplication"/>      
+      <multiplicity id="45" minimum="0" maximum="1"/>    
+    </end>    
+    <end type="TARGET" refId="1" navigable="true"/>    
+    <display labels="true" multiplicity="true"/>  
+  </association>  
+  <association id="46">    
+    <end type="SOURCE" refId="5" navigable="false">      
+      <attribute id="47" name="mesh"/>      
+      <multiplicity id="48" minimum="0" maximum="1"/>    
     </end>    
     <end type="TARGET" refId="7" navigable="true"/>    
     <display labels="true" multiplicity="true"/>  
