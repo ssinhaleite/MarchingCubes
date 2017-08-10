@@ -94,7 +94,7 @@ public class VolumePartitioner
 
 					final Chunk chunk = new Chunk();
 					chunk.setVolume( Views.interval( volumeLabels, begin, end ) );
-					chunk.setOffset( new int[] { ( int ) ( begin[ 0 ] / cubeSize[ 0 ] ), ( int ) ( begin[ 1 ] / cubeSize[ 1 ] ), ( int ) ( begin[ 2 ] / cubeSize[ 2 ] ) } );
+					chunk.setOffset( new int[] { ( int ) ( begin[ 0 ] ), ( int ) ( begin[ 1 ] ), ( int ) ( begin[ 2 ] ) } );
 					chunks.add( chunk );
 
 					if ( LOGGER.isDebugEnabled() )
@@ -152,7 +152,7 @@ public class VolumePartitioner
 
 		final Chunk chunk = new Chunk();
 		chunk.setVolume( Views.interval( volumeLabels, begin, end ) );
-		chunk.setOffset( new int[] { ( int ) ( begin[ 0 ] / cubeSize[ 0 ] ), ( int ) ( begin[ 1 ] / cubeSize[ 1 ] ), ( int ) ( ( begin[ 2 ] / cubeSize[ 2 ] ) ) } );
+		chunk.setOffset( new int[] { ( int ) ( begin[ 0 ] ), ( int ) ( begin[ 1 ] ), ( int ) ( ( begin[ 2 ] ) ) } );
 		chunk.setIndex( index );
 		chunks.add( chunk );
 
