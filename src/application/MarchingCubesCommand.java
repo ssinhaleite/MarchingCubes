@@ -1,7 +1,9 @@
 package application;
 
 import java.io.IOException;
+import java.nio.FloatBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,18 +14,22 @@ import bdv.img.h5.H5LabelMultisetSetupImageLoader;
 import bdv.labels.labelset.LabelMultisetType;
 import ch.systemsx.cisd.hdf5.HDF5Factory;
 import ch.systemsx.cisd.hdf5.IHDF5Reader;
+import cleargl.GLVector;
+import graphics.scenery.Material;
+import graphics.scenery.Mesh;
 import ncsa.hdf.hdf5lib.exceptions.HDF5FileNotFoundException;
 import net.imglib2.RandomAccessibleInterval;
+import util.ForegroundCriterion;
 import util.HDF5Reader;
+import util.MeshExtractor;
 import util.Parameters;
-import viewer.MarchingCubesSceneryApplication;
 
 /**
  * Main class for the Marching Cubes
  * 
  * @author vleite
  */
-public class MarchingCubesApplication
+public class MarchingCubesCommand
 {
 	/** logger */
 	static Logger LOGGER;
@@ -33,6 +39,16 @@ public class MarchingCubesApplication
 
 	/** resolution of the volume */
 	private static float[] resolution = new float[] { 4f, 4f, 40f };
+
+	private static ForegroundCriterion criterion = ForegroundCriterion.EQUAL;
+
+	private static int[] cubeSize = { 4, 4, 4 };
+
+	private static int foregroundValue;
+
+	private static float[] verticesArray = new float[ 0 ];
+
+	private static MarchingCubesApplication sceneryApplication;
 
 	/**
 	 * Main method - starts the scenery application
@@ -45,7 +61,7 @@ public class MarchingCubesApplication
 		// Set the log level
 		System.setProperty( org.slf4j.impl.SimpleLogger.DEFAULT_LOG_LEVEL_KEY, "info" );
 //		System.setProperty( org.slf4j.impl.SimpleLogger.LOG_FILE_KEY, "messages.txt" );
-		LOGGER = LoggerFactory.getLogger( MarchingCubesApplication.class );
+		LOGGER = LoggerFactory.getLogger( MarchingCubesCommand.class );
 
 		// get the parameters
 		final Parameters params = new Parameters();
@@ -68,11 +84,18 @@ public class MarchingCubesApplication
 			return;
 		}
 
-		final MarchingCubesSceneryApplication sceneryApplication = new MarchingCubesSceneryApplication( "Marching cube", 800, 600 );
-		sceneryApplication.setVolumeLabels( volumeLabels );
-		sceneryApplication.setForegroundValue( params.foregroundValue );
+		foregroundValue = params.foregroundValue;
+
+		sceneryApplication = new MarchingCubesApplication( "Marching cube", 800, 600 );
 		sceneryApplication.setVolumeResolution( resolution );
-		sceneryApplication.main();
+
+		new Thread( () -> {
+			sceneryApplication.main();
+		} ).start();
+
+		new Thread( () -> {
+			marchingCube();
+		} ).start();
 	}
 
 	/**
@@ -141,5 +164,98 @@ public class MarchingCubesApplication
 		}
 
 		return true;
+	}
+
+	private static void marchingCube()
+	{
+		MeshExtractor meshExtractor = new MeshExtractor( volumeLabels, cubeSize, foregroundValue, criterion );
+
+		for ( int voxelSize = 32; voxelSize > 0; voxelSize /= 2 )
+		{
+			LOGGER.info( "voxel size: " + voxelSize );
+
+			Mesh completeNeuron = new Mesh();
+			final Material material = new Material();
+			material.setAmbient( new GLVector( 1f, 0.0f, 1f ) );
+			material.setSpecular( new GLVector( 1f, 0.0f, 1f ) );
+
+			if ( voxelSize == 32 )
+			{
+				material.setDiffuse( new GLVector( 1, 0, 0 ) );
+			}
+			if ( voxelSize == 16 )
+			{
+				material.setDiffuse( new GLVector( 0, 1, 0 ) );
+			}
+			if ( voxelSize == 8 )
+			{
+				material.setDiffuse( new GLVector( 0, 0, 1 ) );
+			}
+			if ( voxelSize == 4 )
+			{
+				material.setDiffuse( new GLVector( 1, 0, 1 ) );
+			}
+			if ( voxelSize == 2 )
+			{
+				material.setDiffuse( new GLVector( 0, 1, 1 ) );
+			}
+			if ( voxelSize == 1 )
+			{
+				material.setDiffuse( new GLVector( 1, 1, 0 ) );
+			}
+
+			completeNeuron.setMaterial( material );
+			completeNeuron.setName( String.valueOf( foregroundValue + " " + voxelSize ) );
+			completeNeuron.setPosition( new GLVector( 0.0f, 0.0f, 0.0f ) );
+			completeNeuron.setScale( new GLVector( resolution[ 0 ], resolution[ 1 ], resolution[ 2 ] ) );
+			sceneryApplication.addChild( completeNeuron );
+
+			cubeSize[ 0 ] = voxelSize;
+			cubeSize[ 1 ] = voxelSize;
+			cubeSize[ 2 ] = 1;
+
+			meshExtractor.setCubeSize( cubeSize );
+			int[] position = new int[] { 0, 0, 0 };
+			meshExtractor.createChunks( position );
+
+			float[] completeNeuronVertices = new float[ 0 ];
+			int completeMeshSize = 0;
+			while ( meshExtractor.hasNext() )
+			{
+				Mesh neuron = new Mesh();
+				neuron = meshExtractor.next();
+
+				if ( completeNeuron.getVertices().hasArray() )
+				{
+					completeNeuronVertices = completeNeuron.getVertices().array();
+					completeMeshSize = completeNeuronVertices.length;
+				}
+
+				float[] neuronVertices = neuron.getVertices().array();
+				int meshSize = neuronVertices.length;
+				verticesArray = Arrays.copyOf( completeNeuronVertices, completeMeshSize + meshSize );
+				System.arraycopy( neuronVertices, 0, verticesArray, completeMeshSize, meshSize );
+
+				System.out.println( "number of elements complete mesh: " + verticesArray.length );
+				completeNeuron.setVertices( FloatBuffer.wrap( verticesArray ) );
+				completeNeuron.recalculateNormals();
+				completeNeuron.setDirty( true );
+			}
+
+			LOGGER.info( "all results generated!" );
+
+			// Pause for 2 seconds
+			try
+			{
+				Thread.sleep( 2000 );
+			}
+			catch ( InterruptedException e )
+			{
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			if ( voxelSize != 1 )
+				sceneryApplication.removeChild( completeNeuron );
+		}
 	}
 }
