@@ -1,4 +1,4 @@
-package javafx;
+package tests.javafx;
 
 import java.util.concurrent.CountDownLatch;
 

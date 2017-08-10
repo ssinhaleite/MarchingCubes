@@ -1,4 +1,4 @@
-package javafx;
+package tests.javafx;
 
 import cleargl.GLVector;
 import graphics.scenery.Box;

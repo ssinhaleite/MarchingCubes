@@ -1,4 +1,4 @@
-package javafx;
+package tests.javafx;
 
 import javafx.application.Application;
 import javafx.scene.layout.StackPane;
