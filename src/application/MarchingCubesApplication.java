@@ -1,145 +1,208 @@
-package application;
+package viewer;
 
-import java.io.IOException;
-import java.util.ArrayList;
+import java.nio.FloatBuffer;
+import java.util.Arrays;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.beust.jcommander.JCommander;
-
-import bdv.img.h5.H5LabelMultisetSetupImageLoader;
 import bdv.labels.labelset.LabelMultisetType;
-import ch.systemsx.cisd.hdf5.HDF5Factory;
-import ch.systemsx.cisd.hdf5.IHDF5Reader;
-import ncsa.hdf.hdf5lib.exceptions.HDF5FileNotFoundException;
+import cleargl.GLVector;
+import graphics.scenery.Box;
+import graphics.scenery.Camera;
+import graphics.scenery.DetachedHeadCamera;
+import graphics.scenery.Material;
+import graphics.scenery.Mesh;
+import graphics.scenery.PointLight;
+import graphics.scenery.Scene;
+import graphics.scenery.SceneryDefaultApplication;
+import graphics.scenery.SceneryElement;
+import graphics.scenery.backends.Renderer;
 import net.imglib2.RandomAccessibleInterval;
-import util.HDF5Reader;
-import util.Parameters;
-import viewer.MarchingCubesSceneryApplication;
+import util.MeshExtractor;
 
 /**
- * Main class for the Marching Cubes
+ * Class responsible for create the world/scene
  * 
  * @author vleite
+ *
  */
-public class MarchingCubesApplication
+public class MarchingCubesSceneryApplication extends SceneryDefaultApplication
 {
 	/** logger */
-	static Logger LOGGER;
+	static final Logger LOGGER = LoggerFactory.getLogger( MarchingCubesSceneryApplication.class );
 
-	/** volume with the labeled segmentation */
-	private static RandomAccessibleInterval< LabelMultisetType > volumeLabels = null;
+	private static marchingCubes.MarchingCubes.ForegroundCriterion criterion = marchingCubes.MarchingCubes.ForegroundCriterion.EQUAL;
 
-	/** resolution of the volume */
-	private static float[] resolution = new float[] { 4f, 4f, 40f };
+	private static int[] cubeSize = { 4, 4, 4 };
 
-	/**
-	 * Main method - starts the scenery application
-	 * 
-	 * @param args
-	 * @throws Exception
-	 */
-	public static void main( String[] args ) throws Exception
+	private int foregroundValue;
+
+	private RandomAccessibleInterval< LabelMultisetType > volumeLabels = null;
+
+	private static float[] verticesArray = new float[ 0 ];
+
+	private static float[] volumeResolution;
+
+	public MarchingCubesSceneryApplication( String applicationName, int windowWidth, int windowHeight )
 	{
-		// Set the log level
-		System.setProperty( org.slf4j.impl.SimpleLogger.DEFAULT_LOG_LEVEL_KEY, "info" );
-//		System.setProperty( org.slf4j.impl.SimpleLogger.LOG_FILE_KEY, "messages.txt" );
-		LOGGER = LoggerFactory.getLogger( MarchingCubesApplication.class );
-
-		// get the parameters
-		final Parameters params = new Parameters();
-		JCommander.newBuilder()
-				.addObject( params )
-				.build()
-				.parse( args );
-
-		boolean success = validateParameters( params );
-		if ( !success )
-		{
-			LOGGER.error( "Failed: one of the parameters was not informed" );
-			return;
-		}
-
-		success = loadData( params );
-		if ( !success )
-		{
-			LOGGER.error( "Failed to load the data" );
-			return;
-		}
-
-		final MarchingCubesSceneryApplication sceneryApplication = new MarchingCubesSceneryApplication( "Marching cube", 800, 600 );
-		sceneryApplication.setVolumeLabels( volumeLabels );
-		sceneryApplication.setForegroundValue( params.foregroundValue );
-		sceneryApplication.setVolumeResolution( resolution );
-		sceneryApplication.main();
+		super( applicationName, windowWidth, windowHeight, false );
 	}
 
-	/**
-	 * This method loads the volume labels from the hdf file
-	 */
-	private static boolean loadData( Parameters params )
+	public void setForegroundValue( int foregroundValue )
 	{
-		final IHDF5Reader reader;
-		try
+		this.foregroundValue = foregroundValue;
+	}
+
+	public void setVolumeLabels( RandomAccessibleInterval< LabelMultisetType > volumeLabels )
+	{
+		this.volumeLabels = volumeLabels;
+	}
+
+	public void setVolumeResolution( float[] resolution )
+	{
+		this.volumeResolution = resolution;
+	}
+
+	@Override
+	public void init()
+	{
+		LOGGER.info( "starting application..." );
+
+		setRenderer( Renderer.Factory.createRenderer( getHub(), getApplicationName(), getScene(), getWindowWidth(),
+				getWindowHeight() ) );
+		getHub().add( SceneryElement.Renderer, getRenderer() );
+
+		final Box hull = new Box( new GLVector( 50.0f, 50.0f, 50.0f ), true );
+		hull.getMaterial().setDiffuse( new GLVector( 0.5f, 0.5f, 0.5f ) );
+		hull.getMaterial().setDoubleSided( true );
+		getScene().addChild( hull );
+
+		final Camera cam = new DetachedHeadCamera();
+
+		cam.perspectiveCamera( 50f, getWindowHeight(), getWindowWidth(), 0.001f, 1000.0f );
+		cam.setActive( true );
+		cam.setPosition( new GLVector( volumeResolution[ 0 ] / 2, volumeResolution[ 1 ] / 2, 10 ) );
+		getScene().addChild( cam );
+
+		PointLight[] lights = new PointLight[ 4 ];
+
+		for ( int i = 0; i < lights.length; i++ )
 		{
-			reader = HDF5Factory.openForReading( params.filePath );
-		}
-		catch ( HDF5FileNotFoundException e )
-		{
-			LOGGER.error( "input file not found" );
-			return false;
+			lights[ i ] = new PointLight();
+			lights[ i ].setEmissionColor( new GLVector( 1.0f, 1.0f, 1.0f ) );
+			lights[ i ].setIntensity( 100.2f * 5 );
+			lights[ i ].setLinear( 0.0f );
+			lights[ i ].setQuadratic( 0.1f );
 		}
 
-		LOGGER.info( "Opening labels from " + params.filePath );
-		/** loaded segments */
-		ArrayList< H5LabelMultisetSetupImageLoader > labels = null;
+		lights[ 0 ].setPosition( new GLVector( 1.0f, 0f, -1.0f / ( float ) Math.sqrt( 2.0 ) ) );
+		lights[ 1 ].setPosition( new GLVector( -1.0f, 0f, -1.0f / ( float ) Math.sqrt( 2.0 ) ) );
+		lights[ 2 ].setPosition( new GLVector( 0.0f, 1.0f, 1.0f / ( float ) Math.sqrt( 2.0 ) ) );
+		lights[ 3 ].setPosition( new GLVector( 0.0f, -1.0f, 1.0f / ( float ) Math.sqrt( 2.0 ) ) );
 
-		/* label dataset */
-		if ( reader.exists( params.labelDatasetPath ) )
+		for ( int i = 0; i < lights.length; i++ )
 		{
+			getScene().addChild( lights[ i ] );
+		}
+
+		new Thread()
+		{
+			public void run()
+			{
+				marchingCube( foregroundValue, getScene() );
+			}
+		}.start();
+	}
+
+	private void marchingCube( int foregroundValue, Scene scene )
+	{
+		for ( int voxelSize = 32; voxelSize > 0; voxelSize /= 2 )
+		{
+			LOGGER.info( "voxel size: " + voxelSize );
+
+			Mesh completeNeuron = new Mesh();
+			final Material material = new Material();
+			material.setAmbient( new GLVector( 1f, 0.0f, 1f ) );
+			material.setSpecular( new GLVector( 1f, 0.0f, 1f ) );
+
+			if ( voxelSize == 32 )
+			{
+				material.setDiffuse( new GLVector( 1, 0, 0 ) );
+			}
+			if ( voxelSize == 16 )
+			{
+				material.setDiffuse( new GLVector( 0, 1, 0 ) );
+			}
+			if ( voxelSize == 8 )
+			{
+				material.setDiffuse( new GLVector( 0, 0, 1 ) );
+			}
+			if ( voxelSize == 4 )
+			{
+				material.setDiffuse( new GLVector( 1, 0, 1 ) );
+			}
+			if ( voxelSize == 2 )
+			{
+				material.setDiffuse( new GLVector( 0, 1, 1 ) );
+			}
+			if ( voxelSize == 1 )
+			{
+				material.setDiffuse( new GLVector( 1, 1, 0 ) );
+			}
+
+			completeNeuron.setMaterial( material );
+			completeNeuron.setName( String.valueOf( foregroundValue + " " + voxelSize ) );
+			completeNeuron.setPosition( new GLVector( 0.0f, 0.0f, 0.0f ) );
+			completeNeuron.setScale( new GLVector( volumeResolution[ 0 ], volumeResolution[ 1 ], volumeResolution[ 2 ] ) );
+			scene.addChild( completeNeuron );
+
+			cubeSize[ 0 ] = voxelSize;
+			cubeSize[ 1 ] = voxelSize;
+			cubeSize[ 2 ] = 1;
+
+			MeshExtractor meshExtractor = new MeshExtractor( volumeLabels, cubeSize, foregroundValue, criterion );
+			int[] position = new int[] { 0, 0, 0 };
+			meshExtractor.createChunks( position );
+
+			float[] completeNeuronVertices = new float[ 0 ];
+			int completeMeshSize = 0;
+			while ( meshExtractor.hasNext() )
+			{
+				Mesh neuron = new Mesh();
+				neuron = meshExtractor.next();
+
+				if ( completeNeuron.getVertices().hasArray() )
+				{
+					completeNeuronVertices = completeNeuron.getVertices().array();
+					completeMeshSize = completeNeuronVertices.length;
+				}
+
+				float[] neuronVertices = neuron.getVertices().array();
+				int meshSize = neuronVertices.length;
+				verticesArray = Arrays.copyOf( completeNeuronVertices, completeMeshSize + meshSize );
+				System.arraycopy( neuronVertices, 0, verticesArray, completeMeshSize, meshSize );
+
+				System.out.println( "number of elements complete mesh: " + verticesArray.length );
+				completeNeuron.setVertices( FloatBuffer.wrap( verticesArray ) );
+				completeNeuron.recalculateNormals();
+				completeNeuron.setDirty( true );
+			}
+
+			LOGGER.info( "all results generated!" );
+
+			// Pause for 2 seconds
 			try
 			{
-				labels = HDF5Reader.readLabels( reader, params.labelDatasetPath );
+				Thread.sleep( 2000 );
 			}
-			catch ( IOException e )
+			catch ( InterruptedException e )
 			{
-				LOGGER.error( "read labels failed: " + e.getCause() );
-				return false;
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
+			if ( voxelSize != 1 )
+				scene.removeChild( completeNeuron );
 		}
-		else
-		{
-			LOGGER.error( "no label dataset '" + params.labelDatasetPath + "' found" );
-			return false;
-		}
-
-		volumeLabels = labels.get( 0 ).getImage( 0 );
-		return true;
-	}
-
-	private static boolean validateParameters( Parameters params )
-	{
-		String errorMessage = "";
-		if ( params.filePath == "" )
-		{
-			errorMessage += "the input file path was not informed";
-		}
-
-		if ( params.foregroundValue == -1 )
-		{
-			if ( errorMessage != "" )
-				errorMessage += " and ";
-
-			errorMessage += "the foreground value was not informed";
-		}
-
-		if ( errorMessage != "" )
-		{
-			LOGGER.error( errorMessage );
-			return false;
-		}
-
-		return true;
 	}
 }

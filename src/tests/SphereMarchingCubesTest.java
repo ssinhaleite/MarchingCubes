@@ -6,13 +6,13 @@ import java.util.ArrayList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import application.MarchingCubesApplication;
 import bdv.img.h5.H5LabelMultisetSetupImageLoader;
 import bdv.labels.labelset.LabelMultisetType;
 import ch.systemsx.cisd.hdf5.HDF5Factory;
 import ch.systemsx.cisd.hdf5.IHDF5Reader;
 import net.imglib2.RandomAccessibleInterval;
 import util.HDF5Reader;
-import viewer.MarchingCubesSceneryApplication;
 
 /**
  * This test creates an sphere and then generates the mesh using the Marching
@@ -35,7 +35,7 @@ public class SphereMarchingCubesTest
 
 		loadSphere();
 
-		final MarchingCubesSceneryApplication sceneryApplication = new MarchingCubesSceneryApplication( "Marching cubes", 800, 600 );
+		final MarchingCubesApplication sceneryApplication = new MarchingCubesApplication( "Marching cubes", 800, 600 );
 		sceneryApplication.setVolumeLabels( volumeLabels );
 		sceneryApplication.setForegroundValue( 1 );
 		sceneryApplication.setVolumeResolution( new float[] { 0.5f, 0.75f, 0.5f } );
