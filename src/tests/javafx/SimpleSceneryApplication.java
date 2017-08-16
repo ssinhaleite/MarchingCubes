@@ -6,12 +6,12 @@ import graphics.scenery.Camera;
 import graphics.scenery.DetachedHeadCamera;
 import graphics.scenery.Material;
 import graphics.scenery.PointLight;
-import graphics.scenery.SceneryDefaultApplication;
+import graphics.scenery.SceneryBase;
 import graphics.scenery.SceneryElement;
 import graphics.scenery.backends.Renderer;
 import graphics.scenery.utils.SceneryPanel;
 
-public class SimpleSceneryApplication extends SceneryDefaultApplication
+public class SimpleSceneryApplication extends SceneryBase
 {
 
 	private SceneryPanel scPanel;
@@ -26,7 +26,7 @@ public class SimpleSceneryApplication extends SceneryDefaultApplication
 	public void init()
 	{
 		setRenderer(
-				Renderer.Factory.createRenderer( getHub(), getApplicationName(), getScene(), getWindowWidth(), getWindowHeight(), scPanel ) );
+				Renderer.createRenderer( getHub(), getApplicationName(), getScene(), getWindowWidth(), getWindowHeight(), scPanel ) );
 		getHub().add( SceneryElement.Renderer, getRenderer() );
 
 		final Box hull = new Box( new GLVector( 50.0f, 50.0f, 50.0f ), true );

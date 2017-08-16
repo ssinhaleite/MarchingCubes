@@ -37,7 +37,7 @@ public class SimpleSceneryScene
 		hub.add( SceneryElement.Statistics, statistics );
 
 		final graphics.scenery.Scene scene = new graphics.scenery.Scene();
-		final Renderer renderer = Renderer.Factory.createRenderer( hub, "Simple Scene", scene, 500, 500, scPanel );
+		final Renderer renderer = Renderer.createRenderer( hub, "Simple Scene", scene, 500, 500, scPanel );
 		hub.add( SceneryElement.Renderer, renderer );
 
 		InputHandler inputHandler = new InputHandler(scene, renderer, hub);

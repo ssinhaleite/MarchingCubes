@@ -9,7 +9,7 @@ import graphics.scenery.Camera;
 import graphics.scenery.DetachedHeadCamera;
 import graphics.scenery.Mesh;
 import graphics.scenery.PointLight;
-import graphics.scenery.SceneryDefaultApplication;
+import graphics.scenery.SceneryBase;
 import graphics.scenery.SceneryElement;
 import graphics.scenery.backends.Renderer;
 
@@ -19,7 +19,7 @@ import graphics.scenery.backends.Renderer;
  * @author vleite
  *
  */
-public class MarchingCubesApplication extends SceneryDefaultApplication
+public class MarchingCubesApplication extends SceneryBase
 {
 	/** logger */
 	static final Logger LOGGER = LoggerFactory.getLogger( MarchingCubesApplication.class );
@@ -41,7 +41,7 @@ public class MarchingCubesApplication extends SceneryDefaultApplication
 	{
 		LOGGER.info( "starting application..." );
 
-		setRenderer( Renderer.Factory.createRenderer( getHub(), getApplicationName(), getScene(), getWindowWidth(),
+		setRenderer( Renderer.createRenderer( getHub(), getApplicationName(), getScene(), getWindowWidth(),
 				getWindowHeight() ) );
 		getHub().add( SceneryElement.Renderer, getRenderer() );
 
