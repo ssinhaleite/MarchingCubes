@@ -22,6 +22,8 @@ public class JavaFXApplication extends Application
 		primaryStage.setScene( scene );
 		primaryStage.show();
 
-		simpleSceneryScene.init();
+		new Thread( () -> {
+			simpleSceneryScene.init();
+		} ).start();
 	}
 }
