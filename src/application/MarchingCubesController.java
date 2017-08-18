@@ -29,7 +29,7 @@ import util.Parameters;
  * 
  * @author vleite
  */
-public class MarchingCubesCommand
+public class MarchingCubesController
 {
 	/** logger */
 	static Logger LOGGER;
@@ -61,7 +61,7 @@ public class MarchingCubesCommand
 		// Set the log level
 		System.setProperty( org.slf4j.impl.SimpleLogger.DEFAULT_LOG_LEVEL_KEY, "info" );
 //		System.setProperty( org.slf4j.impl.SimpleLogger.LOG_FILE_KEY, "messages.txt" );
-		LOGGER = LoggerFactory.getLogger( MarchingCubesCommand.class );
+		LOGGER = LoggerFactory.getLogger( MarchingCubesController.class );
 
 		// get the parameters
 		final Parameters params = new Parameters();
