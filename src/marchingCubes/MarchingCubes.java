@@ -14,7 +14,7 @@ import net.imglib2.FinalInterval;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.view.ExtendedRandomAccessibleInterval;
 import net.imglib2.view.Views;
-import util.Mesh;
+import util.SimpleMesh;
 
 /**
  * This class implements the marching cubes algorithm. Based on
@@ -28,7 +28,7 @@ public class MarchingCubes
 	private static final Logger LOGGER = LoggerFactory.getLogger( MarchingCubes.class );
 
 	/** the mesh that represents the surface. */
-	private Mesh mesh;
+	private SimpleMesh mesh;
 
 	/** No. of cells in x, y and z directions. */
 	private long nCellsX, nCellsY, nCellsZ;
@@ -60,7 +60,7 @@ public class MarchingCubes
 	 */
 	public MarchingCubes()
 	{
-		this.mesh = new Mesh();
+		this.mesh = new SimpleMesh();
 		this.nCellsX = 0;
 		this.nCellsY = 0;
 		this.nCellsZ = 0;
@@ -83,14 +83,22 @@ public class MarchingCubes
 	 * @param copyToArray
 	 * @return
 	 */
-	public Mesh generateMesh( final RandomAccessibleInterval< LabelMultisetType > input, final int[] volDim, final int[] offset,
+	public SimpleMesh generateMesh( final RandomAccessibleInterval< LabelMultisetType > input, final int[] volDim, final int[] offset,
 			final int[] cubeSize, final ForegroundCriterion foregroundCriteria, final int foregroundValue,
 			final boolean copyToArray )
 	{
 		initializeVariables( volDim, offset, cubeSize, foregroundCriteria, foregroundValue );
-		if ( copyToArray ) { return generateMeshFromArray( input, volDim, cubeSize ); }
+		SimpleMesh mesh = null;
+		if ( copyToArray )
+		{
+			mesh = generateMeshFromArray( input, volDim, cubeSize );
+		}
+		else
+		{
+			mesh = generateMeshFromRAI( input, cubeSize );
+		}
 
-		return generateMeshFromRAI( input, cubeSize );
+		return mesh;
 	}
 
 	private void initializeVariables( final int[] volDim, final int[] offset, final int[] cubeSize, final ForegroundCriterion foregroundCriteria, final int foregroundValue )
@@ -118,7 +126,7 @@ public class MarchingCubes
 	 * @param cubeSize
 	 * @return
 	 */
-	private Mesh generateMeshFromRAI( final RandomAccessibleInterval< LabelMultisetType > input, final int[] cubeSize )
+	private SimpleMesh generateMeshFromRAI( final RandomAccessibleInterval< LabelMultisetType > input, final int[] cubeSize )
 	{
 		final ExtendedRandomAccessibleInterval< LabelMultisetType, RandomAccessibleInterval< LabelMultisetType > > extended =
 				Views.extendValue( input, new LabelMultisetType() );
@@ -295,7 +303,7 @@ public class MarchingCubes
 	 * @param cubeSize
 	 * @return
 	 */
-	private Mesh generateMeshFromArray( final RandomAccessibleInterval< LabelMultisetType > input, final int[] volDim, final int[] cubeSize )
+	private SimpleMesh generateMeshFromArray( final RandomAccessibleInterval< LabelMultisetType > input, final int[] volDim, final int[] cubeSize )
 	{
 		// array where the data will be copied
 		final List< Long > volumeArray = new ArrayList< Long >();

@@ -14,8 +14,10 @@ import org.slf4j.LoggerFactory;
 
 import bdv.labels.labelset.LabelMultisetType;
 import graphics.scenery.Mesh;
-import marchingCubes.MarchingCubes.ForegroundCriterion;
+import marchingCubes.MarchingCubes;
 import marchingCubes.MarchingCubesCallable;
+import net.imglib2.Localizable;
+import net.imglib2.Point;
 import net.imglib2.RandomAccessibleInterval;
 
 /**
@@ -33,7 +35,7 @@ public class MeshExtractor
 	/** logger */
 	static final Logger LOGGER = LoggerFactory.getLogger( MeshExtractor.class );
 
-	static final int MAX_CUBE_SIZE = 32;
+	static final int MAX_CUBE_SIZE = 16;
 
 	private RandomAccessibleInterval< LabelMultisetType > volumeLabels;
 
@@ -45,17 +47,17 @@ public class MeshExtractor
 
 	private int nCellsX, nCellsY, nCellsZ;
 
-	private ForegroundCriterion criterion;
+	private MarchingCubes.ForegroundCriterion criterion;
 
-	private static Map< Future< util.Mesh >, Chunk > resultMeshMap = null;
+	private static Map< Future< SimpleMesh >, Chunk > resultMeshMap = null;
 
 	private static Map< Chunk, int[] > chunkResolutionMap = null;
 
-	private static CompletionService< util.Mesh > executor = null;
+	private static CompletionService< SimpleMesh > executor = null;
 
-	private static util.VolumePartitioner partitioner;
+	private static VolumePartitioner partitioner;
 
-	public MeshExtractor( RandomAccessibleInterval< LabelMultisetType > volumeLabels, final int[] cubeSize, final int foregroundValue, final ForegroundCriterion criterion )
+	public MeshExtractor( RandomAccessibleInterval< LabelMultisetType > volumeLabels, final int[] cubeSize, final int foregroundValue, final MarchingCubes.ForegroundCriterion criterion )
 	{
 		this.volumeLabels = volumeLabels;
 		this.partitionSize = new int[] { 1, 1, 1 };
@@ -63,14 +65,15 @@ public class MeshExtractor
 		this.foregroundValue = foregroundValue;
 		this.criterion = criterion;
 
-		executor = new ExecutorCompletionService< util.Mesh >(
+		executor = new ExecutorCompletionService< SimpleMesh >(
 				Executors.newWorkStealingPool() );
 
-		resultMeshMap = new HashMap< Future< util.Mesh >, Chunk >();
+		resultMeshMap = new HashMap< Future< SimpleMesh >, Chunk >();
 
 		chunkResolutionMap = new HashMap< Chunk, int[] >();
 
 		generatePartitionSize();
+
 		nCellsX = ( int ) Math.ceil( ( volumeLabels.dimension( 0 ) ) / partitionSize[ 0 ] );
 		nCellsY = ( int ) Math.ceil( ( volumeLabels.dimension( 1 ) ) / partitionSize[ 1 ] );
 		nCellsZ = ( int ) Math.ceil( ( volumeLabels.dimension( 2 ) ) / partitionSize[ 2 ] );
@@ -82,12 +85,13 @@ public class MeshExtractor
 		if ( volumeLabels.dimension( 2 ) % partitionSize[ 2 ] == 0 )
 			nCellsZ--;
 
-		partitioner = new util.VolumePartitioner( this.volumeLabels, partitionSize, this.cubeSize );
+		partitioner = new VolumePartitioner( this.volumeLabels, partitionSize, this.cubeSize );
 	}
 
 	public void setCubeSize( int[] cubeSize )
 	{
 		this.cubeSize = cubeSize;
+		partitioner.setOverlapSize( cubeSize );
 	}
 
 	public boolean hasNext()
@@ -98,7 +102,8 @@ public class MeshExtractor
 
 	public Mesh next()
 	{
-		Future< util.Mesh > completedFuture = null;
+		// System.out.println( "next method" );
+		Future< SimpleMesh > completedFuture = null;
 		// block until any task completes
 		try
 		{
@@ -114,8 +119,10 @@ public class MeshExtractor
 			LOGGER.error( " task interrupted: " + e.getCause() );
 		}
 
+		// System.out.println( "get completed future" );
+
 		Chunk chunk = resultMeshMap.remove( completedFuture );
-		util.Mesh m = new util.Mesh();
+		SimpleMesh m = new SimpleMesh();
 
 		// get the mesh, if the task was able to create it
 		try
@@ -128,11 +135,22 @@ public class MeshExtractor
 			LOGGER.error( "Mesh creation failed: " + e.getCause() );
 		}
 
-		Mesh sceneryMesh = new Mesh();
-		updateMesh( m, sceneryMesh );
+		// System.out.println( "get mesh" );
 
-		chunk.setMesh( sceneryMesh, cubeSize );
+		Mesh sceneryMesh = null;
+		if ( m.getNumberOfVertices() == 0 )
+		{
+			LOGGER.info( "empty mesh" );
+			// System.out.println( "empty mesh" );
+		}
+		else
+		{
+			sceneryMesh = new Mesh();
+			updateMesh( m, sceneryMesh );
+			chunk.setMesh( sceneryMesh, cubeSize );
+		}
 
+		// System.out.println( "new positions" );
 		int index = chunk.getIndex();
 		int xWidth = ( int ) volumeLabels.dimension( 0 );
 		int xyWidth = ( int ) ( volumeLabels.dimension( 1 ) * xWidth );
@@ -149,7 +167,8 @@ public class MeshExtractor
 			LOGGER.debug( "chunk number of meshes resolutions: " + chunk.getNumberOfMeshResolutions() );
 		}
 
-		createChunks( newPosition );
+		Localizable newLocation = new Point( newPosition );
+		createChunks( newLocation );
 
 		// a mesh was created, return it
 		return sceneryMesh;
@@ -162,15 +181,15 @@ public class MeshExtractor
 	 * @param position
 	 *            x, y, z coordinates
 	 */
-	public void createChunks( int[] position )
+	public void createChunks( Localizable location )
 	{
-		if ( position == null )
+		if ( location == null )
 		{
 			LOGGER.info( "Given position to create a chunk is null" );
 			return;
 		}
 
-		long[] offset = partitioner.getVolumeOffset( position );
+		long[] offset = partitioner.getVolumeOffset( location );
 		LOGGER.trace( "offset: {}, {}, {}", offset[ 0 ], offset[ 1 ], offset[ 2 ] );
 
 		int[] newPosition = null;
@@ -185,7 +204,8 @@ public class MeshExtractor
 		LOGGER.trace( "Initial position is: {}, {}, {}", newPosition[ 0 ], newPosition[ 1 ], newPosition[ 2 ] );
 
 		// creates the callable for the chunk in the given position
-		createChunk( newPosition );
+		Localizable newLocation = new Point( newPosition );
+		createChunk( newLocation );
 
 		// if one of the neighbors chunks exist, creates it
 		// newOffsetposition = x + partitionSizeX, y, z
@@ -194,11 +214,11 @@ public class MeshExtractor
 
 		if ( newOffset[ 0 ] < nCellsX )
 		{
-			newPosition = new int[] {
+			newLocation = new Point(
 					( int ) ( newOffset[ 0 ] * ( partitionSize[ 0 ] + 1 ) ),
 					( int ) ( newOffset[ 1 ] * ( partitionSize[ 1 ] + 1 ) ),
-					( int ) ( newOffset[ 2 ] * ( partitionSize[ 2 ] + 1 ) ) };
-			createChunk( newPosition );
+					( int ) ( newOffset[ 2 ] * ( partitionSize[ 2 ] + 1 ) ) );
+			createChunk( newLocation );
 		}
 
 		// position = x - partitionSizeX, y, z
@@ -207,11 +227,11 @@ public class MeshExtractor
 
 		if ( newOffset[ 0 ] >= 0 )
 		{
-			newPosition = new int[] {
+			newLocation = new Point(
 					( int ) ( newOffset[ 0 ] * ( partitionSize[ 0 ] + 1 ) ),
 					( int ) ( newOffset[ 1 ] * ( partitionSize[ 1 ] + 1 ) ),
-					( int ) ( newOffset[ 2 ] * ( partitionSize[ 2 ] + 1 ) ) };
-			createChunk( newPosition );
+					( int ) ( newOffset[ 2 ] * ( partitionSize[ 2 ] + 1 ) ) );
+			createChunk( newLocation );
 		}
 
 		// position = x, y + partitionSizeY, z
@@ -220,11 +240,11 @@ public class MeshExtractor
 
 		if ( newOffset[ 1 ] < nCellsY )
 		{
-			newPosition = new int[] {
+			newLocation = new Point(
 					( int ) ( newOffset[ 0 ] * ( partitionSize[ 0 ] + 1 ) ),
 					( int ) ( newOffset[ 1 ] * ( partitionSize[ 1 ] + 1 ) ),
-					( int ) ( newOffset[ 2 ] * ( partitionSize[ 2 ] + 1 ) ) };
-			createChunk( newPosition );
+					( int ) ( newOffset[ 2 ] * ( partitionSize[ 2 ] + 1 ) ) );
+			createChunk( newLocation );
 		}
 
 		// position = x, y - partitionSizeY, z
@@ -233,11 +253,11 @@ public class MeshExtractor
 
 		if ( newOffset[ 1 ] >= 0 )
 		{
-			newPosition = new int[] {
+			newLocation = new Point(
 					( int ) ( newOffset[ 0 ] * ( partitionSize[ 0 ] + 1 ) ),
 					( int ) ( newOffset[ 1 ] * ( partitionSize[ 1 ] + 1 ) ),
-					( int ) ( newOffset[ 2 ] * ( partitionSize[ 2 ] + 1 ) ) };
-			createChunk( newPosition );
+					( int ) ( newOffset[ 2 ] * ( partitionSize[ 2 ] + 1 ) ) );
+			createChunk( newLocation );
 		}
 
 		// position = x, y, z + partitionSizeZ
@@ -246,11 +266,11 @@ public class MeshExtractor
 
 		if ( newOffset[ 2 ] < nCellsZ )
 		{
-			newPosition = new int[] {
+			newLocation = new Point(
 					( int ) ( newOffset[ 0 ] * ( partitionSize[ 0 ] + 1 ) ),
 					( int ) ( newOffset[ 1 ] * ( partitionSize[ 1 ] + 1 ) ),
-					( int ) ( newOffset[ 2 ] * ( partitionSize[ 2 ] + 1 ) ) };
-			createChunk( newPosition );
+					( int ) ( newOffset[ 2 ] * ( partitionSize[ 2 ] + 1 ) ) );
+			createChunk( newLocation );
 		}
 
 		// position = x, y, z - partitionSizeZ
@@ -259,23 +279,23 @@ public class MeshExtractor
 
 		if ( newOffset[ 2 ] >= 0 )
 		{
-			newPosition = new int[] {
+			newLocation = new Point(
 					( int ) ( newOffset[ 0 ] * ( partitionSize[ 0 ] + 1 ) ),
 					( int ) ( newOffset[ 1 ] * ( partitionSize[ 1 ] + 1 ) ),
-					( int ) ( newOffset[ 2 ] * ( partitionSize[ 2 ] + 1 ) ) };
-			createChunk( newPosition );
+					( int ) ( newOffset[ 2 ] * ( partitionSize[ 2 ] + 1 ) ) );
+			createChunk( newLocation );
 		}
 
 		LOGGER.trace( "There is/are {} threads to calculate chunk mesh", resultMeshMap.size() );
 	}
 
-	private void createChunk( int[] position )
+	private void createChunk( Localizable location )
 	{
-		Chunk chunk = partitioner.getChunk( position );
+		Chunk chunk = partitioner.getChunk( location );
 		if ( LOGGER.isTraceEnabled() )
 		{
 			int[] chunkBb = chunk.getChunkBoundinBox();
-			LOGGER.trace( "position: " + position[ 0 ] + " " + position[ 1 ] + " " + position[ 2 ] );
+			LOGGER.trace( "position: " + location.getIntPosition( 0 ) + " " + location.getIntPosition( 1 ) + " " + location.getIntPosition( 2 ) );
 			LOGGER.trace( "adding in the set: " + chunkBb[ 0 ] + " " + chunkBb[ 1 ] + " " + chunkBb[ 2 ] );
 			LOGGER.trace( " to " + chunkBb[ 3 ] + " " + chunkBb[ 4 ] + " " + chunkBb[ 5 ] );
 		}
@@ -301,10 +321,8 @@ public class MeshExtractor
 		int[] volumeDimension = new int[] { ( int ) chunk.getVolume().dimension( 0 ), ( int ) chunk.getVolume().dimension( 1 ),
 				( int ) chunk.getVolume().dimension( 2 ) };
 
-		MarchingCubesCallable callable = new MarchingCubesCallable( chunk.getVolume(), volumeDimension, chunk.getOffset(), cubeSize, criterion, foregroundValue,
-				true );
-
-		Future< util.Mesh > result = executor.submit( callable );
+		MarchingCubesCallable callable = new MarchingCubesCallable( chunk.getVolume(), volumeDimension, chunk.getOffset(), cubeSize, criterion, foregroundValue, true );
+		Future< SimpleMesh > result = executor.submit( callable );
 
 		resultMeshMap.put( result, chunk );
 		chunkResolutionMap.put( chunk, new int[] { cubeSize[ 0 ], cubeSize[ 1 ], cubeSize[ 2 ] } );
@@ -331,7 +349,7 @@ public class MeshExtractor
 			partitionSize[ i ] = ( partitionSize[ i ] == 0 ) ? 1 : partitionSize[ i ];
 		}
 
-		LOGGER.trace( "final partition size: {}, {}, {}", partitionSize[ 0 ], partitionSize[ 1 ], partitionSize[ 2 ] );
+		LOGGER.info( "final partition size: {}, {}, {}", partitionSize[ 0 ], partitionSize[ 1 ], partitionSize[ 2 ] );
 	}
 
 	/**
@@ -342,7 +360,7 @@ public class MeshExtractor
 	 * @param sceneryMesh
 	 *            scenery mesh that will receive the information
 	 */
-	public void updateMesh( util.Mesh mesh, Mesh sceneryMesh )
+	public void updateMesh( SimpleMesh mesh, Mesh sceneryMesh )
 	{
 		float[] verticesArray = new float[ mesh.getNumberOfVertices() * 3 ];
 

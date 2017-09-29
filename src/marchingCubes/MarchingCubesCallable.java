@@ -3,31 +3,30 @@ package marchingCubes;
 import java.util.concurrent.Callable;
 
 import bdv.labels.labelset.LabelMultisetType;
-import marchingCubes.MarchingCubes.ForegroundCriterion;
 import net.imglib2.RandomAccessibleInterval;
-import util.Mesh;
+import util.SimpleMesh;
 
-public class MarchingCubesCallable implements Callable< Mesh >
+public class MarchingCubesCallable implements Callable< SimpleMesh >
 {
 	/** volume data */
 	RandomAccessibleInterval< LabelMultisetType > volume;
 
 	/** volume dimension */
-	int[] volDim;
+	private int[] volDim;
 
 	/** offset to positioning the vertices in global coordinates */
-	int[] offset;
+	private int[] offset;
 
 	/** marching cube voxel dimension */
-	int[] cubeSize;
+	private int[] cubeSize;
 
 	/**
 	 * defines if the criterion that will be used to generate the mesh
 	 */
-	ForegroundCriterion criterion;
+	private MarchingCubes.ForegroundCriterion criterion;
 
 	/** the value to match the criterion */
-	int foregroundValue;
+	private int foregroundValue;
 
 	/**
 	 * indicates if it is to use the implementation directly with RAI (false) or
@@ -35,22 +34,22 @@ public class MarchingCubesCallable implements Callable< Mesh >
 	 */
 	boolean copyToArray;
 
-	public MarchingCubesCallable( RandomAccessibleInterval< LabelMultisetType > input, int[] volDim, int[] offset, int[] cubeSize, ForegroundCriterion criterion, int level, boolean usingRAI )
+	public MarchingCubesCallable( RandomAccessibleInterval< LabelMultisetType > input, int[] volDim, int[] offset, int[] cubeSize, MarchingCubes.ForegroundCriterion criterion, int foregroundValue, boolean usingRAI )
 	{
 		this.volume = input;
 		this.volDim = volDim;
 		this.offset = offset;
 		this.cubeSize = cubeSize;
 		this.criterion = criterion;
-		this.foregroundValue = level;
+		this.foregroundValue = foregroundValue;
 		this.copyToArray = usingRAI;
 	}
 
 	@Override
-	public Mesh call() throws Exception
+	public SimpleMesh call() throws Exception
 	{
 		MarchingCubes mc_rai = new MarchingCubes();
-		Mesh m = mc_rai.generateMesh( volume, volDim, offset, cubeSize, criterion, foregroundValue, copyToArray );
+		SimpleMesh m = mc_rai.generateMesh( volume, volDim, offset, cubeSize, criterion, foregroundValue, copyToArray );
 
 		return m;
 	}

@@ -26,11 +26,12 @@ public class PerformanceRAITest
 	static Timestamp end = new Timestamp( System.currentTimeMillis() );
 
 	// hdf file to use on test
-	static String path = "data/sample_B_20160708_frags_46_50.hdf";
+//	static String path = "resources/sample_B_20160708_frags_46_50.hdf";
+	static String path = "data/sample_B.augmented.0.hdf";
 
 	static String path_label = "/volumes/labels/neuron_ids";
 
-	static int[] volDim = { 500, 500, 5 };
+	static int[] volDim = { 2340, 1685, 153 };
 
 	static int[] offsets = { 0, 0, 0 };
 
@@ -52,7 +53,7 @@ public class PerformanceRAITest
 		volumeLabels = labels.get( 0 ).getImage( 0 );
 
 		int foregroundValue = 0;
-		for ( int size = 128; size >= 1; size /= 2 )
+		for ( int size = 32; size >= 1; size /= 2 )
 		{
 			filename = "mc_cubeSize_" + size + ".txt";
 			PrintStream fileStream = null;
@@ -67,9 +68,9 @@ public class PerformanceRAITest
 			System.setOut( fileStream );
 
 			int[] cubeSize = { size, size, size };
-			for ( int i = 0; i < 27; i++ )
-			{
-				foregroundValue = i + 1;
+//			for ( int i = 0; i < 27; i++ )
+//			{
+			foregroundValue = 1854;// i + 1;
 				System.out.println( "MarchingCubes isolevel: " + foregroundValue );
 				MarchingCubes mc = new MarchingCubes();
 				begin = new Timestamp( System.currentTimeMillis() );
@@ -81,7 +82,7 @@ public class PerformanceRAITest
 				end = new Timestamp( System.currentTimeMillis() );
 				System.out.println( "time for generating mesh using rai: " + ( end.getTime() - begin.getTime() ) );
 
-			}
+//			}
 		}
 	}
 }

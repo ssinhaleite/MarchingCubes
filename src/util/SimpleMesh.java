@@ -3,7 +3,7 @@ package util;
 /**
  * the primary structure used to pass around the components of a mesh
  */
-public class Mesh
+public class SimpleMesh
 {
 	/**
 	 * the number of vertices and normals
@@ -15,13 +15,13 @@ public class Mesh
 	 */
 	private float[][] vertices;
 
-	Mesh( int vertexCount, float[][] verticesArray, int trianglesCount, int[] trianglesArray )
+	SimpleMesh( int vertexCount, float[][] verticesArray, int trianglesCount, int[] trianglesArray )
 	{
 		numberOfVertices = vertexCount;
 		vertices = verticesArray;
 	}
 
-	public Mesh()
+	public SimpleMesh()
 	{}
 
 	public int getNumberOfVertices()

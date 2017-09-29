@@ -19,7 +19,13 @@ public class Parameters
 
 	@Parameter( names = { "--neuronId", "-id" }, description = "foreground value" )
 	public Integer foregroundValue = 7;
-//	public Integer foregroundValue = 1854;
+//	public Integer foregroundValue = 364328; // separated parts
+//	public Integer foregroundValue = 289449;
+//	public Integer foregroundValue = 302633; // bird :P
+//	public Integer foregroundValue = 289449;
+//	public Integer foregroundValue = 462291;
+//	public Integer foregroundValue = 370928;
+//	public Integer foregroundValue = 416321;
 
 	@Parameter( names = "--help", help = true )
 	private boolean help;

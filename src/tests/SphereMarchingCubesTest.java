@@ -17,6 +17,8 @@ import cleargl.GLVector;
 import graphics.scenery.Material;
 import graphics.scenery.Mesh;
 import marchingCubes.MarchingCubes.ForegroundCriterion;
+import net.imglib2.Localizable;
+import net.imglib2.Point;
 import net.imglib2.RandomAccessibleInterval;
 import util.HDF5Reader;
 import util.MeshExtractor;
@@ -42,8 +44,8 @@ public class SphereMarchingCubesTest
 
 		loadSphere();
 
-		final MarchingCubesApplication sceneryApplication = new MarchingCubesApplication( "Marching cubes", 800, 600 );
-		sceneryApplication.setVolumeResolution( new float[] { 0.5f, 0.75f, 0.5f } );
+		final MarchingCubesApplication sceneryApplication = new MarchingCubesApplication( "Marching cubes", 800, 600, false );
+		sceneryApplication.setVolumeResolution( new double[] { 0.5, 0.75, 0.5 } );
 		new Thread( () -> {
 			sceneryApplication.main();
 		} ).start();
@@ -92,8 +94,8 @@ public class SphereMarchingCubesTest
 				sceneryApplication.addChild( completeNeuron );
 
 				meshExtractor.setCubeSize( new int[] { voxelSize, voxelSize, 1 } );
-				int[] position = new int[] { 0, 0, 0 };
-				meshExtractor.createChunks( position );
+				Localizable location = new Point( new int[] { 0, 0, 0 } );
+				meshExtractor.createChunks( location );
 
 				float[] completeNeuronVertices = new float[ 0 ];
 				float[] verticesArray = new float[ 0 ];

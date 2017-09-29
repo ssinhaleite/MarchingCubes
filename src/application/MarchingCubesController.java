@@ -1,28 +1,19 @@
 package application;
 
-import java.io.IOException;
 import java.nio.FloatBuffer;
-import java.util.ArrayList;
 import java.util.Arrays;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.beust.jcommander.JCommander;
-
-import bdv.img.h5.H5LabelMultisetSetupImageLoader;
+import bdv.labels.labelset.Label;
 import bdv.labels.labelset.LabelMultisetType;
-import ch.systemsx.cisd.hdf5.HDF5Factory;
-import ch.systemsx.cisd.hdf5.IHDF5Reader;
+import bdv.labels.labelset.Multiset;
 import cleargl.GLVector;
 import graphics.scenery.Material;
 import graphics.scenery.Mesh;
-import marchingCubes.MarchingCubes.ForegroundCriterion;
-import ncsa.hdf.hdf5lib.exceptions.HDF5FileNotFoundException;
+import marchingCubes.MarchingCubes;
+import net.imglib2.Localizable;
+import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessibleInterval;
-import util.HDF5Reader;
 import util.MeshExtractor;
-import util.Parameters;
 
 /**
  * Main class for the Marching Cubes
@@ -31,231 +22,119 @@ import util.Parameters;
  */
 public class MarchingCubesController
 {
-	/** logger */
-	static Logger LOGGER;
+	private static MarchingCubes.ForegroundCriterion criterion = MarchingCubes.ForegroundCriterion.EQUAL;
 
-	/** volume with the labeled segmentation */
-	private static RandomAccessibleInterval< LabelMultisetType > volumeLabels = null;
-
-	/** resolution of the volume */
-	private static float[] resolution = new float[] { 4f, 4f, 40f };
-
-	private static ForegroundCriterion criterion = ForegroundCriterion.EQUAL;
-
-	private static int[] cubeSize = { 4, 4, 4 };
-
-	private static int foregroundValue;
+	private static int[] cubeSize = { 1, 1, 1 };
 
 	private static float[] verticesArray = new float[ 0 ];
 
-	private static MarchingCubesApplication sceneryApplication;
+	private MarchingCubesApplication viewer3D;
+
+	private ViewerMode mode;
+
+	private double[] resolution;
 
 	/**
-	 * Main method - starts the scenery application
-	 * 
-	 * @param args
-	 * @throws Exception
+	 * Enum of the viewer modes. There are two types: ONLY_ONE_NEURON_VISIBLE:
+	 * Remove all previously rendered neurons and show only the most recent one.
+	 * MANY_NEURONS_VISIBLE: Add a new neuron to the viewer and keep the ones
+	 * that were already rendered.
 	 */
-	public static void main( String[] args ) throws Exception
+	public enum ViewerMode
 	{
-		// Set the log level
-		System.setProperty( org.slf4j.impl.SimpleLogger.DEFAULT_LOG_LEVEL_KEY, "info" );
-//		System.setProperty( org.slf4j.impl.SimpleLogger.LOG_FILE_KEY, "messages.txt" );
-		LOGGER = LoggerFactory.getLogger( MarchingCubesController.class );
-
-		// get the parameters
-		final Parameters params = new Parameters();
-		JCommander.newBuilder()
-				.addObject( params )
-				.build()
-				.parse( args );
-
-		boolean success = validateParameters( params );
-		if ( !success )
-		{
-			LOGGER.error( "Failed: one of the parameters was not informed" );
-			return;
-		}
-
-		success = loadData( params );
-		if ( !success )
-		{
-			LOGGER.error( "Failed to load the data" );
-			return;
-		}
-
-		foregroundValue = params.foregroundValue;
-
-		sceneryApplication = new MarchingCubesApplication( "Marching cube", 800, 600 );
-		sceneryApplication.setVolumeResolution( resolution );
-
-		new Thread( () -> {
-			sceneryApplication.main();
-		} ).start();
-
-		new Thread( () -> {
-			marchingCube();
-		} ).start();
+		ONLY_ONE_NEURON_VISIBLE,
+		MANY_NEURONS_VISIBLE
 	}
 
-	/**
-	 * This method loads the volume labels from the hdf file
-	 */
-	private static boolean loadData( Parameters params )
+	public MarchingCubesController()
 	{
-		final IHDF5Reader reader;
-		try
-		{
-			reader = HDF5Factory.openForReading( params.filePath );
-		}
-		catch ( HDF5FileNotFoundException e )
-		{
-			LOGGER.error( "input file not found" );
-			return false;
-		}
-
-		LOGGER.info( "Opening labels from " + params.filePath );
-		/** loaded segments */
-		ArrayList< H5LabelMultisetSetupImageLoader > labels = null;
-
-		/* label dataset */
-		if ( reader.exists( params.labelDatasetPath ) )
-		{
-			try
-			{
-				labels = HDF5Reader.readLabels( reader, params.labelDatasetPath );
-			}
-			catch ( IOException e )
-			{
-				LOGGER.error( "read labels failed: " + e.getCause() );
-				return false;
-			}
-		}
-		else
-		{
-			LOGGER.error( "no label dataset '" + params.labelDatasetPath + "' found" );
-			return false;
-		}
-
-		volumeLabels = labels.get( 0 ).getImage( 0 );
-		return true;
+		viewer3D = null;
 	}
 
-	private static boolean validateParameters( Parameters params )
+	public void setViewer3D( MarchingCubesApplication viewer3D )
 	{
-		String errorMessage = "";
-		if ( params.filePath == "" )
-		{
-			errorMessage += "the input file path was not informed";
-		}
-
-		if ( params.foregroundValue == -1 )
-		{
-			if ( errorMessage != "" )
-				errorMessage += " and ";
-
-			errorMessage += "the foreground value was not informed";
-		}
-
-		if ( errorMessage != "" )
-		{
-			LOGGER.error( errorMessage );
-			return false;
-		}
-
-		return true;
+		this.viewer3D = viewer3D;
 	}
 
-	private static void marchingCube()
+	public void setMode( ViewerMode mode )
 	{
+		this.mode = mode;
+	}
+
+	public void setResolution( double[] resolution )
+	{
+		this.resolution = resolution;
+		viewer3D.setVolumeResolution( resolution );
+	}
+
+	public void generateMesh( RandomAccessibleInterval< LabelMultisetType > volumeLabels, Localizable location )
+	{
+		if ( mode == ViewerMode.ONLY_ONE_NEURON_VISIBLE )
+		{
+			viewer3D.removeAllNeurons();
+		}
+
+		int foregroundValue = getForegroundValue( volumeLabels, location );
 		MeshExtractor meshExtractor = new MeshExtractor( volumeLabels, cubeSize, foregroundValue, criterion );
 
-		for ( int voxelSize = 32; voxelSize > 0; voxelSize /= 2 )
+		// use cube of size 1
+		Mesh completeNeuron = new Mesh();
+		final Material material = new Material();
+		material.setAmbient( new GLVector( 1f, 0.0f, 1f ) );
+		material.setSpecular( new GLVector( 1f, 0.0f, 1f ) );
+
+		material.setDiffuse( new GLVector( 1, 1, 0 ) );
+
+		completeNeuron.setMaterial( material );
+		completeNeuron.setPosition( new GLVector( 0.0f, 0.0f, 0.0f ) );
+		completeNeuron.setScale( new GLVector( ( float ) resolution[ 0 ], ( float ) resolution[ 1 ], ( float ) resolution[ 2 ] ) );
+		viewer3D.addChild( completeNeuron );
+
+		meshExtractor.setCubeSize( cubeSize );
+		meshExtractor.createChunks( location );
+
+		float[] completeNeuronVertices = new float[ 0 ];
+		int completeMeshSize = 0;
+		while ( meshExtractor.hasNext() )
 		{
-			LOGGER.info( "voxel size: " + voxelSize );
-
-			Mesh completeNeuron = new Mesh();
-			final Material material = new Material();
-			material.setAmbient( new GLVector( 1f, 0.0f, 1f ) );
-			material.setSpecular( new GLVector( 1f, 0.0f, 1f ) );
-
-			if ( voxelSize == 32 )
+			Mesh neuron = new Mesh();
+			neuron = meshExtractor.next();
+			if ( neuron == null )
 			{
-				material.setDiffuse( new GLVector( 1, 0, 0 ) );
-			}
-			if ( voxelSize == 16 )
-			{
-				material.setDiffuse( new GLVector( 0, 1, 0 ) );
-			}
-			if ( voxelSize == 8 )
-			{
-				material.setDiffuse( new GLVector( 0, 0, 1 ) );
-			}
-			if ( voxelSize == 4 )
-			{
-				material.setDiffuse( new GLVector( 1, 0, 1 ) );
-			}
-			if ( voxelSize == 2 )
-			{
-				material.setDiffuse( new GLVector( 0, 1, 1 ) );
-			}
-			if ( voxelSize == 1 )
-			{
-				material.setDiffuse( new GLVector( 1, 1, 0 ) );
+				continue;
 			}
 
-			completeNeuron.setMaterial( material );
-			completeNeuron.setName( String.valueOf( foregroundValue + " " + voxelSize ) );
-			completeNeuron.setPosition( new GLVector( 0.0f, 0.0f, 0.0f ) );
-			completeNeuron.setScale( new GLVector( resolution[ 0 ], resolution[ 1 ], resolution[ 2 ] ) );
-			sceneryApplication.addChild( completeNeuron );
-
-			cubeSize[ 0 ] = voxelSize;
-			cubeSize[ 1 ] = voxelSize;
-			cubeSize[ 2 ] = 1;
-
-			meshExtractor.setCubeSize( cubeSize );
-			int[] position = new int[] { 0, 0, 0 };
-			meshExtractor.createChunks( position );
-
-			float[] completeNeuronVertices = new float[ 0 ];
-			int completeMeshSize = 0;
-			while ( meshExtractor.hasNext() )
+			if ( completeNeuron.getVertices().hasArray() )
 			{
-				Mesh neuron = new Mesh();
-				neuron = meshExtractor.next();
-
-				if ( completeNeuron.getVertices().hasArray() )
-				{
-					completeNeuronVertices = completeNeuron.getVertices().array();
-					completeMeshSize = completeNeuronVertices.length;
-				}
-
-				float[] neuronVertices = neuron.getVertices().array();
-				int meshSize = neuronVertices.length;
-				verticesArray = Arrays.copyOf( completeNeuronVertices, completeMeshSize + meshSize );
-				System.arraycopy( neuronVertices, 0, verticesArray, completeMeshSize, meshSize );
-
-				System.out.println( "number of elements complete mesh: " + verticesArray.length );
-				completeNeuron.setVertices( FloatBuffer.wrap( verticesArray ) );
-				completeNeuron.recalculateNormals();
-				completeNeuron.setDirty( true );
+				completeNeuronVertices = completeNeuron.getVertices().array();
+				completeMeshSize = completeNeuronVertices.length;
 			}
 
-			LOGGER.info( "all results generated!" );
+			float[] neuronVertices = neuron.getVertices().array();
+			int meshSize = neuronVertices.length;
+			verticesArray = Arrays.copyOf( completeNeuronVertices, completeMeshSize + meshSize );
+			System.arraycopy( neuronVertices, 0, verticesArray, completeMeshSize, meshSize );
 
-			// Pause for 2 seconds
-			try
-			{
-				Thread.sleep( 2000 );
-			}
-			catch ( InterruptedException e )
-			{
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			if ( voxelSize != 1 )
-				sceneryApplication.removeChild( completeNeuron );
+			completeNeuron.setVertices( FloatBuffer.wrap( verticesArray ) );
+			completeNeuron.recalculateNormals();
+			completeNeuron.setDirty( true );
 		}
+	}
+
+	private int getForegroundValue( RandomAccessibleInterval< LabelMultisetType > input, Localizable location )
+	{
+		final RandomAccess< LabelMultisetType > access = input.randomAccess();
+		access.setPosition( location );
+
+		System.out.println( " location: " + location.getIntPosition( 0 ) + "x" + location.getIntPosition( 1 ) + "x" + location.getIntPosition( 2 ) );
+
+		int foregroundValue = -1;
+		for ( final Multiset.Entry< Label > e : access.get().entrySet() )
+		{
+			foregroundValue = ( int ) e.getElement().id();
+			System.out.println( "foregroundValue: " + foregroundValue );
+		}
+
+		return foregroundValue;
 	}
 }

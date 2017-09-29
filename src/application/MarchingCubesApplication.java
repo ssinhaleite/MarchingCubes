@@ -1,5 +1,8 @@
 package application;
 
+import java.util.Iterator;
+import java.util.concurrent.CopyOnWriteArrayList;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -8,10 +11,13 @@ import graphics.scenery.Box;
 import graphics.scenery.Camera;
 import graphics.scenery.DetachedHeadCamera;
 import graphics.scenery.Mesh;
+import graphics.scenery.Node;
 import graphics.scenery.PointLight;
 import graphics.scenery.SceneryBase;
 import graphics.scenery.SceneryElement;
 import graphics.scenery.backends.Renderer;
+import graphics.scenery.controls.behaviours.MovementCommand;
+import graphics.scenery.utils.SceneryPanel;
 
 /**
  * Class responsible for create the world/scene
@@ -24,25 +30,27 @@ public class MarchingCubesApplication extends SceneryBase
 	/** logger */
 	static final Logger LOGGER = LoggerFactory.getLogger( MarchingCubesApplication.class );
 
-	private float[] volumeResolution = null;
+	private double[] volumeResolution = null;
 
-	public MarchingCubesApplication( String applicationName, int windowWidth, int windowHeight )
+	private final SceneryPanel scPanel;
+
+	public MarchingCubesApplication( String applicationName, int windowWidth, int windowHeight, boolean wantREPL )
 	{
-		super( applicationName, windowWidth, windowHeight, false );
+		super( applicationName, windowWidth, windowHeight, wantREPL );
+
+		scPanel = new SceneryPanel( 500, 500 );
 	}
 
-	public void setVolumeResolution( float[] resolution )
+	public void setVolumeResolution( double[] resolution )
 	{
 		this.volumeResolution = resolution;
 	}
 
-	@Override
 	public void init()
 	{
-		LOGGER.info( "starting application..." );
-
-		setRenderer( Renderer.createRenderer( getHub(), getApplicationName(), getScene(), getWindowWidth(),
-				getWindowHeight() ) );
+		System.out.println( "init... " );
+		setRenderer(
+				Renderer.createRenderer( getHub(), getApplicationName(), getScene(), getWindowWidth(), getWindowHeight(), scPanel ) );
 		getHub().add( SceneryElement.Renderer, getRenderer() );
 
 		final Box hull = new Box( new GLVector( 50.0f, 50.0f, 50.0f ), true );
@@ -52,15 +60,27 @@ public class MarchingCubesApplication extends SceneryBase
 
 		final Camera cam = new DetachedHeadCamera();
 
-		cam.perspectiveCamera( 50f, getWindowHeight(), getWindowWidth(), 0.001f, 1000.0f );
+		System.out.println( "camera... " );
+
+		cam.perspectiveCamera( 50f, getWindowWidth(), getWindowHeight(), 0.1f, 1000.0f );
 		cam.setActive( true );
+		// TODO: camera position must be related with the mesh not with the
+		// whole volume
 		if ( volumeResolution == null )
-			cam.setPosition( new GLVector( 0, 0, 10 ) );
+		{
+			cam.setPosition( new GLVector( 0, 0, 5 ) );
+		}
 		else
-			cam.setPosition( new GLVector( volumeResolution[ 0 ] / 2, volumeResolution[ 1 ] / 2, 10 ) );
+		{
+			cam.setPosition( new GLVector( ( float ) ( volumeResolution[ 0 ] / 2 ), ( float ) ( volumeResolution[ 1 ] / 2 ), 2 ) );
+		}
 		getScene().addChild( cam );
 
-		PointLight[] lights = new PointLight[ 4 ];
+		// TODO: camera position must be related with the object
+		cam.setPosition( new GLVector( 2f, 2f, 10 ) );
+		getScene().addChild( cam );
+
+		final PointLight[] lights = new PointLight[ 4 ];
 
 		for ( int i = 0; i < lights.length; i++ )
 		{
@@ -77,18 +97,44 @@ public class MarchingCubesApplication extends SceneryBase
 		lights[ 3 ].setPosition( new GLVector( 0.0f, -1.0f, 1.0f / ( float ) Math.sqrt( 2.0 ) ) );
 
 		for ( int i = 0; i < lights.length; i++ )
-		{
 			getScene().addChild( lights[ i ] );
-		}
 	}
 
 	public void addChild( Mesh child )
 	{
 		getScene().addChild( child );
+		MovementCommand movement = new MovementCommand( "move_forward", "forward", () -> child );
+	}
+
+	@Override
+	public void inputSetup()
+	{
+		setupCameraModeSwitching( "C" );
 	}
 
 	public void removeChild( Mesh child )
 	{
 		getScene().removeChild( child );
+	}
+
+	public SceneryPanel getPanel()
+	{
+		return scPanel;
+	}
+
+	public void removeAllNeurons()
+	{
+		CopyOnWriteArrayList< Node > children = getScene().getChildren();
+		Iterator< Node > iterator = children.iterator();
+		while ( iterator.hasNext() )
+		{
+			Node child = iterator.next();
+			System.out.println( child.getNodeType() );
+
+			if ( child.getNodeType().compareTo( "Mesh" ) == 0 )
+			{
+				getScene().removeChild( child );
+			}
+		}
 	}
 }
